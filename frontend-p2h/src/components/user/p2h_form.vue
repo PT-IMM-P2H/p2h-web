@@ -30,7 +30,30 @@ const selectedDuration = ref("");
 const currentShiftInfo = ref(null); // Info shift dari backend
 const shiftWarning = ref(""); // Peringatan jika pilih shift salah
 
+// User data for welcome message
+const userData = ref({
+  full_name: "User",
+});
+
 // --- LOGIKA BUSINESS ---
+
+// Fetch user profile for welcome message
+const fetchUserProfile = async () => {
+  // Only fetch if user is authenticated
+  if (!isAuthenticated.value) {
+    userData.value.full_name = "User";
+    return;
+  }
+
+  try {
+    const response = await api.get("/users/me");
+    userData.value.full_name = response.data.payload.full_name || "User";
+  } catch (error) {
+    console.error("❌ Gagal fetch user profile:", error);
+    // Keep default name if fetch fails
+    userData.value.full_name = "User";
+  }
+};
 
 const checkAuthentication = () => {
   const token = localStorage.getItem("access_token");
@@ -286,6 +309,7 @@ const getOptionClass = (id, opt) => {
 onMounted(() => {
   checkAuthentication();
   fetchCurrentShift(); // Fetch shift info saat component dimount
+  fetchUserProfile(); // Fetch user profile untuk welcome message
 });
 </script>
 
@@ -300,7 +324,7 @@ onMounted(() => {
       <div class="w-full max-w-4xl space-y-4">
         <div class="p-8 bg-white rounded-2xl shadow-sm border border-zinc-200">
           <h1 class="text-2xl font-extrabold mb-2 text-zinc-900 leading-tight">
-            Selamat datang Naufal Andrian
+            Selamat datang {{ userData.full_name }}
           </h1>
           <p class="text-zinc-600 text-sm leading-relaxed">
             Mohon mengisi informasi keadaan kendaraan hari ini sebelum anda

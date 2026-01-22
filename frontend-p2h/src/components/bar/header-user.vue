@@ -1,21 +1,27 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { computed, ref } from "vue";
-import { useUserProfile } from '../../composables/useUserProfile'
+import { useUserProfile } from "../../composables/useUserProfile";
 
 const router = useRouter();
 const isMenuOpen = ref(false);
-const { clearProfile } = useUserProfile()
+const { clearProfile } = useUserProfile();
 
 const handleLogout = () => {
   // Clear user profile cache
-  clearProfile()
+  clearProfile();
   // Clear localStorage token
-  localStorage.removeItem('token')
+  localStorage.removeItem("token");
   // Redirect to login
   router.push("/login");
   isMenuOpen.value = false;
 };
+
+const handleLogin = () => {
+  router.push("/login");
+  isMenuOpen.value = false;
+};
+
 const hadleprofile = () => {
   router.push({ name: "profile-user" });
   isMenuOpen.value = false;
@@ -34,7 +40,7 @@ const hadledashboard = () => {
   isMenuOpen.value = false;
 };
 
-const hadlemonitor= () => {
+const hadlemonitor = () => {
   router.push({ name: "monitor-kendaraan" });
   isMenuOpen.value = false;
 };
@@ -65,19 +71,35 @@ const toggleMenu = () => {
 const closeMenu = () => {
   isMenuOpen.value = false;
 };
+
+// Check if current route is monitor page
+const isMonitorPage = computed(
+  () => currentRoute.value === "monitor-kendaraan",
+);
+
+// Check if user is authenticated
+const isAuthenticated = computed(() => {
+  return !!localStorage.getItem("access_token");
+});
 </script>
 
 <template>
   <header
-    class="fixed top-0 left-0 w-full z-50 bg-white/50 backdrop-blur-lg shadow-md px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
+    class="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-lg shadow-md px-4 md:px-6 py-3 md:py-4 flex justify-between items-center"
+  >
     <div class="flex items-center gap-2 md:gap-3 min-w-0 flex-1">
-      <img src="/image_asset/2_Ptimm.png" alt="Logo" class="h-7 md:h-8 w-auto shrink-0" />
+      <img
+        src="/image_asset/2_Ptimm.png"
+        alt="Logo"
+        class="h-7 md:h-8 w-auto shrink-0"
+      />
 
       <!-- HR vertikal valid -->
       <div class="h-6 md:h-8 w-0.5 bg-[#cacaca] rounded-lg shrink-0"></div>
 
       <span
-        class="font-['Montserrat'] font-semibold text-md md:text-md text-[#523E95] truncate">
+        class="font-['Montserrat'] font-semibold text-md md:text-md text-[#523E95] truncate"
+      >
         Pelaksanaan Pemeriksaan Harian
       </span>
     </div>
@@ -104,6 +126,7 @@ const closeMenu = () => {
         Form P2H
       </button>
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadlehasilP2H"
         :class="getButtonClass('hasil-form')"
         :style="{ color: getButtonColor('hasil-form') }"
@@ -112,6 +135,7 @@ const closeMenu = () => {
         Hasil P2H
       </button>
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadlepriwayat"
         :class="getButtonClass('riwayat-user')"
         :style="{ color: getButtonColor('riwayat-user') }"
@@ -120,6 +144,7 @@ const closeMenu = () => {
         Riwayat
       </button>
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadleprofile"
         :class="getButtonClass('profile-user')"
         :style="{ color: getButtonColor('profile-user') }"
@@ -130,6 +155,7 @@ const closeMenu = () => {
 
       <!-- admin -->
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadledashboard"
         :class="getButtonClass('dashboard')"
         :style="{ color: getButtonColor('dashboard') }"
@@ -138,13 +164,24 @@ const closeMenu = () => {
         Dashboard
       </button>
 
-      <div class="h-5 w-px bg-gray-300"></div>
+      <div v-if="isAuthenticated" class="h-5 w-px bg-gray-300"></div>
 
+      <!-- Logout button (only if authenticated) -->
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="handleLogout"
         class="text-xs lg:text-sm font-medium text-red-500 hover:text-red-700 transition-all duration-200 whitespace-nowrap"
       >
         Logout
+      </button>
+
+      <!-- Login button (only if not authenticated) -->
+      <button
+        v-if="!isAuthenticated"
+        @click="handleLogin"
+        class="text-xs lg:text-sm font-medium text-blue-600 hover:text-blue-800 transition-all duration-200 whitespace-nowrap"
+      >
+        Login
       </button>
     </nav>
 
@@ -185,6 +222,7 @@ const closeMenu = () => {
           Form P2H
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadlehasilP2H"
           :class="getButtonClass('hasil-form')"
           :style="{ color: getButtonColor('hasil-form') }"
@@ -193,6 +231,7 @@ const closeMenu = () => {
           Hasil P2H
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadlepriwayat"
           :class="getButtonClass('riwayat-user')"
           :style="{ color: getButtonColor('riwayat-user') }"
@@ -201,6 +240,7 @@ const closeMenu = () => {
           Riwayat
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadleprofile"
           :class="getButtonClass('profile-user')"
           :style="{ color: getButtonColor('profile-user') }"
@@ -217,6 +257,7 @@ const closeMenu = () => {
           Log Kendaraan
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadledashboard"
           :class="getButtonClass('dashboard')"
           :style="{ color: getButtonColor('dashboard') }"
@@ -224,12 +265,24 @@ const closeMenu = () => {
         >
           Dashboard
         </button>
-        <hr class="border-gray-200 my-2" />
+        <hr v-if="isAuthenticated" class="border-gray-200 my-2" />
+
+        <!-- Logout (only if authenticated) -->
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="handleLogout"
           class="block w-full text-left px-3 py-2.5 text-sm font-medium text-red-500 rounded-md hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
         >
           Logout
+        </button>
+
+        <!-- Login (only if not authenticated) -->
+        <button
+          v-if="!isAuthenticated"
+          @click="handleLogin"
+          class="block w-full text-left px-3 py-2.5 text-sm font-medium text-blue-600 rounded-md hover:bg-blue-50 hover:text-blue-800 transition-colors duration-200"
+        >
+          Login
         </button>
       </div>
     </nav>
