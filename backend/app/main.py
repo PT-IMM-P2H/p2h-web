@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
+import os
 
 from app.config import settings
 from app.database import Base, engine
@@ -13,8 +14,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- KONFIGURASI PORT ---
-# Kita set ke 8000 sebagai port default aplikasi
-PORT = 8000 
+# Gunakan environment variable PORT dari Railway, fallback ke 8000 untuk local
+PORT = int(os.getenv("PORT", 8000))
+# Gunakan 0.0.0.0 untuk production, 127.0.0.1 untuk local development
+HOST = "0.0.0.0" if os.getenv("RAILWAY_ENVIRONMENT") else "127.0.0.1"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -27,8 +30,8 @@ async def lifespan(app: FastAPI):
     print("\n" + "="*60)
     print("                P2H SYSTEM PT. IMM BONTANG")
     print("="*60)
-    print(f"🚀 Main API      : http://127.0.0.1:{PORT}")
-    print(f"📝 Swagger UI    : http://127.0.0.1:{PORT}/docs")
+    print(f"🚀 Main API      : http://{HOST}:{PORT}")
+    print(f"📝 Swagger UI    : http://{HOST}:{PORT}/docs")
     print("="*60 + "\n")
 
     try:
@@ -118,5 +121,5 @@ app.include_router(dashboard.router, tags=["Dashboard"])
 
 if __name__ == "__main__":
     import uvicorn
-    # Port 8000 sebagai default aplikasi
-    uvicorn.run("app.main:app", host="127.0.0.1", port=PORT, reload=True)
+    # Gunakan HOST dan PORT yang sudah dikonfigurasi
+    uvicorn.run("app.main:app", host=HOST, port=PORT, reload=True)
