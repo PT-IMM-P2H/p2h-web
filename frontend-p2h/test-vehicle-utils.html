@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Vehicle Utils</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 3px solid #3b82f6;
+            background: #eff6ff;
+        }
+        .success { border-left-color: #10b981; background: #d1fae5; }
+        .error { border-left-color: #ef4444; background: #fee2e2; }
+        h2 { color: #1f2937; }
+        h3 { color: #4b5563; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Testing Vehicle Utils - Frontend</h1>
+    <div id="results"></div>
+
+    <script type="module">
+        import { 
+            normalizeHullNumber, 
+            formatHullNumber, 
+            validateHullNumberFormat,
+            formatHullNumberOnBlur
+        } from './src/utils/vehicleUtils.js';
+
+        const results = document.getElementById('results');
+        
+        function addTestSection(title) {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = `<h2>${title}</h2>`;
+            results.appendChild(section);
+            return section;
+        }
+
+        function addTestCase(section, input, output, expected = null) {
+            const testCase = document.createElement('div');
+            const isSuccess = expected === null || output === expected;
+            testCase.className = `test-case ${isSuccess ? 'success' : 'error'}`;
+            testCase.innerHTML = `
+                <strong>Input:</strong> "${input}"<br>
+                <strong>Output:</strong> "${output}"
+                ${expected !== null ? `<br><strong>Expected:</strong> "${expected}"` : ''}
+            `;
+            section.appendChild(testCase);
+        }
+
+        // Test 1: Normalize Hull Number
+        const section1 = addTestSection('1. Testing normalizeHullNumber');
+        const normalizeTests = [
+            { input: 'P 309', expected: 'P309' },
+            { input: 'p.309', expected: 'P309' },
+            { input: 'P,309', expected: 'P309' },
+            { input: 'P-309', expected: 'P309' },
+            { input: '  P  .  309  ', expected: 'P309' },
+            { input: 'a21', expected: 'A21' },
+            { input: 'B030', expected: 'B030' }
+        ];
+        normalizeTests.forEach(test => {
+            const result = normalizeHullNumber(test.input);
+            addTestCase(section1, test.input, result, test.expected);
+        });
+
+        // Test 2: Format Hull Number
+        const section2 = addTestSection('2. Testing formatHullNumber');
+        const formatTests = [
+            { input: 'P309', expected: 'P.309' },
+            { input: 'p 309', expected: 'P.309' },
+            { input: 'A21', expected: 'A.21' },
+            { input: 'B030', expected: 'B.030' },
+            { input: 'P.309', expected: 'P.309' },
+            { input: 'P,309', expected: 'P.309' }
+        ];
+        formatTests.forEach(test => {
+            const result = formatHullNumber(test.input);
+            addTestCase(section2, test.input, result, test.expected);
+        });
+
+        // Test 3: Validate Hull Number
+        const section3 = addTestSection('3. Testing validateHullNumberFormat');
+        const validateTests = [
+            { input: 'P309', expectedValid: true },
+            { input: 'P.309', expectedValid: true },
+            { input: 'p 309', expectedValid: true },
+            { input: '123', expectedValid: false },
+            { input: 'ABC', expectedValid: false },
+            { input: '', expectedValid: false }
+        ];
+        validateTests.forEach(test => {
+            const result = validateHullNumberFormat(test.input);
+            const testCase = document.createElement('div');
+            const isSuccess = result.isValid === test.expectedValid;
+            testCase.className = `test-case ${isSuccess ? 'success' : 'error'}`;
+            testCase.innerHTML = `
+                <strong>Input:</strong> "${test.input}"<br>
+                <strong>Valid:</strong> ${result.isValid}<br>
+                <strong>Message:</strong> ${result.errorMessage || 'None'}<br>
+                <strong>Expected Valid:</strong> ${test.expectedValid}
+            `;
+            section3.appendChild(testCase);
+        });
+
+        // Summary
+        const summary = addTestSection('✅ Test Summary');
+        summary.innerHTML += '<p style="color: #10b981; font-size: 18px; font-weight: bold;">All tests completed! Check results above.</p>';
+    </script>
+</body>
+</html>
