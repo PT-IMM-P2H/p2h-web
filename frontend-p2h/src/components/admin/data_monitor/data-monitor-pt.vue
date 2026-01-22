@@ -11,7 +11,7 @@ import {
   XMarkIcon,
   ChevronDownIcon,
   CalendarIcon,
-  CheckIcon
+  CheckIcon,
 } from "@heroicons/vue/24/outline";
 import { api } from "../../../services/api";
 import { useSidebarProvider } from "../../../composables/useSidebar";
@@ -19,7 +19,8 @@ import { useSidebarProvider } from "../../../composables/useSidebar";
 // Provide sidebar state untuk header dan aside
 const { isSidebarOpen } = useSidebarProvider();
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 const selectedRowIds = ref([]);
 const selectAllChecked = ref(false);
@@ -46,18 +47,21 @@ const p2hReports = ref([]);
 const fetchP2HReports = async () => {
   try {
     isLoading.value = true;
-    console.log('🔄 [Admin] Fetching P2H reports...');
-    const response = await api.get('/p2h/reports?limit=100');
-    console.log('✅ [Admin] P2H reports fetched:', response.data);
+    console.log("🔄 [Admin] Fetching P2H reports...");
+    const response = await api.get("/p2h/reports?limit=100");
+    console.log("✅ [Admin] P2H reports fetched:", response.data);
     p2hReports.value = response.data.payload;
-    console.log('📊 [Admin] Total reports:', p2hReports.value.length);
+    console.log("📊 [Admin] Total reports:", p2hReports.value.length);
   } catch (error) {
-    console.error('❌ [Admin] Gagal fetch P2H reports:', error);
-    console.error('Error details:', error.response?.data);
+    console.error("❌ [Admin] Gagal fetch P2H reports:", error);
+    console.error("Error details:", error.response?.data);
     if (error.response?.status === 401) {
-      alert('Sesi Anda telah berakhir. Silakan login kembali.');
+      alert("Sesi Anda telah berakhir. Silakan login kembali.");
     } else {
-      alert('Gagal memuat data P2H: ' + (error.response?.data?.detail || error.message));
+      alert(
+        "Gagal memuat data P2H: " +
+          (error.response?.data?.detail || error.message),
+      );
     }
   } finally {
     isLoading.value = false;
@@ -67,38 +71,38 @@ const fetchP2HReports = async () => {
 // Format data dari backend ke format tabel
 const tableData = computed(() => {
   // Filter hanya data dengan kategori IMM (Operasional PT)
-  const filteredReports = p2hReports.value.filter(report => 
-    report.user.kategori_pengguna === 'IMM'
+  const filteredReports = p2hReports.value.filter(
+    (report) => report.user.kategori_pengguna === "IMM",
   );
-  
-  return filteredReports.map(report => {
+
+  return filteredReports.map((report) => {
     // Extract keterangan dari items yang abnormal/warning (hanya isi keterangan)
     const problemItems = (report.details || []).filter(
-      d => d.status === 'abnormal' || d.status === 'warning'
+      (d) => d.status === "abnormal" || d.status === "warning",
     );
-    
+
     // Group keterangan by category (section_name)
     const keteranganByCategory = {};
     problemItems
-      .filter(d => d.keterangan && d.keterangan.trim())
-      .forEach(d => {
+      .filter((d) => d.keterangan && d.keterangan.trim())
+      .forEach((d) => {
         const category = d.checklist_item.section_name;
         if (!keteranganByCategory[category]) {
           keteranganByCategory[category] = [];
         }
         keteranganByCategory[category].push(d.keterangan.trim());
       });
-    
+
     const hasKeterangan = Object.keys(keteranganByCategory).length > 0;
-    
+
     // Format shift number menjadi shift name
     let shiftName = `Shift ${report.shift_number}`;
-    if (report.vehicle.shift_type === 'non_shift') {
-      shiftName = 'Non Shift';
+    if (report.vehicle.shift_type === "non_shift") {
+      shiftName = "Non Shift";
     } else if (report.shift_number === 4) {
-      shiftName = 'Long Shift';
+      shiftName = "Long Shift";
     }
-    
+
     return {
       id: report.id,
       tanggal: report.submission_date,
@@ -106,18 +110,22 @@ const tableData = computed(() => {
       shift: shiftName,
       shiftRaw: report.shift_number,
       noLambung: report.vehicle.no_lambung,
-      nomorPolisi: report.vehicle.plat_nomor || '-',
-      warnaLambung: report.vehicle.warna_no_lambung || '-',
+      nomorPolisi: report.vehicle.plat_nomor || "-",
+      warnaLambung: report.vehicle.warna_no_lambung || "-",
       tipe: report.vehicle.vehicle_type,
-      merek: report.vehicle.merk || '-',
+      merek: report.vehicle.merk || "-",
       namaPemeriksa: report.user.full_name,
-      kategoriLayanan: 'Operasional PT',
-      perusahaan: report.user.company?.nama_perusahaan || '-',
-      hasil: report.overall_status === 'normal' ? 'Normal' : 
-             report.overall_status === 'warning' ? 'Warning' : 'Abnormal',
+      kategoriLayanan: "Operasional PT",
+      perusahaan: report.user.company?.nama_perusahaan || "-",
+      hasil:
+        report.overall_status === "normal"
+          ? "Normal"
+          : report.overall_status === "warning"
+            ? "Warning"
+            : "Abnormal",
       hasilRaw: report.overall_status,
       keteranganByCategory: keteranganByCategory,
-      hasKeterangan: hasKeterangan
+      hasKeterangan: hasKeterangan,
     };
   });
 });
@@ -225,7 +233,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length
+    filteredTableData.value.length,
   );
 });
 
@@ -258,25 +266,85 @@ const applyFilter = () => {
 // Export filters computed property
 const exportFilters = computed(() => {
   const filters = {
-    kategori: 'IMM'
+    kategori: "IMM",
   };
-  
+
   if (searchQuery.value) {
     filters.search = searchQuery.value;
   }
-  
+
   // Add status filter - backend expects single report_status value
   // If multiple selected, use the first one
   if (appliedFilterHasil.value.normal) {
-    filters.report_status = 'normal';
+    filters.report_status = "normal";
   } else if (appliedFilterHasil.value.abnormal) {
-    filters.report_status = 'abnormal';
+    filters.report_status = "abnormal";
   } else if (appliedFilterHasil.value.warning) {
-    filters.report_status = 'warning';
+    filters.report_status = "warning";
   }
-  
+
   return filters;
 });
+
+// Function untuk menghapus data yang dipilih
+const handleDeleteSelected = async () => {
+  if (selectedRowIds.value.length === 0) {
+    alert("Tidak ada data yang dipilih untuk dihapus");
+    return;
+  }
+
+  const confirmDelete = confirm(
+    `Apakah Anda yakin ingin menghapus ${selectedRowIds.value.length} data P2H yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
+  );
+
+  if (!confirmDelete) {
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    console.log("🗑️ Menghapus data P2H:", selectedRowIds.value);
+
+    // Delete each selected report
+    const deletePromises = selectedRowIds.value.map(async (reportId) => {
+      try {
+        await api.delete(`/p2h/reports/${reportId}`);
+        console.log(`✅ Berhasil menghapus report ${reportId}`);
+        return { success: true, id: reportId };
+      } catch (error) {
+        console.error(`❌ Gagal menghapus report ${reportId}:`, error);
+        return { success: false, id: reportId, error };
+      }
+    });
+
+    const results = await Promise.all(deletePromises);
+    const successCount = results.filter((r) => r.success).length;
+    const failCount = results.filter((r) => !r.success).length;
+
+    if (successCount > 0) {
+      alert(
+        `Berhasil menghapus ${successCount} data P2H${failCount > 0 ? `. ${failCount} data gagal dihapus.` : ""}`,
+      );
+
+      // Refresh data
+      await fetchP2HReports();
+
+      // Clear selection
+      selectedRowIds.value = [];
+      selectAllChecked.value = false;
+    } else {
+      alert("Gagal menghapus data P2H. Silakan coba lagi.");
+    }
+  } catch (error) {
+    console.error("❌ Error saat menghapus data:", error);
+    alert(
+      "Terjadi kesalahan saat menghapus data: " +
+        (error.message || "Unknown error"),
+    );
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 // Load data saat component mounted
 onMounted(() => {
@@ -295,18 +363,14 @@ onMounted(() => {
         <!-- Content -->
         <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
           <!-- Judul - Sticky -->
-          <div
-            class="mb-2 -mt-1 shrink-0 sticky top-0 z-30 bg-[#EFEFEF] pt-3"
-          >
+          <div class="mb-2 -mt-1 shrink-0 sticky top-0 z-30 bg-[#EFEFEF] pt-3">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
               <h1 class="text-base font-bold text-[#523E95] text-left">
                 PT Indominco Mandiri
               </h1>
             </div>
           </div>
-          <div
-            class="bg-white rounded-lg shadow-md p-5 flex flex-col"
-          >
+          <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
             <!-- Toolbar - Sticky inside card -->
             <div
               class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
@@ -344,6 +408,7 @@ onMounted(() => {
 
               <!-- Delete Button -->
               <button
+                @click="handleDeleteSelected"
                 :disabled="selectedRowIds.length === 0"
                 class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm order-4"
                 :class="
@@ -362,13 +427,21 @@ onMounted(() => {
               class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4"
             >
               <!-- Loading state -->
-              <div v-if="isLoading" class="flex justify-center items-center py-12 bg-white rounded-lg border">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+              <div
+                v-if="isLoading"
+                class="flex justify-center items-center py-12 bg-white rounded-lg border"
+              >
+                <div
+                  class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"
+                ></div>
                 <span class="ml-3 text-gray-600">Memuat data...</span>
               </div>
 
               <!-- Empty state -->
-              <div v-else-if="tableData.length === 0" class="flex justify-center items-center py-12 bg-white rounded-lg border">
+              <div
+                v-else-if="tableData.length === 0"
+                class="flex justify-center items-center py-12 bg-white rounded-lg border"
+              >
                 <p class="text-gray-500 text-lg">Belum ada data P2H</p>
               </div>
 
@@ -389,10 +462,7 @@ onMounted(() => {
                               type="checkbox"
                               :checked="selectAllChecked"
                               @change="toggleSelectAll"
-                              class="w-4 h-4 cursor-pointer rounded border appearance-none
-                                    bg-white border-gray-500
-                                    checked:bg-blue-500 checked:border-blue-500
-                                    transition-colors duration-150"
+                              class="w-4 h-4 cursor-pointer rounded border appearance-none bg-white border-gray-500 checked:bg-blue-500 checked:border-blue-500 transition-colors duration-150"
                               style="
                                 appearance: none;
                                 -webkit-appearance: none;
@@ -470,34 +540,34 @@ onMounted(() => {
                       v-for="row in paginatedData"
                       :key="row.id"
                       class="border-b border-gray-200 hover:bg-gray-50 transition cursor-pointer"
-                      :class="{ 'bg-blue-50': isRowSelected(row.id) }">
-                        <td class="px-2 md:px-3 py-3 text-center whitespace-nowrap w-10 md:w-12">
-                          <div class="flex items-center justify-center">
-                            <div class="relative w-5 h-5">
-                              <input
-                                type="checkbox"
-                                :checked="isRowSelected(row.id)"
-                                @change="selectRow(row.id)"
-                                @click.stop
-                                class="w-4 h-4 cursor-pointer rounded border appearance-none
-                                      bg-white border-gray-500
-                                      checked:bg-blue-500 checked:border-blue-500
-                                      transition-colors duration-150"
-                                style="
-                                  appearance: none;
-                                  -webkit-appearance: none;
-                                  -moz-appearance: none;
-                                "
-                              />
+                      :class="{ 'bg-blue-50': isRowSelected(row.id) }"
+                    >
+                      <td
+                        class="px-2 md:px-3 py-3 text-center whitespace-nowrap w-10 md:w-12"
+                      >
+                        <div class="flex items-center justify-center">
+                          <div class="relative w-5 h-5">
+                            <input
+                              type="checkbox"
+                              :checked="isRowSelected(row.id)"
+                              @change="selectRow(row.id)"
+                              @click.stop
+                              class="w-4 h-4 cursor-pointer rounded border appearance-none bg-white border-gray-500 checked:bg-blue-500 checked:border-blue-500 transition-colors duration-150"
+                              style="
+                                appearance: none;
+                                -webkit-appearance: none;
+                                -moz-appearance: none;
+                              "
+                            />
 
-                              <!-- Check Icon -->
-                              <CheckIcon
-                                v-if="isRowSelected(row.id)"
+                            <!-- Check Icon -->
+                            <CheckIcon
+                              v-if="isRowSelected(row.id)"
                               class="absolute inset-0 m-auto w-3 h-3 text-white pointer-events-none"
-                              />
-                            </div>
+                            />
                           </div>
-                        </td>
+                        </div>
+                      </td>
                       <td
                         class="px-4 py-3 text-gray-800 whitespace-nowrap min-w-32"
                       >
@@ -559,13 +629,30 @@ onMounted(() => {
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs min-w-40"
-                        :class="row.hasKeterangan ? 'text-red-600 font-medium' : 'text-gray-400'"
+                        :class="
+                          row.hasKeterangan
+                            ? 'text-red-600 font-medium'
+                            : 'text-gray-400'
+                        "
                       >
                         <div v-if="row.hasKeterangan" class="space-y-2">
-                          <div v-for="(notes, category) in row.keteranganByCategory" :key="category">
-                            <div class="font-semibold text-xs mb-1 text-gray-700">{{ category }}:</div>
+                          <div
+                            v-for="(
+                              notes, category
+                            ) in row.keteranganByCategory"
+                            :key="category"
+                          >
+                            <div
+                              class="font-semibold text-xs mb-1 text-gray-700"
+                            >
+                              {{ category }}:
+                            </div>
                             <ul class="list-disc list-inside space-y-1 ml-2">
-                              <li v-for="(ket, idx) in notes" :key="idx" class="text-xs">
+                              <li
+                                v-for="(ket, idx) in notes"
+                                :key="idx"
+                                class="text-xs"
+                              >
                                 {{ ket }}
                               </li>
                             </ul>
@@ -585,8 +672,10 @@ onMounted(() => {
               >
                 <!-- Items per page selector -->
                 <div class="flex items-center gap-2 order-1 md:order-1">
-                  <label class="text-xs md:text-sm text-gray-700 font-medium">Tampilkan</label>
-                  <select 
+                  <label class="text-xs md:text-sm text-gray-700 font-medium"
+                    >Tampilkan</label
+                  >
+                  <select
                     v-model="itemsPerPage"
                     @change="currentPage = 1"
                     class="px-2 md:px-3 py-1 md:py-1.5 border border-gray-300 rounded-md text-xs md:text-sm text-gray-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
@@ -596,9 +685,11 @@ onMounted(() => {
                     <option :value="50">50</option>
                     <option :value="100">100</option>
                   </select>
-                  <span class="text-xs md:text-sm text-gray-700 font-medium">baris</span>
+                  <span class="text-xs md:text-sm text-gray-700 font-medium"
+                    >baris</span
+                  >
                 </div>
-                
+
                 <!-- Navigation and info -->
                 <div class="flex items-center gap-3 order-2 md:order-2">
                   <button
@@ -608,14 +699,12 @@ onMounted(() => {
                   >
                     &lt;
                   </button>
-                  
-                  <span
-                    class="text-xs md:text-sm text-gray-700 font-medium"
-                  >
+
+                  <span class="text-xs md:text-sm text-gray-700 font-medium">
                     {{ startIndex }} - {{ endIndex }} dari
                     {{ filteredTableData.length }}
                   </span>
-                  
+
                   <button
                     @click="nextPage"
                     :disabled="currentPage === totalPages"

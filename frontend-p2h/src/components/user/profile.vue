@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import NavBar from "../bar/header-user.vue";
 import Footer from "../bar/footer.vue";
 import {
@@ -7,8 +7,54 @@ import {
   PencilSquareIcon,
   ChevronRightIcon,
 } from "@heroicons/vue/24/solid";
+import { api } from "../../services/api";
 
 const showEditAkun = ref(false);
+const isLoading = ref(false);
+const userData = ref({
+  full_name: "",
+  email: "",
+  phone_number: "",
+  birth_date: "",
+  company_name: "",
+  department: "",
+  work_status: "",
+  position: "",
+});
+
+// Fetch user profile data
+const fetchUserProfile = async () => {
+  try {
+    isLoading.value = true;
+    console.log("🔄 Fetching user profile...");
+    const response = await api.get("/users/me");
+    console.log("✅ User profile fetched:", response.data);
+
+    const user = response.data.payload;
+    userData.value = {
+      full_name: user.full_name || "",
+      email: user.email || "",
+      phone_number: user.phone_number || "",
+      birth_date: user.birth_date || "",
+      company_name: user.company?.nama_perusahaan || "",
+      department: user.department || "",
+      work_status: user.work_status || "",
+      position: user.position || "",
+    };
+  } catch (error) {
+    console.error("❌ Gagal fetch user profile:", error);
+    if (error.response?.status === 401) {
+      alert("Sesi Anda telah berakhir. Silakan login kembali.");
+    } else {
+      alert(
+        "Gagal memuat profil: " +
+          (error.response?.data?.detail || error.message),
+      );
+    }
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const openEditAkun = () => {
   showEditAkun.value = true;
@@ -17,6 +63,16 @@ const openEditAkun = () => {
 const closeEditAkun = () => {
   showEditAkun.value = false;
 };
+
+const handleSaveProfile = async () => {
+  // TODO: Implement update profile functionality
+  alert("Fitur update profil akan segera tersedia");
+  closeEditAkun();
+};
+
+onMounted(() => {
+  fetchUserProfile();
+});
 </script>
 
 <template>
@@ -27,14 +83,16 @@ const closeEditAkun = () => {
     <!-- Kontent Profil -->
     <main
       class="flex-1 flex items-start md:items-center justify-center bg-cover bg-center bg-no-repeat px-4 pt-24 md:pt-8 pb-40 md:pb-20 overflow-y-auto"
-      style="background-image: url(/image_asset/Backgrond.png)"
+      style="background-image: url(/image_asset/BG_2.png)"
     >
       <div
-        class="w-full h-auto flex flex-col gap-4 bg-white rounded-xl shadow-lg max-w-2xl md:max-w-4xl p-4 md:p-7 mt-2 md:mt-0">
+        class="w-full h-auto flex flex-col gap-4 bg-white rounded-xl shadow-lg max-w-2xl md:max-w-4xl p-4 md:p-7 mt-2 md:mt-0"
+      >
         <div class="flex justify-end">
           <button
             @click="openEditAkun"
-            class="px-7 py-1 text-xs md:text-sm font-semilight bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-md hover:opacity-90 transition">
+            class="px-7 py-1 text-xs md:text-sm font-semilight bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-md hover:opacity-90 transition"
+          >
             Edit akun
           </button>
         </div>
@@ -47,7 +105,9 @@ const closeEditAkun = () => {
               id="nama"
               name="nama"
               type="text"
+              v-model="userData.full_name"
               placeholder="Nama Lengkap"
+              readonly
               class="w-full p-2 text-sm border border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md"
             />
           </div>
@@ -57,7 +117,9 @@ const closeEditAkun = () => {
               id="email"
               name="email"
               type="email"
+              v-model="userData.email"
               placeholder="email@example.com"
+              readonly
               class="w-full p-2 border text-sm border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md"
             />
           </div>
@@ -73,7 +135,9 @@ const closeEditAkun = () => {
               id="phone_number"
               name="phone_number"
               type="tel"
+              v-model="userData.phone_number"
               placeholder="081xxxxxxxx"
+              readonly
               class="w-full p-2 border text-sm border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md"
             />
           </div>
@@ -85,7 +149,9 @@ const closeEditAkun = () => {
               id="birth_date"
               name="birth_date"
               type="date"
+              v-model="userData.birth_date"
               placeholder="hh/bb/tttt"
+              readonly
               class="w-full p-2 border text-sm border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md"
             />
           </div>
@@ -95,7 +161,9 @@ const closeEditAkun = () => {
               id="company"
               name="company"
               type="text"
+              v-model="userData.company_name"
               placeholder="Perusahaan"
+              readonly
               class="w-full p-2 border text-sm border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md"
             />
           </div>
@@ -106,17 +174,23 @@ const closeEditAkun = () => {
             id="department"
             name="department"
             type="text"
+            v-model="userData.department"
             placeholder="Departemen"
+            readonly
             class="w-full p-2 border text-sm border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md mb-1"
           />
         </div>
         <div>
-          <p class="text-base font-regular text-gray-800 mb-1">Status karyawan</p>
+          <p class="text-base font-regular text-gray-800 mb-1">
+            Status karyawan
+          </p>
           <input
             id="work_status"
             name="work_status"
             type="text"
+            v-model="userData.work_status"
             placeholder="Status karyawan"
+            readonly
             class="w-full p-2 border text-sm border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md mb-1"
           />
         </div>
@@ -127,7 +201,9 @@ const closeEditAkun = () => {
             id="position"
             name="position"
             type="text"
+            v-model="userData.position"
             placeholder="Posisi kerja"
+            readonly
             class="w-full p-2 border text-sm border-[#C3C3C3] bg-[#EEEEEE] text-[#777777] rounded-md mb-1"
           />
         </div>
@@ -156,7 +232,9 @@ const closeEditAkun = () => {
           </div>
 
           <div>
-            <label for="edit_nama" class="block text-base font-medium text-black mb-2 mt-4"
+            <label
+              for="edit_nama"
+              class="block text-base font-medium text-black mb-2 mt-4"
               >Nama Lengkap</label
             >
             <div class="relative">
@@ -164,6 +242,7 @@ const closeEditAkun = () => {
                 id="edit_nama"
                 name="edit_nama"
                 type="text"
+                v-model="userData.full_name"
                 placeholder="Masukkan nama"
                 class="w-full p-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-sm focus:outline-none focus:border-[#A90CF8]"
               />
@@ -173,7 +252,9 @@ const closeEditAkun = () => {
             </div>
           </div>
           <div>
-            <label for="edit_phone" class="block text-base font-medium text-gray-800 mb-2 mt-2"
+            <label
+              for="edit_phone"
+              class="block text-base font-medium text-gray-800 mb-2 mt-2"
               >Nomor Handphone</label
             >
             <div class="relative">
@@ -181,6 +262,7 @@ const closeEditAkun = () => {
                 id="edit_phone"
                 name="edit_phone"
                 type="tel"
+                v-model="userData.phone_number"
                 placeholder="081xxxxxxxx"
                 class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-sm focus:outline-none focus:border-[#A90CF8]"
               />
@@ -190,7 +272,9 @@ const closeEditAkun = () => {
             </div>
           </div>
           <div>
-            <label for="edit_company" class="block text-base font-medium text-gray-800 mb-2 mt-2"
+            <label
+              for="edit_company"
+              class="block text-base font-medium text-gray-800 mb-2 mt-2"
               >Perusahaan</label
             >
             <div class="relative">
@@ -207,7 +291,9 @@ const closeEditAkun = () => {
             </div>
           </div>
           <div>
-            <label for="edit_department" class="block text-base font-medium text-gray-800 mb-2 mt-2"
+            <label
+              for="edit_department"
+              class="block text-base font-medium text-gray-800 mb-2 mt-2"
               >Departemen</label
             >
             <div class="relative">
@@ -224,7 +310,9 @@ const closeEditAkun = () => {
             </div>
           </div>
           <div>
-            <label for="edit_position" class="block text-base font-medium text-gray-800 mb-2 mt-2"
+            <label
+              for="edit_position"
+              class="block text-base font-medium text-gray-800 mb-2 mt-2"
               >Posisi kerja</label
             >
             <div class="relative">
@@ -243,6 +331,7 @@ const closeEditAkun = () => {
 
           <div class="flex justify-center mt-6">
             <button
+              @click="handleSaveProfile"
               class="px-8 md:px-10 py-2 text-sm md:text-base bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular"
             >
               Simpan

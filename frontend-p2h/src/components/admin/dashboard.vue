@@ -3,7 +3,14 @@ import Aside from "../bar/aside.vue";
 import HeaderAdmin from "../bar/header_admin.vue";
 import CardDetailModal from "./CardDetailModal.vue";
 import { UserIcon, ChevronDownIcon } from "@heroicons/vue/24/outline";
-import { onMounted, onBeforeUnmount, ref, nextTick, watch, computed } from "vue";
+import {
+  onMounted,
+  onBeforeUnmount,
+  ref,
+  nextTick,
+  watch,
+  computed,
+} from "vue";
 import Chart from "chart.js/auto";
 import { useI18n } from "vue-i18n";
 import { api } from "../../services/api";
@@ -12,14 +19,13 @@ import { useSidebarProvider } from "../../composables/useSidebar";
 const { t } = useI18n();
 
 // Setup sidebar state
-const { isSidebarOpen, closeSidebar } = useSidebarProvider()
+const { isSidebarOpen, closeSidebar } = useSidebarProvider();
 
 let chartInstance = null;
 let pieChartInstance = null;
 let vehicleTypeChartInstance = null;
 
 // Variables for date inputs (format YYYY-MM-DD untuk date picker di Filter Hari)
-// Default: empty (no filter) - user can set manually if needed
 const a = ref("");
 const u = ref("");
 
@@ -34,13 +40,13 @@ const statisticsData = ref({
   totalAbnormal: 0,
   totalWarning: 0,
   totalCompletedP2H: 0,
-  totalPendingP2H: 0
+  totalPendingP2H: 0,
 });
 
 // Modal state
 const modalOpen = ref(false);
-const modalCardType = ref('');
-const modalCardTitle = ref('');
+const modalCardType = ref("");
+const modalCardTitle = ref("");
 const modalItems = ref([]);
 const modalLoading = ref(false);
 
@@ -50,10 +56,10 @@ const openCardDetail = async (cardType, cardTitle) => {
   modalCardTitle.value = cardTitle;
   modalOpen.value = true;
   modalLoading.value = true;
-  
+
   try {
     const params = {};
-    
+
     // Add date filters if set
     if (a.value && a.value !== "") {
       params.start_date = a.value;
@@ -61,17 +67,19 @@ const openCardDetail = async (cardType, cardTitle) => {
     if (u.value && u.value !== "") {
       params.end_date = u.value;
     }
-    
+
     params.limit = 20; // Get more items for modal
-    
-    const response = await api.get(`/dashboard/card-details/${cardType}`, { params });
-    console.log('Card details response:', response.data);
-    
-    if (response.data.status === 'success') {
+
+    const response = await api.get(`/dashboard/card-details/${cardType}`, {
+      params,
+    });
+    console.log("Card details response:", response.data);
+
+    if (response.data.status === "success") {
       modalItems.value = response.data.payload.items || [];
     }
   } catch (error) {
-    console.error('Error fetching card details:', error);
+    console.error("Error fetching card details:", error);
     modalItems.value = [];
   } finally {
     modalLoading.value = false;
@@ -81,8 +89,8 @@ const openCardDetail = async (cardType, cardTitle) => {
 // Close modal
 const closeModal = () => {
   modalOpen.value = false;
-  modalCardType.value = '';
-  modalCardTitle.value = '';
+  modalCardType.value = "";
+  modalCardTitle.value = "";
   modalItems.value = [];
 };
 
@@ -93,25 +101,25 @@ const vehicleTypes = ref([]);
 
 // Data bulanan dari backend
 const vehicleDataByMonth = ref({
-  "Januari": [0, 0, 0],
-  "Februari": [0, 0, 0],
-  "Maret": [0, 0, 0],
-  "April": [0, 0, 0],
-  "Mei": [0, 0, 0],
-  "Juni": [0, 0, 0],
-  "Juli": [0, 0, 0],
-  "Agustus": [0, 0, 0],
-  "September": [0, 0, 0],
-  "Oktober": [0, 0, 0],
-  "November": [0, 0, 0],
-  "Desember": [0, 0, 0],
+  Januari: [0, 0, 0],
+  Februari: [0, 0, 0],
+  Maret: [0, 0, 0],
+  April: [0, 0, 0],
+  Mei: [0, 0, 0],
+  Juni: [0, 0, 0],
+  Juli: [0, 0, 0],
+  Agustus: [0, 0, 0],
+  September: [0, 0, 0],
+  Oktober: [0, 0, 0],
+  November: [0, 0, 0],
+  Desember: [0, 0, 0],
 });
 
 // Fetch dashboard statistics dari backend
 const fetchStatistics = async () => {
   try {
     const params = {};
-    
+
     // Add date filters if set
     if (a.value && a.value !== "") {
       params.start_date = a.value;
@@ -119,16 +127,16 @@ const fetchStatistics = async () => {
     if (u.value && u.value !== "") {
       params.end_date = u.value;
     }
-    
+
     // NOTE: Vehicle type filter NOT applied here - cards and pie chart show ALL data
     // Vehicle type filter only affects monthly chart and vehicle type status
-    
-    const response = await api.get('/dashboard/statistics', { params });
-    console.log('Statistics response:', response.data);
-    if (response.data.status === 'success') {
+
+    const response = await api.get("/dashboard/statistics", { params });
+    console.log("Statistics response:", response.data);
+    if (response.data.status === "success") {
       const data = response.data.payload;
-      console.log('📊 Statistics data:', data);
-      
+      console.log("📊 Statistics data:", data);
+
       // Map snake_case dari backend ke camelCase untuk frontend
       statisticsData.value = {
         totalVehicles: data.total_vehicles,
@@ -136,25 +144,25 @@ const fetchStatistics = async () => {
         totalAbnormal: data.total_abnormal,
         totalWarning: data.total_warning,
         totalCompletedP2H: data.total_completed_p2h,
-        totalPendingP2H: data.total_pending_p2h
+        totalPendingP2H: data.total_pending_p2h,
       };
-      
+
       // Update pie chart dengan data statistik
       const pieData = [
         data.total_normal || 0,
         data.total_abnormal || 0,
-        data.total_warning || 0
+        data.total_warning || 0,
       ];
-      console.log('🥧 Updating pie chart with data:', pieData);
-      
+      console.log("🥧 Updating pie chart with data:", pieData);
+
       pieChartData.value.datasets[0].data = pieData;
-      
+
       // Reinit pie chart setelah data berubah
       await nextTick();
       initPieChart();
     }
   } catch (error) {
-    console.error('Error fetching statistics:', error);
+    console.error("Error fetching statistics:", error);
   } finally {
     // Cleanup if needed
   }
@@ -165,25 +173,25 @@ const fetchMonthlyReports = async () => {
   try {
     const currentYear = new Date().getFullYear();
     const params = {
-      year: currentYear
+      year: currentYear,
     };
-    
+
     if (selectedVehicleType.value && selectedVehicleType.value !== "") {
       params.vehicle_type = selectedVehicleType.value;
     }
-    
-    const response = await api.get('/dashboard/monthly-reports', { params });
-    console.log('Monthly reports response:', response.data);
-    if (response.data.status === 'success') {
+
+    const response = await api.get("/dashboard/monthly-reports", { params });
+    console.log("Monthly reports response:", response.data);
+    if (response.data.status === "success") {
       vehicleDataByMonth.value = response.data.payload.monthly_data;
-      console.log('Updated vehicleDataByMonth:', vehicleDataByMonth.value);
-      
+      console.log("Updated vehicleDataByMonth:", vehicleDataByMonth.value);
+
       // Update chart setelah data berubah
       await nextTick();
       updateChart();
     }
   } catch (error) {
-    console.error('Error fetching monthly reports:', error);
+    console.error("Error fetching monthly reports:", error);
   } finally {
     // Cleanup if needed
   }
@@ -192,17 +200,17 @@ const fetchMonthlyReports = async () => {
 // Fetch vehicle types dari backend
 const fetchVehicleTypes = async () => {
   try {
-    console.log('🚗 Fetching vehicle types...');
-    const response = await api.get('/dashboard/vehicle-types');
-    console.log('Vehicle types response:', response.data);
-    if (response.data.status === 'success') {
+    console.log("🚗 Fetching vehicle types...");
+    const response = await api.get("/dashboard/vehicle-types");
+    console.log("Vehicle types response:", response.data);
+    if (response.data.status === "success") {
       vehicleTypes.value = response.data.payload.vehicle_types;
-      console.log('✅ Vehicle types loaded:', vehicleTypes.value);
+      console.log("✅ Vehicle types loaded:", vehicleTypes.value);
     } else {
-      console.error('❌ Failed to fetch vehicle types:', response.data);
+      console.error("❌ Failed to fetch vehicle types:", response.data);
     }
   } catch (error) {
-    console.error('❌ Error fetching vehicle types:', error);
+    console.error("❌ Error fetching vehicle types:", error);
   } finally {
     // Cleanup if needed
   }
@@ -211,11 +219,11 @@ const fetchVehicleTypes = async () => {
 // Convert monthly data to Chart.js format
 const convertMonthlyDataToChartFormat = (monthlyData) => {
   // Handle jika monthlyData kosong atau bukan object
-  if (!monthlyData || typeof monthlyData !== 'object') {
-    console.warn('Invalid monthlyData:', monthlyData);
+  if (!monthlyData || typeof monthlyData !== "object") {
+    console.warn("Invalid monthlyData:", monthlyData);
     return {
       labels: [],
-      datasets: []
+      datasets: [],
     };
   }
 
@@ -224,7 +232,7 @@ const convertMonthlyDataToChartFormat = (monthlyData) => {
   const abnormalData = [];
   const warningData = [];
 
-  months.forEach(month => {
+  months.forEach((month) => {
     const dataArray = monthlyData[month];
     // Pastikan dataArray adalah array
     if (Array.isArray(dataArray) && dataArray.length >= 3) {
@@ -324,7 +332,7 @@ const vehicleData = convertMonthlyDataToChartFormat(vehicleDataByMonth);
 // Function untuk menghitung nilai maksimal dari data dan tambahkan 20
 const getMaxValue = (data) => {
   let max = 0;
-  data.datasets.forEach(dataset => {
+  data.datasets.forEach((dataset) => {
     const datasetMax = Math.max(...dataset.data);
     if (datasetMax > max) max = datasetMax;
   });
@@ -333,147 +341,149 @@ const getMaxValue = (data) => {
 
 const getChartOptions = (data) => {
   const maxValue = getMaxValue(data);
-  
+
   return {
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: {
-    duration: 2000,
-    easing: "easeInOutQuart",
-    delay: (context) => {
-      let delay = 0;
-      if (context.type === "data") {
-        delay = context.dataIndex * 50 + context.datasetIndex * 100;
-      }
-      return delay;
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 2000,
+      easing: "easeInOutQuart",
+      delay: (context) => {
+        let delay = 0;
+        if (context.type === "data") {
+          delay = context.dataIndex * 50 + context.datasetIndex * 100;
+        }
+        return delay;
+      },
     },
-  },
-  plugins: {
-    legend: {
-      display: false,
-      position: "top",
-      labels: {
-        usePointStyle: true,
-        padding: 5,
-        font: {
-          size: 13,
+    plugins: {
+      legend: {
+        display: false,
+        position: "top",
+        labels: {
+          usePointStyle: true,
+          padding: 5,
+          font: {
+            size: 13,
+            weight: "600",
+            family: "'Montserrat', sans-serif",
+          },
+          color: "#374151",
+        },
+      },
+      filler: {
+        propagate: true,
+      },
+      tooltip: {
+        backgroundColor: "rgba(0, 0, 0, 0.9)",
+        padding: 14,
+        titleFont: {
+          size: 14,
           weight: "600",
-          family: "'Montserrat', sans-serif",
         },
-        color: "#374151",
-      },
-    },
-    filler: {
-      propagate: true,
-    },
-    tooltip: {
-      backgroundColor: "rgba(0, 0, 0, 0.9)",
-      padding: 14,
-      titleFont: {
-        size: 14,
-        weight: "600",
-      },
-      bodyFont: {
-        size: 13,
-      },
-      borderColor: "#3B82F6",
-      borderWidth: 1,
-      displayColors: true,
-      padding: {
-        top: 12,
-        left: 14,
-        right: 14,
-        bottom: 12,
-      },
-      caretSize: 8,
-      caretPadding: 12,
-      cornerRadius: 6,
-      callbacks: {
-        label: function (context) {
-          return " Kendaraan: " + context.parsed.y;
+        bodyFont: {
+          size: 13,
         },
-        afterLabel: function (context) {
-          const data = context.parsed.y;
-          const previous =
-            context.dataIndex > 0
-              ? context.chart.data.datasets[0].data[context.dataIndex - 1]
-              : data;
-          const change = data - previous;
-          const changeText =
-            change > 0
-              ? `↑ +${change}`
-              : change < 0
-              ? `↓ ${change}`
-              : "→ Stabil";
-          return changeText;
+        borderColor: "#3B82F6",
+        borderWidth: 1,
+        displayColors: true,
+        padding: {
+          top: 12,
+          left: 14,
+          right: 14,
+          bottom: 12,
+        },
+        caretSize: 8,
+        caretPadding: 12,
+        cornerRadius: 6,
+        callbacks: {
+          label: function (context) {
+            return " Kendaraan: " + context.parsed.y;
+          },
+          afterLabel: function (context) {
+            const data = context.parsed.y;
+            const previous =
+              context.dataIndex > 0
+                ? context.chart.data.datasets[0].data[context.dataIndex - 1]
+                : data;
+            const change = data - previous;
+            const changeText =
+              change > 0
+                ? `↑ +${change}`
+                : change < 0
+                  ? `↓ ${change}`
+                  : "→ Stabil";
+            return changeText;
+          },
         },
       },
     },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      max: maxValue,
-      ticks: {
-        stepSize: 20,
-        font: {
-          size: 12,
-          weight: "500",
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: maxValue,
+        ticks: {
+          stepSize: 20,
+          font: {
+            size: 12,
+            weight: "500",
+          },
+          color: "#6B7280",
+          padding: 8,
         },
-        color: "#6B7280",
-        padding: 8,
+        grid: {
+          color: "rgba(200, 200, 200, 10)",
+          drawBorder: false,
+          lineWidth: 1,
+        },
+        border: {
+          display: false,
+        },
       },
-      grid: {
-        color: "rgba(200, 200, 200, 10)",
-        drawBorder: false,
-        lineWidth: 1,
-      },
-      border: {
-        display: false,
+      x: {
+        ticks: {
+          font: {
+            size: 12,
+            weight: "500",
+          },
+          color: "#6B7280",
+          padding: 8,
+        },
+        grid: {
+          display: false,
+          drawBorder: false,
+        },
+        border: {
+          display: false,
+        },
       },
     },
-    x: {
-      ticks: {
-        font: {
-          size: 12,
-          weight: "500",
-        },
-        color: "#6B7280",
-        padding: 8,
-      },
-      grid: {
-        display: false,
-        drawBorder: false,
-      },
-      border: {
-        display: false,
-      },
+    interaction: {
+      mode: "index",
+      intersect: false,
     },
-  },
-  interaction: {
-    mode: "index",
-    intersect: false,
-  },
   };
 };
 
 // Data untuk chart status berdasarkan tipe kendaraan dari backend
 const vehicleTypeStatusData = ref({
   labels: ["Normal", "Abnormal", "Warning"],
-  datasets: [{
-    data: [0, 0, 0],
-    backgroundColor: [
-      "rgba(16, 185, 129, 0.7)",
-      "rgba(245, 158, 11, 0.7)",
-      "rgba(239, 68, 68, 0.7)",
-    ],
-    borderColor: [
-      "rgba(16, 185, 129, 1)",
-      "rgba(245, 158, 11, 1)",
-      "rgba(239, 68, 68, 1)",
-    ],
-    borderWidth: 2,
-  }]
+  datasets: [
+    {
+      data: [0, 0, 0],
+      backgroundColor: [
+        "rgba(16, 185, 129, 0.7)",
+        "rgba(245, 158, 11, 0.7)",
+        "rgba(239, 68, 68, 0.7)",
+      ],
+      borderColor: [
+        "rgba(16, 185, 129, 1)",
+        "rgba(245, 158, 11, 1)",
+        "rgba(239, 68, 68, 1)",
+      ],
+      borderWidth: 2,
+    },
+  ],
 });
 
 // Fetch status berdasarkan tipe kendaraan dari backend
@@ -481,28 +491,30 @@ const fetchVehicleTypeStatus = async () => {
   if (!selectedVehicleType.value) {
     return;
   }
-  
+
   try {
     const params = {
-      vehicle_type: selectedVehicleType.value
+      vehicle_type: selectedVehicleType.value,
     };
-    
-    const response = await api.get('/dashboard/vehicle-type-status', { params });
-    console.log('Vehicle type status response:', response.data);
-    if (response.data.status === 'success') {
+
+    const response = await api.get("/dashboard/vehicle-type-status", {
+      params,
+    });
+    console.log("Vehicle type status response:", response.data);
+    if (response.data.status === "success") {
       const data = response.data.payload;
       vehicleTypeStatusData.value.datasets[0].data = [
         data.normal || 0,
         data.abnormal || 0,
-        data.warning || 0
+        data.warning || 0,
       ];
-      
+
       // Reinit chart setelah data berubah
       await nextTick();
       initVehicleTypeChart();
     }
   } catch (error) {
-    console.error('Error fetching vehicle type status:', error);
+    console.error("Error fetching vehicle type status:", error);
   } finally {
     // Cleanup if needed
   }
@@ -548,7 +560,8 @@ const pieChartOptions = {
 
           return data.labels.map((label, index) => {
             const value = dataset.data[index];
-            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+            const percentage =
+              total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
             return {
               text: `: ${label} ${percentage}%`,
               fillStyle: dataset.backgroundColor[index],
@@ -579,7 +592,8 @@ const pieChartOptions = {
         label: function (context) {
           const total = context.dataset.data.reduce((a, b) => a + b, 0);
           const value = context.parsed;
-          const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+          const percentage =
+            total > 0 ? ((value / total) * 100).toFixed(1) : "0.0";
           return context.label + ": " + value + " unit (" + percentage + "%)";
         },
       },
@@ -645,7 +659,10 @@ const initPieChart = async () => {
 
   // Create new pie chart
   try {
-    console.log("✅ Creating pie chart with data:", pieChartData.value.datasets[0].data);
+    console.log(
+      "✅ Creating pie chart with data:",
+      pieChartData.value.datasets[0].data,
+    );
     pieChartInstance = new Chart(pieCanvas, {
       type: "pie",
       data: pieChartData.value,
@@ -686,7 +703,10 @@ const initVehicleTypeChart = async () => {
 
   // Create new chart dengan data dari backend
   try {
-    console.log("✅ Creating vehicle type chart with data:", vehicleTypeStatusData.value.datasets[0].data);
+    console.log(
+      "✅ Creating vehicle type chart with data:",
+      vehicleTypeStatusData.value.datasets[0].data,
+    );
     vehicleTypeChartInstance = new Chart(vehicleTypeCanvas, {
       type: "pie",
       data: vehicleTypeStatusData.value,
@@ -702,14 +722,14 @@ const initVehicleTypeChart = async () => {
 // NOTE: fetchStatistics NOT called here - cards and main pie chart are NOT filtered by vehicle type
 watch(selectedVehicleType, () => {
   if (chartInstance || pieChartInstance) {
-    fetchMonthlyReports();  // Update monthly chart with vehicle type filter
-    fetchVehicleTypeStatus();  // Update vehicle type status pie chart
+    fetchMonthlyReports(); // Update monthly chart with vehicle type filter
+    fetchVehicleTypeStatus(); // Update vehicle type status pie chart
   }
 });
 
 // Watch date filters untuk auto-update saat tanggal berubah
 watch([a, u], () => {
-  console.log('📅 Date filter changed:', { start: a.value, end: u.value });
+  console.log("📅 Date filter changed:", { start: a.value, end: u.value });
   // Auto fetch data saat tanggal berubah
   if ((a.value || u.value) && (chartInstance || pieChartInstance)) {
     fetchStatistics();
@@ -724,7 +744,7 @@ const updateChart = () => {
     initChart();
     return;
   }
-  
+
   const newData = convertMonthlyDataToChartFormat(vehicleDataByMonth.value);
   chartInstance.data = newData;
   chartInstance.options = getChartOptions(newData);
@@ -736,19 +756,19 @@ const monthlyTotals = computed(() => {
   let totalNormal = 0;
   let totalAbnormal = 0;
   let totalWarning = 0;
-  
-  Object.values(vehicleDataByMonth.value).forEach(monthData => {
+
+  Object.values(vehicleDataByMonth.value).forEach((monthData) => {
     if (Array.isArray(monthData) && monthData.length >= 3) {
       totalNormal += monthData[0] || 0;
       totalAbnormal += monthData[1] || 0;
       totalWarning += monthData[2] || 0;
     }
   });
-  
+
   return {
     normal: totalNormal,
     abnormal: totalAbnormal,
-    warning: totalWarning
+    warning: totalWarning,
   };
 });
 
@@ -767,7 +787,7 @@ const resetFilter = () => {
   a.value = "";
   u.value = "";
   selectedVehicleType.value = "";
-  
+
   // Fetch ulang data tanpa filter
   fetchStatistics();
   fetchMonthlyReports();
@@ -775,10 +795,10 @@ const resetFilter = () => {
 
 onMounted(async () => {
   // Fetch data dari backend dulu
-  await fetchStatistics();  // Ini akan update pieChartData dan init pie chart
+  await fetchStatistics(); // Ini akan update pieChartData dan init pie chart
   await fetchVehicleTypes();
-  await fetchMonthlyReports();  // Ini akan update vehicleDataByMonth dan call updateChart()
-  
+  await fetchMonthlyReports(); // Ini akan update vehicleDataByMonth dan call updateChart()
+
   // Initialize line chart setelah semua data ready
   await nextTick();
   initChart();
@@ -803,7 +823,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
       <!-- Aside Sidebar - Push content style -->
       <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
@@ -814,110 +834,172 @@ onBeforeUnmount(() => {
 
         <!-- Konten Utama -->
         <main
-          class="bg-[#EFEFEF] flex-1 flex items-start justify-center overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1"
+          class="bg-[#EFEFEF] flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1"
         >
           <div class="w-full p-2">
             <!-- 6 Konten Sejajar -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 sm:gap-2">
+            <div
+              class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 sm:gap-2"
+            >
               <!-- Box 1 - Total Vehicles -->
               <div
-                @click="openCardDetail('total_vehicles', t('dashboard.totalVehicles'))"
+                @click="
+                  openCardDetail('total_vehicles', t('dashboard.totalVehicles'))
+                "
                 class="bg-white rounded-lg shadow-md p-1.5 sm:p-2 flex items-start gap-1.5 sm:gap-2 min-h-1 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
               >
-                <UserIcon class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-black shrink-0 mt-0.5" />
+                <UserIcon
+                  class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-black shrink-0 mt-0.5"
+                />
                 <div class="flex flex-col flex-1 min-w-0">
                   <p class="text-xs font-regular text-gray-500 truncate">
-                    {{ t('dashboard.totalVehicles') }}
+                    {{ t("dashboard.totalVehicles") }}
                   </p>
-                  <h3 class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-black mt-0.5 sm:mt-1">{{ statisticsData.totalVehicles }}</h3>
+                  <h3
+                    class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-black mt-0.5 sm:mt-1"
+                  >
+                    {{ statisticsData.totalVehicles }}
+                  </h3>
                 </div>
               </div>
 
               <!-- Box 2 - Total Normal -->
               <div
-                @click="openCardDetail('total_normal', t('dashboard.totalNormal'))"
+                @click="
+                  openCardDetail('total_normal', t('dashboard.totalNormal'))
+                "
                 class="bg-white rounded-lg shadow-md p-1.5 sm:p-2 flex items-start gap-1.5 sm:gap-2 min-h-1 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
               >
-                <UserIcon class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-green-600 shrink-0 mt-0.5" />
+                <UserIcon
+                  class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-green-600 shrink-0 mt-0.5"
+                />
                 <div class="flex flex-col flex-1 min-w-0">
                   <p class="text-xs font-regular text-gray-500 truncate">
-                    {{ t('dashboard.totalNormal') }}
+                    {{ t("dashboard.totalNormal") }}
                   </p>
-                  <h3 class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-green-600 mt-0.5 sm:mt-1">{{ statisticsData.totalNormal }}</h3>
+                  <h3
+                    class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-green-600 mt-0.5 sm:mt-1"
+                  >
+                    {{ statisticsData.totalNormal }}
+                  </h3>
                 </div>
               </div>
 
               <!-- Box 3 - Total Abnormal -->
               <div
-                @click="openCardDetail('total_abnormal', t('dashboard.totalAbnormal'))"
+                @click="
+                  openCardDetail('total_abnormal', t('dashboard.totalAbnormal'))
+                "
                 class="bg-white rounded-lg shadow-md p-1.5 sm:p-2 flex items-start gap-1.5 sm:gap-2 min-h-1 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
               >
-                <UserIcon class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-yellow-600 shrink-0 mt-0.5" />
+                <UserIcon
+                  class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-yellow-600 shrink-0 mt-0.5"
+                />
                 <div class="flex flex-col flex-1 min-w-0">
                   <p class="text-xs font-regular text-gray-500 truncate">
-                    {{ t('dashboard.totalAbnormal') }}
+                    {{ t("dashboard.totalAbnormal") }}
                   </p>
-                  <h3 class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-yellow-600 mt-0.5 sm:mt-1">{{ statisticsData.totalAbnormal }}</h3>
+                  <h3
+                    class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-yellow-600 mt-0.5 sm:mt-1"
+                  >
+                    {{ statisticsData.totalAbnormal }}
+                  </h3>
                 </div>
               </div>
 
               <!-- Box 4 - Total Warning -->
               <div
-                @click="openCardDetail('total_warning', t('dashboard.totalWarning'))"
+                @click="
+                  openCardDetail('total_warning', t('dashboard.totalWarning'))
+                "
                 class="bg-white rounded-lg shadow-md p-1.5 sm:p-2 flex items-start gap-1.5 sm:gap-2 min-h-1 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
               >
-                <UserIcon class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-red-600 shrink-0 mt-0.5" />
+                <UserIcon
+                  class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-red-600 shrink-0 mt-0.5"
+                />
                 <div class="flex flex-col flex-1 min-w-0">
                   <p class="text-xs font-regular text-gray-500 truncate">
-                    {{ t('dashboard.totalWarning') }}
+                    {{ t("dashboard.totalWarning") }}
                   </p>
-                  <h3 class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-red-600 mt-0.5 sm:mt-1">{{ statisticsData.totalWarning }}</h3>
+                  <h3
+                    class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-red-600 mt-0.5 sm:mt-1"
+                  >
+                    {{ statisticsData.totalWarning }}
+                  </h3>
                 </div>
               </div>
 
               <!-- Box 5 - Total Completed P2H -->
               <div
-                @click="openCardDetail('total_completed', t('dashboard.totalCompletedP2H'))"
+                @click="
+                  openCardDetail(
+                    'total_completed',
+                    t('dashboard.totalCompletedP2H'),
+                  )
+                "
                 class="bg-white rounded-lg shadow-md p-1.5 sm:p-2 flex items-start gap-1.5 sm:gap-2 min-h-1 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
               >
-                <UserIcon class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-blue-600 shrink-0 mt-0.5" />
+                <UserIcon
+                  class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-blue-600 shrink-0 mt-0.5"
+                />
                 <div class="flex flex-col flex-1 min-w-0">
                   <p class="text-xs font-regular text-gray-500 truncate">
-                    {{ t('dashboard.totalCompletedP2H') }}
+                    {{ t("dashboard.totalCompletedP2H") }}
                   </p>
-                  <h3 class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-blue-600 mt-0.5 sm:mt-1">{{ statisticsData.totalCompletedP2H }}</h3>
+                  <h3
+                    class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-blue-600 mt-0.5 sm:mt-1"
+                  >
+                    {{ statisticsData.totalCompletedP2H }}
+                  </h3>
                 </div>
               </div>
 
               <!-- Box 6 - Total Pending P2H -->
               <div
-                @click="openCardDetail('total_pending', t('dashboard.totalPendingP2H'))"
+                @click="
+                  openCardDetail(
+                    'total_pending',
+                    t('dashboard.totalPendingP2H'),
+                  )
+                "
                 class="bg-white rounded-lg shadow-md p-1.5 sm:p-2 flex items-start gap-1.5 sm:gap-2 min-h-1 cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200"
               >
-                <UserIcon class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-gray-600 shrink-0 mt-0.5" />
+                <UserIcon
+                  class="w-5 h-5 sm:w-6 sm:h-6 lg:w-8 lg:h-8 text-gray-600 shrink-0 mt-0.5"
+                />
                 <div class="flex flex-col flex-1 min-w-0">
                   <p class="text-xs font-regular text-gray-500 truncate">
-                    {{ t('dashboard.totalPendingP2H') }}
+                    {{ t("dashboard.totalPendingP2H") }}
                   </p>
-                  <h3 class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-600 mt-0.5 sm:mt-1">{{ statisticsData.totalPendingP2H }}</h3>
+                  <h3
+                    class="text-sm sm:text-base md:text-lg lg:text-xl font-bold text-gray-600 mt-0.5 sm:mt-1"
+                  >
+                    {{ statisticsData.totalPendingP2H }}
+                  </h3>
                 </div>
               </div>
             </div>
 
             <!-- Konten kedua -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-2 mt-2 sm:mt-3 md:mt-4">
+            <div
+              class="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 md:gap-2 mt-2 sm:mt-3 md:mt-4"
+            >
               <div class="flex flex-col w-full gap-2 sm:gap-3">
                 <!-- Konten Kiri -->
                 <div class="bg-white rounded-lg shadow-md p-3 sm:p-4 md:p-6">
-                  <h2 class="text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4">
-                    {{ t('dashboard.filterDay') }}
+                  <h2
+                    class="text-base sm:text-lg md:text-xl font-bold text-gray-800 mb-2 sm:mb-3 md:mb-4"
+                  >
+                    {{ t("dashboard.filterDay") }}
                   </h2>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div
+                    class="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4"
+                  >
                     <div>
                       <label
                         for="filter-start-date"
                         class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
-                        >{{ t('dashboard.startDate') }}</label
+                        >{{ t("dashboard.startDate") }}</label
                       >
                       <input
                         id="filter-start-date"
@@ -930,7 +1012,7 @@ onBeforeUnmount(() => {
                       <label
                         for="filter-end-date"
                         class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2"
-                        >{{ t('dashboard.endDate') }}</label
+                        >{{ t("dashboard.endDate") }}</label
                       >
                       <input
                         id="filter-end-date"
@@ -946,41 +1028,47 @@ onBeforeUnmount(() => {
                       @click="applyFilter"
                       class="w-full p-1.5 sm:p-2 bg-indigo-600 text-white text-xs sm:text-sm font-semibold rounded-md hover:bg-indigo-700 transition-colors duration-200"
                     >
-                      {{ t('dashboard.applyFilter') }}
+                      {{ t("dashboard.applyFilter") }}
                     </button>
                     <button
                       type="button"
                       @click="resetFilter"
                       class="w-full p-1.5 sm:p-2 bg-gray-300 text-gray-700 text-xs sm:text-sm font-semibold rounded-md hover:bg-gray-400 transition-colors duration-200"
                     >
-                      {{ t('dashboard.resetFilter') }}
+                      {{ t("dashboard.resetFilter") }}
                     </button>
                   </div>
                 </div>
 
                 <!-- Tipe kendaraan -->
                 <div class="w-full relative">
-                  <button 
+                  <button
                     @click="isVehicleTypeOpen = !isVehicleTypeOpen"
                     class="w-full bg-white rounded-lg shadow-md p-3 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200"
                   >
                     <p class="text-sm font-semibold text-gray-800">
-                      {{ selectedVehicleType || t('dashboard.vehicleType') }}
+                      {{ selectedVehicleType || t("dashboard.vehicleType") }}
                     </p>
-                    <ChevronDownIcon 
-                      :class="['w-5 h-5 text-gray-800 transition-transform duration-200', isVehicleTypeOpen && 'rotate-180']" 
+                    <ChevronDownIcon
+                      :class="[
+                        'w-5 h-5 text-gray-800 transition-transform duration-200',
+                        isVehicleTypeOpen && 'rotate-180',
+                      ]"
                     />
                   </button>
 
                   <!-- Dropdown Menu -->
-                  <div 
+                  <div
                     v-if="isVehicleTypeOpen"
                     class="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-10"
                   >
                     <button
                       v-for="type in vehicleTypes"
                       :key="type"
-                      @click="selectedVehicleType = type; isVehicleTypeOpen = false"
+                      @click="
+                        selectedVehicleType = type;
+                        isVehicleTypeOpen = false;
+                      "
                       class="w-full text-left px-4 py-3 hover:bg-indigo-50 transition-colors duration-150 text-sm font-medium text-gray-800 first:rounded-t-lg last:rounded-b-lg"
                     >
                       {{ type }}
@@ -992,11 +1080,17 @@ onBeforeUnmount(() => {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-md font-bold text-gray-800 mb-4">
-                      {{ t('dashboard.statusVehicleType') }} {{ selectedVehicleType || t('dashboard.vehicleType') }}
+                      {{ t("dashboard.statusVehicleType") }}
+                      {{ selectedVehicleType || t("dashboard.vehicleType") }}
                     </h3>
                     <div class="h-80 w-full">
-                      <div v-if="!selectedVehicleType" class="h-full flex items-center justify-center">
-                        <p class="text-gray-400 text-center font-medium">{{ t('dashboard.selectFilter') }}</p>
+                      <div
+                        v-if="!selectedVehicleType"
+                        class="h-full flex items-center justify-center"
+                      >
+                        <p class="text-gray-400 text-center font-medium">
+                          {{ t("dashboard.selectFilter") }}
+                        </p>
                       </div>
                       <canvas v-else id="chart-pie-vehicle-type"></canvas>
                     </div>
@@ -1004,7 +1098,7 @@ onBeforeUnmount(() => {
 
                   <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-md font-bold text-gray-800 mb-4">
-                      {{ t('dashboard.p2hResults') }}
+                      {{ t("dashboard.p2hResults") }}
                     </h3>
                     <div class="h-80 w-full">
                       <canvas id="chart-pie-hasil"></canvas>
@@ -1016,12 +1110,14 @@ onBeforeUnmount(() => {
               <!-- Konten Tahunan -->
               <div class="bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-lg font-bold text-gray-800 mb-2">
-                  {{ t('dashboard.p2hAnnualChart') }}
+                  {{ t("dashboard.p2hAnnualChart") }}
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <label for="annual-start-period" class="block text-sm font-medium text-gray-700 mb-2"
-                      >{{ t('dashboard.startPeriod') }}</label
+                    <label
+                      for="annual-start-period"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                      >{{ t("dashboard.startPeriod") }}</label
                     >
                     <input
                       id="annual-start-period"
@@ -1032,8 +1128,10 @@ onBeforeUnmount(() => {
                     />
                   </div>
                   <div>
-                    <label for="annual-end-period" class="block text-sm font-medium text-gray-700 mb-2"
-                      >{{ t('dashboard.endPeriod') }}</label
+                    <label
+                      for="annual-end-period"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                      >{{ t("dashboard.endPeriod") }}</label
                     >
                     <input
                       id="annual-end-period"
@@ -1053,7 +1151,7 @@ onBeforeUnmount(() => {
                     <div class="flex items-center justify-between mb-6">
                       <div>
                         <h6 class="text-gray-900 font-bold text-lg">
-                          {{ t('dashboard.vehicleStatusMonthly') }}
+                          {{ t("dashboard.vehicleStatusMonthly") }}
                         </h6>
                       </div>
                     </div>
@@ -1068,33 +1166,41 @@ onBeforeUnmount(() => {
                           class="flex items-center justify-center gap-2 mb-2"
                         >
                           <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                          <span class="text-xs mr-3 font-semibold text-gray-600"
-                            >{{ t('dashboard.normal') }}</span
+                          <span
+                            class="text-xs mr-3 font-semibold text-gray-600"
+                            >{{ t("dashboard.normal") }}</span
                           >
                         </div>
-                        <p class="text-xl font-bold text-green-600">{{ monthlyTotals.normal }}</p>
+                        <p class="text-xl font-bold text-green-600">
+                          {{ monthlyTotals.normal }}
+                        </p>
                       </div>
                       <div class="text-center">
                         <div
                           class="flex items-center justify-center gap-2 mb-2"
                         >
                           <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                          <span class="text-xs mr-3 font-semibold text-gray-600"
-                            >{{ t('dashboard.abnormal') }}</span
+                          <span
+                            class="text-xs mr-3 font-semibold text-gray-600"
+                            >{{ t("dashboard.abnormal") }}</span
                           >
                         </div>
-                        <p class="text-xl font-bold text-yellow-600">{{ monthlyTotals.abnormal }}</p>
+                        <p class="text-xl font-bold text-yellow-600">
+                          {{ monthlyTotals.abnormal }}
+                        </p>
                       </div>
                       <div class="text-center">
                         <div
                           class="flex items-center justify-center gap-2 mb-2"
                         >
                           <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                          <span class="text-xs font-semibold text-gray-600"
-                            >{{ t('dashboard.warning') }}</span
-                          >
+                          <span class="text-xs font-semibold text-gray-600">{{
+                            t("dashboard.warning")
+                          }}</span>
                         </div>
-                        <p class="text-xl font-bold text-red-600">{{ monthlyTotals.warning }}</p>
+                        <p class="text-xl font-bold text-red-600">
+                          {{ monthlyTotals.warning }}
+                        </p>
                       </div>
                     </div>
                   </div>

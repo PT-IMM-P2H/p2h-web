@@ -35,6 +35,28 @@ async def create_user(
             detail=str(e)
         )
 
+@router.get("/me")
+async def get_current_user_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Mendapatkan profil user yang sedang login.
+    Accessible oleh semua user yang sudah login.
+    """
+    # Refresh user data from database to get latest info including company
+    user = db.query(User).filter(User.id == current_user.id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User tidak ditemukan"
+        )
+    
+    return base_response(
+        message="Profil user berhasil diambil",
+        payload=UserResponse.model_validate(user).model_dump(mode='json')
+    )
+
 @router.get("")
 async def get_users(
     skip: int = Query(0, ge=0),

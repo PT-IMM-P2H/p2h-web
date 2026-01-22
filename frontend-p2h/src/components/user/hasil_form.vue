@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "../bar/header-user.vue";
 import Footer from "../bar/footer.vue";
@@ -7,6 +7,7 @@ import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 
 const router = useRouter();
 const currentDate = ref("");
+const submissionData = ref(null);
 
 onMounted(() => {
   // Format tanggal hari ini
@@ -18,14 +19,35 @@ onMounted(() => {
     day: "numeric",
   };
   currentDate.value = today.toLocaleDateString("id-ID", options);
+
+  // Get data from sessionStorage
+  const storedData = sessionStorage.getItem("p2hResult");
+  if (storedData) {
+    try {
+      submissionData.value = JSON.parse(storedData);
+      // Clear data setelah dibaca untuk mencegah data lama
+      sessionStorage.removeItem("p2hResult");
+    } catch (error) {
+      console.error("Error parsing p2hResult:", error);
+      router.push("/form-p2h");
+    }
+  } else {
+    // Jika tidak ada data, redirect ke form
+    router.push("/form-p2h");
+  }
 });
+
+// Computed property untuk status
+const isNormal = computed(() => submissionData.value?.status === "normal");
+const isAbnormal = computed(() => submissionData.value?.status === "abnormal");
+const isWarning = computed(() => submissionData.value?.status === "warning");
 
 const handleWaLink = () => {
   window.open("https://wa.me/6282254442400", "_blank");
 };
 
 const handleKembali = () => {
-  router.push("/login");
+  router.push("/");
 };
 </script>
 
@@ -37,9 +59,12 @@ const handleKembali = () => {
     <!-- Content -->
     <main
       class="flex-1 flex items-center justify-center bg-cover bg-center bg-no-repeat py-20 mb-10 overflow-y-auto"
-      style="background-image: url(/image_asset/BG_2.png); background-attachment: fixed;"
+      style="
+        background-image: url(/image_asset/BG_2.png);
+        background-attachment: fixed;
+      "
     >
-      <div class="p-4 m-3 bg-white rounded-lg shadow-lg w-full max-w-6xl">
+      <div class="p-8 m-3 bg-white rounded-lg shadow-lg w-full max-w-6xl">
         <div class="flex justify-between items-center mb-4">
           <img
             src="/image_asset/2_Ptimm.png"
@@ -55,11 +80,12 @@ const handleKembali = () => {
         </h1>
         <p class="text-sm text-gray-600 text-left">
           <InformationCircleIcon class="w-4 h-4 inline-block text-gray-500" />
-          You hava submitted the form at {{ new }}
+          Form telah disubmit pada {{ submissionData?.submissionTime || "-" }}
         </p>
 
         <!-- Hasil Normal -->
         <div
+          v-if="isNormal"
           class="flex items-start gap-3 mb-2 mt-2 p-2 bg-green-100 border-l-4 border-green-500 rounded"
         >
           <p class="text-black font-medium text-lg leading-relaxed">
@@ -69,6 +95,7 @@ const handleKembali = () => {
 
         <!-- Pengumuman Box Normal -->
         <div
+          v-if="isNormal"
           class="flex items-start gap-3 mb-4 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded"
         >
           <div class="text-black font-semibold text-sm leading-relaxed italic">
@@ -99,23 +126,27 @@ const handleKembali = () => {
 
         <!-- Hasil Abnormal -->
         <div
+          v-if="isAbnormal"
           class="flex items-start gap-3 mb-2 mt-2 p-2 bg-yellow-100 border-l-4 border-yellow-500 rounded"
         >
           <p class="text-black font-medium text-lg leading-relaxed">
             Kondisi kendaraan : <span class="font-bold">Abnormal</span>
           </p>
         </div>
-        
+
         <div
+          v-if="isAbnormal"
           class="flex items-start gap-3 mb-4 mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded"
         >
           <p class="text-black font-semibold text-sm leading-relaxed italic">
-            Bagian kendaraan terdapat kerusakan ringan, namun masih dapat digunakan dan perlu dilakukan pemeriksaan atau perbaikan di bengkel.
+            Bagian kendaraan terdapat kerusakan ringan, namun masih dapat
+            digunakan dan perlu dilakukan pemeriksaan atau perbaikan di bengkel.
           </p>
         </div>
 
-        <!-- Pengumuman Box Normal -->
+        <!-- Pengumuman Box Abnormal -->
         <div
+          v-if="isAbnormal"
           class="flex items-start gap-3 mb-4 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded"
         >
           <div class="text-black font-semibold text-sm leading-relaxed italic">
@@ -146,24 +177,29 @@ const handleKembali = () => {
 
         <!-- Hasil Warning -->
         <div
+          v-if="isWarning"
           class="flex items-start gap-3 mb-2 mt-2 p-2 bg-red-100 border-l-4 border-red-500 rounded"
         >
           <p class="text-black font-medium text-lg leading-relaxed">
             Kondisi kendaraan : <span class="font-bold">Warning</span>
           </p>
         </div>
-        
-        <!-- Pengumuman Box Normal -->
+
+        <!-- Pengumuman Box Warning -->
         <div
+          v-if="isWarning"
           class="flex items-start gap-3 mb-4 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded"
         >
           <div class="text-black font-semibold text-sm leading-relaxed italic">
-
             <p class="mb-3 font-bold text-base">
-              Bagian kendaraan mengalami kerusakan serius sehingga tidak dapat digunakan dan harus segera dibawa ke bengkel untuk penanganan lebih lanjut.
+              Bagian kendaraan mengalami kerusakan serius sehingga tidak dapat
+              digunakan dan harus segera dibawa ke bengkel untuk penanganan
+              lebih lanjut.
             </p>
-                        <p class="text-red-600 font-bold text-base mb-3 italic underline">
-              <InformationCircleIcon class="w-5 h-5 inline-block text-red-600 mr-2" />
+            <p class="text-red-600 font-bold text-base mb-3 italic underline">
+              <InformationCircleIcon
+                class="w-5 h-5 inline-block text-red-600 mr-2"
+              />
               Kendaraan dinyatakan tidak dapat dioperasikan
             </p>
             <p class="font-bold text-base">
@@ -172,7 +208,11 @@ const handleKembali = () => {
                 href="https://wa.me/6282254442400"
                 target="_blank"
                 class="text-xs md:text-lg text-[#646cff] font-medium hover:underline m-0"
-                style="text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px;"
+                style="
+                  text-decoration: underline;
+                  text-decoration-thickness: 1px;
+                  text-underline-offset: 3px;
+                "
               >
                 0822-5444-2400
               </a>
@@ -184,7 +224,7 @@ const handleKembali = () => {
         <div class="flex justify-center mt-6">
           <button
             @click="handleKembali"
-            class="px-8 md:px-10 py-2 text-sm md:text-base bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular"
+            class="px-8 md:px-10 py-2 text-sm md:text-base bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-medium"
           >
             Kembali
           </button>

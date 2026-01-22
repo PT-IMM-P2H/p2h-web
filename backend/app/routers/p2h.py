@@ -287,3 +287,58 @@ async def get_p2h_report(
     
     payload = P2HReportResponse.model_validate(report).model_dump(mode='json')
     return base_response(message="Detail laporan P2H berhasil ditemukan", payload=payload)
+
+@router.delete("/reports/{report_id}")
+async def delete_p2h_report(
+    report_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+):
+    """
+    Delete a P2H report by ID.
+    Only accessible by admin and superadmin.
+    """
+    from app.models.p2h import P2HReport, P2HDailyTracker
+    report = db.query(P2HReport).filter(P2HReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Laporan P2H tidak ditemukan")
+    
+    # Clear references in P2HDailyTracker before deleting
+    # Find all daily trackers that reference this report
+    trackers = db.query(P2HDailyTracker).filter(
+        (P2HDailyTracker.shift_1_report_id == report_id) |
+        (P2HDailyTracker.shift_2_report_id == report_id) |
+        (P2HDailyTracker.shift_3_report_id == report_id)
+    ).all()
+    
+    for tracker in trackers:
+        # Clear the reference and update shift status
+        if tracker.shift_1_report_id == report_id:
+            tracker.shift_1_report_id = None
+            tracker.shift_1_done = False
+        if tracker.shift_2_report_id == report_id:
+            tracker.shift_2_report_id = None
+            tracker.shift_2_done = False
+        if tracker.shift_3_report_id == report_id:
+            tracker.shift_3_report_id = None
+            tracker.shift_3_done = False
+        
+        # Update submission count
+        tracker.submission_count = max(0, tracker.submission_count - 1)
+        
+        # Update final status based on remaining submissions
+        if tracker.submission_count == 0:
+            tracker.final_status = "red"
+        elif tracker.submission_count < 3:
+            tracker.final_status = "yellow"
+        else:
+            tracker.final_status = "green"
+    
+    # Delete the report (details will be cascade deleted)
+    db.delete(report)
+    db.commit()
+    
+    return base_response(
+        message="Laporan P2H berhasil dihapus",
+        payload={"id": str(report_id)}
+    )

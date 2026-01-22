@@ -41,6 +41,11 @@ const router = createRouter({
             component: () => import('../components/admin/dashboard.vue')
         },
         {
+            path:'/hasil-form',
+            name:'hasil-form',
+            component: () => import('../components/user/hasil_form.vue')
+        },
+        {
             path: '/data-monitor-pt',
             name: 'data-monitor-pt',
             component: () => import('../components/admin/data_monitor/data-monitor-pt.vue')
