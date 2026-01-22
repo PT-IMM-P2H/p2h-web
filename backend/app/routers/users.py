@@ -12,6 +12,19 @@ from app.utils.response import base_response
 
 router = APIRouter()
 
+@router.get("/me")
+async def get_current_user_profile(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get current logged-in user profile.
+    Accessible by all authenticated users.
+    """
+    return base_response(
+        message="Data profil berhasil diambil",
+        payload=UserResponse.model_validate(current_user).model_dump(mode='json')
+    )
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
@@ -34,28 +47,6 @@ async def create_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-
-@router.get("/me")
-async def get_current_user_profile(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Mendapatkan profil user yang sedang login.
-    Accessible oleh semua user yang sudah login.
-    """
-    # Refresh user data from database to get latest info including company
-    user = db.query(User).filter(User.id == current_user.id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User tidak ditemukan"
-        )
-    
-    return base_response(
-        message="Profil user berhasil diambil",
-        payload=UserResponse.model_validate(user).model_dump(mode='json')
-    )
 
 @router.get("")
 async def get_users(

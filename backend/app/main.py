@@ -1,9 +1,8 @@
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
-import os
 
 from app.config import settings
 from app.database import Base, engine
@@ -14,10 +13,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- KONFIGURASI PORT ---
-# Gunakan environment variable PORT dari Railway, fallback ke 8000 untuk local
-PORT = int(os.getenv("PORT", 8000))
-# Gunakan 0.0.0.0 untuk production, 127.0.0.1 untuk local development
-HOST = "0.0.0.0" if os.getenv("RAILWAY_ENVIRONMENT") else "127.0.0.1"
+# Kita set ke 8000 sebagai port default aplikasi
+PORT = 8000 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,8 +27,8 @@ async def lifespan(app: FastAPI):
     print("\n" + "="*60)
     print("                P2H SYSTEM PT. IMM BONTANG")
     print("="*60)
-    print(f"🚀 Main API      : http://{HOST}:{PORT}")
-    print(f"📝 Swagger UI    : http://{HOST}:{PORT}/docs")
+    print(f"🚀 Main API      : http://127.0.0.1:{PORT}")
+    print(f"📝 Swagger UI    : http://127.0.0.1:{PORT}/docs")
     print("="*60 + "\n")
 
     try:
@@ -84,10 +81,25 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         status_code=422
     )
 
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Handle HTTP exceptions including ConflictException, NotFoundException, etc."""
+    # Extract message from detail if it's a dict
+    message = exc.detail
+    if isinstance(exc.detail, dict):
+        message = exc.detail.get('message', str(exc.detail))
+    
+    return base_response(
+        message=message,
+        payload=None,
+        status_code=exc.status_code
+    )
+
 @app.exception_handler(status.HTTP_404_NOT_FOUND)
 async def not_found_handler(request: Request, exc: Exception):
     return base_response(
         message="Resource atau data yang Anda cari tidak ditemukan",
+        payload=None,
         status_code=404
     )
 
@@ -109,17 +121,20 @@ async def root():
     )
 
 # Import and register routers
-from app.routers import auth, users, vehicles, p2h, master_data, dashboard, vehicle_types
+from app.routers import auth, users, vehicles, p2h, master_data, dashboard, vehicle_type, bulk_upload
+from app.routers.export import router as export_router
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(vehicles.router, prefix="/vehicles", tags=["Vehicles"])
-app.include_router(vehicle_types.router, prefix="/vehicle-types", tags=["Vehicle Types"])
+app.include_router(vehicle_type.router)  # Vehicle Types CRUD
 app.include_router(p2h.router, prefix="/p2h", tags=["P2H Inspection"])
 app.include_router(master_data.router, prefix="/master-data", tags=["Master Data"])
 app.include_router(dashboard.router, tags=["Dashboard"])
+app.include_router(bulk_upload.router)  # Bulk Upload & Templates
+app.include_router(export_router)  # Export Excel/PDF/CSV
 
 if __name__ == "__main__":
     import uvicorn
-    # Gunakan HOST dan PORT yang sudah dikonfigurasi
-    uvicorn.run("app.main:app", host=HOST, port=PORT, reload=True)
+    # Port 8000 sebagai default aplikasi
+    uvicorn.run("app.main:app", host="127.0.0.1", port=PORT, reload=True)

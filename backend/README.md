@@ -1,8 +1,6 @@
 # P2H System - Backend API
 
-Halo 
 Backend REST API untuk sistem **P2H (Pelaksanaan Pemeriksaan Harian)** kendaraan PT. IMM Bontang.
-Halo
 
 ## 🚀 Technology Stack
 

@@ -4,6 +4,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from app.models.vehicle import VehicleType, ShiftType
+from app.utils.vehicle_utils import format_hull_number, validate_hull_number_format
 
 
 # Nested schemas for relations
@@ -45,7 +46,25 @@ class VehicleBase(BaseModel):
 
 class VehicleCreate(VehicleBase):
     """Schema for creating a vehicle"""
-    pass
+    
+    @field_validator('no_lambung')
+    @classmethod
+    def validate_and_format_hull_number(cls, v: str) -> str:
+        """
+        Validate dan format nomor lambung ke format standar.
+        Input bisa dalam format apapun: P309, P.309, p 309, P,309
+        Output akan selalu dalam format standar: P.309
+        """
+        if not v:
+            raise ValueError('Nomor lambung tidak boleh kosong')
+        
+        # Validasi format
+        is_valid, error_msg = validate_hull_number_format(v)
+        if not is_valid:
+            raise ValueError(error_msg)
+        
+        # Format ke standar: [HURUF].[ANGKA]
+        return format_hull_number(v)
 
 
 class VehicleUpdate(BaseModel):
@@ -64,6 +83,23 @@ class VehicleUpdate(BaseModel):
     kir_expiry: Optional[date] = None
     shift_type: Optional[ShiftType] = None
     is_active: Optional[bool] = None
+    
+    @field_validator('no_lambung')
+    @classmethod
+    def validate_and_format_hull_number(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validate dan format nomor lambung saat update.
+        """
+        if v is None:
+            return v
+        
+        # Validasi format
+        is_valid, error_msg = validate_hull_number_format(v)
+        if not is_valid:
+            raise ValueError(error_msg)
+        
+        # Format ke standar
+        return format_hull_number(v)
 
 
 class VehicleResponse(BaseModel):

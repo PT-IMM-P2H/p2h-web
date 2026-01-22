@@ -94,7 +94,7 @@ class P2HReportResponse(BaseModel):
 
 
 class P2HReportListResponse(BaseModel):
-    """Schema for P2H report list (without details)"""
+    """Schema for P2H report list (with basic details)"""
     model_config = ConfigDict(from_attributes=True)
     
     id: UUID
@@ -105,6 +105,8 @@ class P2HReportListResponse(BaseModel):
     submission_date: date
     submission_time: time
     created_at: datetime
+    # Tambahkan details untuk menampilkan keterangan abnormal/warning
+    details: Optional[List[P2HDetailResponse]] = []
 
 
 # Import for forward references

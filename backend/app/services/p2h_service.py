@@ -75,14 +75,24 @@ class P2HService:
     def calculate_overall_status(details: List[P2HDetailSubmit]) -> InspectionStatus:
         """
         Menentukan status akhir P2H berdasarkan item yang diperiksa.
-        Prioritas: ABNORMAL > WARNING > NORMAL
+        Prioritas: WARNING > ABNORMAL > NORMAL
+        
+        Logic:
+        - Jika ada WARNING, maka overall = WARNING
+        - Jika tidak ada WARNING tapi ada ABNORMAL, maka overall = ABNORMAL
+        - Jika semua NORMAL, maka overall = NORMAL
         """
         statuses = [d.status for d in details]
         
-        if InspectionStatus.ABNORMAL in statuses:
-            return InspectionStatus.ABNORMAL
+        # Prioritas 1: WARNING (paling kritis)
         if InspectionStatus.WARNING in statuses:
             return InspectionStatus.WARNING
+        
+        # Prioritas 2: ABNORMAL
+        if InspectionStatus.ABNORMAL in statuses:
+            return InspectionStatus.ABNORMAL
+        
+        # Default: NORMAL
         return InspectionStatus.NORMAL
     
     @staticmethod
@@ -94,12 +104,16 @@ class P2HService:
         """
         Memproses submit form P2H dari user.
         """
+        logger.info(f"📝 Starting P2H submission for vehicle_id: {submission.vehicle_id}, user: {user.full_name}")
+        
         # 1. Cari Vehicle
         vehicle = db.query(Vehicle).filter(Vehicle.id == submission.vehicle_id).first()
         if not vehicle:
             raise ValueError("Kendaraan tidak ditemukan")
         if not vehicle.is_active:
             raise ValueError("Kendaraan sedang dalam status non-aktif")
+        
+        logger.info(f"🚗 Vehicle found: {vehicle.no_lambung}")
         
         # 2. Ambil Waktu Operasional (Reset jam 05:00)
         current_date = get_current_date()
@@ -116,6 +130,7 @@ class P2HService:
         
         # 4. Hitung Status Keseluruhan
         overall_status = P2HService.calculate_overall_status(submission.details)
+        logger.info(f"📊 Overall status calculated: {overall_status}")
         
         # 5. Simpan Header Laporan
         report = P2HReport(
@@ -128,6 +143,8 @@ class P2HService:
         )
         db.add(report)
         db.flush() # Ambil ID report untuk detail
+        
+        logger.info(f"💾 P2H Report created with ID: {report.id}")
         
         # 6. Simpan Detail Pemeriksaan
         for d in submission.details:
@@ -157,13 +174,21 @@ class P2HService:
         db.refresh(report)
         
         # 8. Notifikasi Telegram (Hanya jika bermasalah)
+        logger.info(f"🔔 Checking if telegram notification needed - Status: {overall_status}")
         if overall_status in [InspectionStatus.ABNORMAL, InspectionStatus.WARNING]:
             try:
-                await telegram_service.send_p2h_notification(
+                logger.info(f"📤 Sending telegram notification for report {report.id}")
+                notification = await telegram_service.send_p2h_notification(
                     db, vehicle, report, overall_status
                 )
+                if notification and notification.is_sent:
+                    logger.info(f"✅ Telegram notification sent successfully")
+                else:
+                    logger.warning(f"⚠️ Telegram notification failed to send")
             except Exception as e:
-                logger.error(f"Telegram alert failed: {str(e)}")
+                logger.error(f"❌ Telegram alert failed: {str(e)}", exc_info=True)
+        else:
+            logger.info(f"ℹ️ No telegram notification needed - Status is NORMAL")
         
         return report
 

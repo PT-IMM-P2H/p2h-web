@@ -25,7 +25,8 @@ class DashboardService:
         self,
         db: Session,
         start_date: Optional[date] = None,
-        end_date: Optional[date] = None
+        end_date: Optional[date] = None,
+        vehicle_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Get comprehensive dashboard statistics with business logic.
@@ -37,12 +38,13 @@ class DashboardService:
             db: Database session
             start_date: Optional start date filter
             end_date: Optional end date filter
+            vehicle_type: Optional vehicle type filter
             
         Returns:
             Dictionary with complete statistics
         """
         # Get base statistics from repository
-        stats = self.dashboard_repo.get_statistics(db, start_date, end_date)
+        stats = self.dashboard_repo.get_statistics(db, start_date, end_date, vehicle_type)
         
         # Business logic: Calculate pending P2H
         today = datetime.now().date()
