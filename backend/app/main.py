@@ -106,11 +106,12 @@ async def root():
     )
 
 # Import and register routers
-from app.routers import auth, users, vehicles, p2h, master_data, dashboard
+from app.routers import auth, users, vehicles, p2h, master_data, dashboard, vehicle_types
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 app.include_router(vehicles.router, prefix="/vehicles", tags=["Vehicles"])
+app.include_router(vehicle_types.router, prefix="/vehicle-types", tags=["Vehicle Types"])
 app.include_router(p2h.router, prefix="/p2h", tags=["P2H Inspection"])
 app.include_router(master_data.router, prefix="/master-data", tags=["Master Data"])
 app.include_router(dashboard.router, tags=["Dashboard"])

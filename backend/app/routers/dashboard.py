@@ -8,6 +8,7 @@ from app.models.user import User
 from app.dependencies import get_current_user
 from app.utils.response import base_response
 from app.services.dashboard_service import dashboard_service
+from app.repositories.dashboard_repository import dashboard_repository
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 

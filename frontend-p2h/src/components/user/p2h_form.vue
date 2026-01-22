@@ -342,16 +342,18 @@ onMounted(() => {
 
         <div class="p-8 bg-white rounded-2xl shadow-sm border border-zinc-200 space-y-5">
           <h2 class="text-lg font-black border-b-4 border-purple-600 inline-block pb-1 text-zinc-900">Jenis Kendaraan</h2>
-          <div class="flex gap-2">
-            <input 
-              v-model="searchInput" 
-              @keyup.enter="handleSearchVehicle"
-              placeholder="Masukkan nomor lambung (P.309)" 
-              class="flex-1 p-3.5 bg-white border-2 border-zinc-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none font-semibold text-zinc-900 placeholder-zinc-400" 
-            />
-            <button @click="handleSearchVehicle" class="bg-purple-600 hover:bg-purple-700 text-white px-8 rounded-xl font-black flex items-center gap-2 transition-all shadow-md active:scale-95">
-              Cari <MagnifyingGlassIcon class="h-5 w-5"/>
-            </button>
+          <div class="space-y-2">
+            <div class="flex gap-2">
+              <input 
+                v-model="searchInput" 
+                @keyup.enter="handleSearchVehicle"
+                placeholder="Cari nomor lambung (contoh: 309, P309, P.309)" 
+                class="flex-1 p-3.5 bg-white border-2 border-zinc-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none font-semibold text-zinc-900 placeholder-zinc-400" 
+              />
+              <button @click="handleSearchVehicle" class="bg-purple-600 hover:bg-purple-700 text-white px-8 rounded-xl font-black flex items-center gap-2 transition-all shadow-md active:scale-95">
+                Cari <MagnifyingGlassIcon class="h-5 w-5"/>
+              </button>
+            </div>
           </div>
 
           <div v-if="vehicleData" 

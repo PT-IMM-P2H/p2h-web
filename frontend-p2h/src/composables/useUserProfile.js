@@ -20,7 +20,7 @@ export function useUserProfile() {
     error.value = null
 
     try {
-      const response = await api.get('/users/me')
+      const response = await api.get('/auth/me')
       
       if (response.data.status === 'success') {
         userProfile.value = response.data.payload

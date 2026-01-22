@@ -875,7 +875,7 @@ const simpanPertanyaan = async () => {
                 class="bg-white rounded-lg w-full max-w-md shadow-lg p-6"
               >
                 <div class="flex items-center gap-3 mb-4">
-                  <div class="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                  <div class="shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
                     <TrashIcon class="w-6 h-6 text-red-600" />
                   </div>
                   <div>
