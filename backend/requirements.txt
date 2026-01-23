@@ -5,8 +5,7 @@ sqlalchemy
 alembic
 psycopg2-binary
 python-jose[cryptography]
-passlib
-argon2-cffi
+passlib[argon2]
 python-dotenv
 pydantic
 pydantic-settings
