@@ -11,14 +11,13 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False
     )
-    
-    # Database
+
+    PORT: int = 8000
+
     DATABASE_URL: str
-    
-    # JWT
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440 # 24 jam
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
     
     # Telegram
     TELEGRAM_BOT_TOKEN: str = ""
