@@ -18,4 +18,5 @@ pytz
 httpx
 uuid7
 bcrypt
-reportlab>=4.0.0
+xlsxwriter
+reportlab
