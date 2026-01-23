@@ -125,6 +125,7 @@ async def root():
 # Import and register routers
 from app.routers import auth, users, vehicles, p2h, master_data, dashboard, vehicle_type, bulk_upload
 from app.routers.export import router as export_router
+from app.routers.health import router as health_router
 
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
@@ -135,6 +136,7 @@ app.include_router(master_data.router, prefix="/master-data", tags=["Master Data
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(bulk_upload.router)  # Bulk Upload & Templates
 app.include_router(export_router)  # Export Excel/PDF/CSV
+app.include_router(health_router, prefix="/health", tags=["Health"])
 
 if __name__ == "__main__":
     import uvicorn
