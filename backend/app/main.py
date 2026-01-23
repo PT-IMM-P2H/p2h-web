@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
 import logging
+import os
 
 from app.config import settings
 from app.database import Base, engine
@@ -13,8 +14,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- KONFIGURASI PORT ---
-# Kita set ke 8000 sebagai port default aplikasi
-PORT = 8000 
+# Railway menyediakan PORT via environment variable
+# Default ke 8000 untuk development lokal
+PORT = int(os.getenv("PORT", 8000)) 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -136,5 +138,6 @@ app.include_router(export_router)  # Export Excel/PDF/CSV
 
 if __name__ == "__main__":
     import uvicorn
-    # Port 8000 sebagai default aplikasi
-    uvicorn.run("app.main:app", host="127.0.0.1", port=PORT, reload=True)
+    # Host 0.0.0.0 agar bisa diakses dari luar (Railway)
+    # Port dari environment variable Railway
+    uvicorn.run("app.main:app", host="0.0.0.0", port=PORT, reload=True)
