@@ -1,85 +1,132 @@
-# 🔧 Fix API Base URL untuk Vercel
+# 🔴 CRITICAL: Railway Service URLs
 
-## Masalah
+## ⚠️ Railway Punya 2 Service Berbeda!
 
-Frontend di Vercel masih memanggil `http://localhost:8000` padahal backend sudah di Railway.
+Jika Anda deploy frontend DAN backend ke Railway, akan ada **2 service dengan URL berbeda**:
 
-Browser user **TIDAK PUNYA** localhost:8000!
-
-## Solusi: Update Environment Variable di Vercel
-
-### 1. Login ke Vercel Dashboard
-
-https://vercel.com/dashboard
-
-### 2. Pilih Project Frontend
-
-Klik project **p2h-web** (atau nama project Vercel Anda)
-
-### 3. Buka Settings → Environment Variables
-
-1. Klik tab **"Settings"**
-2. Scroll ke **"Environment Variables"**
-3. Klik **"Add New"**
-
-### 4. Tambahkan Variable
-
-**Key:**
-
-```
-VITE_API_BASE_URL
-```
-
-**Value:**
+### 1. Frontend Service (Static Site)
 
 ```
 https://p2h-web-production.up.railway.app
 ```
 
-**Environments:** Pilih semua (Production, Preview, Development)
+- Ini untuk **serve HTML/CSS/JS** frontend
+- **BUKAN** API endpoint!
+- User akses ini di browser untuk buka aplikasi
 
-Klik **"Save"**
+### 2. Backend API Service (FastAPI)
 
-### 5. Redeploy
+```
+https://p2h-api-production.up.railway.app
+```
 
-Setelah save, Vercel akan minta redeploy:
+- Ini **API endpoint** yang sebenarnya
+- Frontend **WAJIB** pakai URL ini untuk API calls
+- Endpoint: `/auth/login`, `/p2h/reports`, dll.
 
-1. Klik **"Redeploy"** atau
-2. Push commit baru ke GitHub untuk trigger auto-deploy
+---
+
+## 🔥 Kesalahan yang Sering Terjadi
+
+❌ **SALAH:**
+
+```javascript
+// Frontend memanggil frontend service sebagai API
+const API_URL = "https://p2h-web-production.up.railway.app";
+axios.get(`${API_URL}/p2h/reports`); // ❌ 502 Bad Gateway!
+```
+
+✅ **BENAR:**
+
+```javascript
+// Frontend memanggil backend API service
+const API_URL = "https://p2h-api-production.up.railway.app";
+axios.get(`${API_URL}/p2h/reports`); // ✅ Works!
+```
+
+---
+
+## 📝 Update Environment Variable
+
+### Di Vercel (untuk frontend Vercel)
+
+**Variable:**
+
+```
+VITE_API_BASE_URL=https://p2h-api-production.up.railway.app
+```
+
+**BUKAN:**
+
+```
+VITE_API_BASE_URL=https://p2h-web-production.up.railway.app  ❌
+```
+
+### Di Railway Frontend Service (jika deploy frontend di Railway)
+
+Sama, set environment variable:
+
+```
+VITE_API_BASE_URL=https://p2h-api-production.up.railway.app
+```
+
+---
+
+## 🔍 Cara Cek URL yang Benar
+
+### Di Railway Dashboard:
+
+1. **Backend API Service:**
+   - Buka project backend
+   - Tab "Settings" → "Domains"
+   - Copy domain (contoh: `p2h-api-production.up.railway.app`)
+   - Ini yang dipakai untuk `VITE_API_BASE_URL`
+
+2. **Frontend Service:**
+   - Buka project frontend
+   - Tab "Settings" → "Domains"
+   - Copy domain (contoh: `p2h-web-production.up.railway.app`)
+   - Ini yang user buka di browser
 
 ---
 
 ## ✅ Verifikasi
 
-Setelah redeploy selesai:
+Test backend API langsung di browser:
 
-1. Buka frontend Vercel di browser
-2. Buka **DevTools** (F12) → **Network** tab
-3. Login atau refresh page
-4. Lihat request API - harus ke `https://p2h-web-production.up.railway.app`, **BUKAN** `localhost:8000`
-
----
-
-## 📝 Catatan
-
-- `.env` file **TIDAK** ter-commit ke Git (ada di `.gitignore`)
-- Environment variables di Vercel **override** `.env` local
-- Setiap update env variable perlu **redeploy**
-
----
-
-## 🔄 Untuk Development Lokal
-
-Jika mau test dengan backend Railway di local:
-
-Update `.env` lokal:
-
-```bash
-VITE_API_BASE_URL=https://p2h-web-production.up.railway.app
+```
+https://p2h-api-production.up.railway.app/
 ```
 
-Atau tetap pakai localhost jika backend jalan lokal:
+Harus return JSON response dari FastAPI, bukan HTML!
 
-```bash
-VITE_API_BASE_URL=http://localhost:8000
+```json
+{
+  "status": "success",
+  "message": "Welcome to P2H System PT. IMM API",
+  "payload": {
+    "version": "1.0.0",
+    "docs": "/docs"
+  }
+}
+```
+
+---
+
+## 🎯 Architecture
+
+```
+[User Browser]
+      |
+      | Akses: https://p2h-web-production.up.railway.app
+      | (atau https://p2h-web.vercel.app)
+      v
+[Frontend Service - HTML/CSS/JS]
+      |
+      | API Calls: https://p2h-api-production.up.railway.app
+      v
+[Backend API Service - FastAPI]
+      |
+      v
+[Database]
 ```
