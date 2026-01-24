@@ -1,13 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_FILE = BASE_DIR / ".env"
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=str(ENV_FILE),
+        env_file=".env" if os.getenv("RAILWAY_ENVIRONMENT") is None else None,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore"

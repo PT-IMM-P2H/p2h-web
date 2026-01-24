@@ -140,6 +140,9 @@ app.include_router(health_router, prefix="/health", tags=["Health"])
 
 if __name__ == "__main__":
     import uvicorn
-    # Host 0.0.0.0 agar bisa diakses dari luar (Railway)
-    # Port dari environment variable Railway
-    uvicorn.run("app.main:app", host="0.0.0.0", port=PORT, reload=True)
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=PORT,
+        reload=False
+    )
