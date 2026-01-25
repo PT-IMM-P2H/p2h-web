@@ -93,8 +93,9 @@ async def lifespan(app: FastAPI):
     print(f"🔧 Railway Mode  : {'Yes' if os.getenv('RAILWAY_ENVIRONMENT_NAME') else 'No (Local)'}")
     print("=" * 60 + "\n")
 
-    # ✅ AUTO MIGRATE (AMAN DI RAILWAY)
-    run_alembic_migration()
+    # ✅ AUTO MIGRATE - Now handled in Railway startCommand
+    # Migration runs BEFORE app starts: alembic upgrade head && python -m app.seeds.seed_users && uvicorn...
+    # run_alembic_migration()
 
     # Scheduler
     try:
