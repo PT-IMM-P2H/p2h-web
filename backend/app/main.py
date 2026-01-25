@@ -252,6 +252,7 @@ from app.routers import (
     dashboard,
     vehicle_type,
     bulk_upload,
+    admin,
 )
 
 from app.routers.export import router as export_router
@@ -267,6 +268,7 @@ app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(bulk_upload.router)
 app.include_router(export_router)
 app.include_router(health_router, prefix="/health", tags=["Health"])
+app.include_router(admin.router)  # Admin endpoints for seeding
 
 # =========================================================
 # LOCAL RUN
