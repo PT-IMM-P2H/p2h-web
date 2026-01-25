@@ -125,9 +125,45 @@ app = FastAPI(
 # =========================================================
 # CORS
 # =========================================================
+# Environment-aware CORS: wildcard in dev, specific origins in production
+if settings.ENVIRONMENT == "development":
+    allow_origins = ["*"]  # Allow all origins in development
+    allow_origin_regex = None
+    logger.info("🔓 CORS: Development mode - allowing all origins")
+else:
+    # In production, use configured origins with wildcard support
+    origins_list = settings.cors_origins_list
+    
+    # Check if any origin contains wildcard
+    has_wildcard = any("*" in origin for origin in origins_list)
+    
+    if has_wildcard:
+        # Convert wildcard patterns to regex
+        import re
+        patterns = []
+        for origin in origins_list:
+            if "*" in origin:
+                # Convert wildcard to regex pattern
+                pattern = origin.replace(".", r"\.").replace("*", ".*")
+                patterns.append(pattern)
+            else:
+                # Escape exact origins for regex
+                patterns.append(re.escape(origin))
+        
+        # Combine all patterns
+        allow_origin_regex = "|".join(f"({p})" for p in patterns)
+        allow_origins = None  # Use regex instead
+        logger.info(f"🔒 CORS: Production mode with wildcard - pattern: {allow_origin_regex}")
+    else:
+        # No wildcard, use simple list
+        allow_origins = origins_list
+        allow_origin_regex = None
+        logger.info(f"🔒 CORS: Production mode - allowing origins: {allow_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
+    allow_origins=allow_origins if allow_origins else [],
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

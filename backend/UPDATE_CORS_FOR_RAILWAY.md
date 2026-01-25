@@ -37,7 +37,10 @@ Jika sudah ada variable `CORS_ORIGINS`:
 1. Klik **Edit** (ikon pensil)
 2. Update value menjadi:
    ```json
-   ["http://localhost:5173", "https://p2h-web.vercel.app"]
+   [
+     "http://localhost:5173",
+     "https://p2h-bro0xl7kq-naufals-projects-6b92b323.vercel.app"
+   ]
    ```
 3. Klik **Save**
 
@@ -49,7 +52,10 @@ Jika belum ada:
 2. **Variable Name:** `CORS_ORIGINS`
 3. **Value:**
    ```json
-   ["http://localhost:5173", "https://p2h-web.vercel.app"]
+   [
+     "http://localhost:5173",
+     "https://p2h-bro0xl7kq-naufals-projects-6b92b323.vercel.app"
+   ]
    ```
 4. Klik **"Add"**
 
@@ -121,7 +127,10 @@ Backend menggunakan JSON array, jadi format harus:
 **✅ BENAR:**
 
 ```json
-["http://localhost:5173", "https://p2h-web.vercel.app"]
+[
+  "http://localhost:5173",
+  "https://p2h-bro0xl7kq-naufals-projects-6b92b323.vercel.app"
+]
 ```
 
 **❌ SALAH:**
@@ -133,7 +142,10 @@ http://localhost:5173,https://p2h-web.vercel.app
 **❌ SALAH:**
 
 ```json
-["http://localhost:5173", "https://p2h-web.vercel.app"]
+[
+  "http://localhost:5173",
+  "https://p2h-bro0xl7kq-naufals-projects-6b92b323.vercel.app"
+]
 ```
 
 Harus pakai **double quotes** `"`, bukan single quotes `'`.

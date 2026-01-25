@@ -44,6 +44,28 @@ class Settings(BaseSettings):
             # Fallback to comma-separated string
             return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
     
+    def is_origin_allowed(self, origin: str) -> bool:
+        """
+        Check if origin is allowed, supporting wildcard patterns.
+        Examples:
+        - https://*.vercel.app matches https://p2h-xyz.vercel.app
+        - https://*.railway.app matches any Railway deployment
+        """
+        import re
+        
+        for allowed_origin in self.cors_origins_list:
+            # Exact match
+            if allowed_origin == origin:
+                return True
+            
+            # Wildcard match (convert * to regex)
+            if "*" in allowed_origin:
+                pattern = allowed_origin.replace(".", r"\.").replace("*", ".*")
+                if re.match(f"^{pattern}$", origin):
+                    return True
+        
+        return False
+    
     # Environment
     ENVIRONMENT: str = "development"
     
