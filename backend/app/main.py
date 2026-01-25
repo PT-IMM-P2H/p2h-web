@@ -89,6 +89,8 @@ async def lifespan(app: FastAPI):
     print("=" * 60)
     print(f"🚀 Main API      : http://0.0.0.0:{PORT}")
     print(f"📝 Swagger UI    : /docs")
+    print(f"🌍 Environment   : {settings.ENVIRONMENT}")
+    print(f"🔧 Railway Mode  : {'Yes' if os.getenv('RAILWAY_ENVIRONMENT_NAME') else 'No (Local)'}")
     print("=" * 60 + "\n")
 
     # ✅ AUTO MIGRATE (AMAN DI RAILWAY)
@@ -126,43 +128,53 @@ app = FastAPI(
 # CORS
 # =========================================================
 # Environment-aware CORS: wildcard in dev, specific origins in production
-if settings.ENVIRONMENT == "development":
-    allow_origins = ["*"]  # Allow all origins in development
-    allow_origin_regex = None
-    logger.info("🔓 CORS: Development mode - allowing all origins")
-else:
-    # In production, use configured origins with wildcard support
-    origins_list = settings.cors_origins_list
-    
-    # Check if any origin contains wildcard
-    has_wildcard = any("*" in origin for origin in origins_list)
-    
-    if has_wildcard:
-        # Convert wildcard patterns to regex
-        import re
-        patterns = []
-        for origin in origins_list:
-            if "*" in origin:
-                # Convert wildcard to regex pattern
-                pattern = origin.replace(".", r"\.").replace("*", ".*")
-                patterns.append(pattern)
-            else:
-                # Escape exact origins for regex
-                patterns.append(re.escape(origin))
-        
-        # Combine all patterns
-        allow_origin_regex = "|".join(f"({p})" for p in patterns)
-        allow_origins = None  # Use regex instead
-        logger.info(f"🔒 CORS: Production mode with wildcard - pattern: {allow_origin_regex}")
-    else:
-        # No wildcard, use simple list
-        allow_origins = origins_list
+try:
+    if settings.ENVIRONMENT == "development":
+        allow_origins = ["*"]  # Allow all origins in development
         allow_origin_regex = None
-        logger.info(f"🔒 CORS: Production mode - allowing origins: {allow_origins}")
+        logger.info("🔓 CORS: Development mode - allowing all origins")
+    else:
+        # In production, use configured origins with wildcard support
+        logger.info(f"🔍 CORS: Raw CORS_ORIGINS value: {settings.CORS_ORIGINS}")
+        origins_list = settings.cors_origins_list
+        logger.info(f"🔍 CORS: Parsed origins list: {origins_list}")
+        
+        # Check if any origin contains wildcard
+        has_wildcard = any("*" in origin for origin in origins_list)
+        
+        if has_wildcard:
+            # Convert wildcard patterns to regex
+            import re
+            patterns = []
+            for origin in origins_list:
+                if "*" in origin:
+                    # Convert wildcard to regex pattern
+                    pattern = origin.replace(".", r"\.").replace("*", ".*")
+                    patterns.append(pattern)
+                else:
+                    # Escape exact origins for regex
+                    patterns.append(re.escape(origin))
+            
+            # Combine all patterns
+            allow_origin_regex = "|".join(f"({p})" for p in patterns)
+            allow_origins = []  # Empty list when using regex
+            logger.info(f"🔒 CORS: Production mode with wildcard - pattern: {allow_origin_regex}")
+        else:
+            # No wildcard, use simple list
+            allow_origins = origins_list
+            allow_origin_regex = None
+            logger.info(f"🔒 CORS: Production mode - allowing origins: {allow_origins}")
+
+except Exception as e:
+    # Fallback to safe defaults if CORS configuration fails
+    logger.error(f"❌ CORS configuration error: {str(e)}")
+    logger.warning("⚠️ Falling back to allow all origins due to config error")
+    allow_origins = ["*"]
+    allow_origin_regex = None
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allow_origins if allow_origins else [],
+    allow_origins=allow_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],

@@ -8,7 +8,9 @@ ENV_FILE = BASE_DIR / ".env"
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env" if os.getenv("RAILWAY_ENVIRONMENT") is None else None,
+        # Don't load .env file if running on Railway
+        # Railway sets RAILWAY_ENVIRONMENT_NAME (e.g., "production")
+        env_file=".env" if os.getenv("RAILWAY_ENVIRONMENT_NAME") is None else None,
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore"
