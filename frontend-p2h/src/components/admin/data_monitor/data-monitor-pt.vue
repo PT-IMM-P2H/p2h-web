@@ -40,6 +40,29 @@ const appliedFilterHasil = ref({
   warning: false,
 });
 
+// Filter Date & Metadata State
+const filterDate = ref({
+  start: "",
+  end: "",
+});
+const appliedFilterDate = ref({
+  start: "",
+  end: "",
+});
+
+const filterData = ref({
+  namaPerusahaan: "",
+  departemen: "",
+  posisi: "",
+  status: "",
+});
+const appliedFilterData = ref({
+  namaPerusahaan: "",
+  departemen: "",
+  posisi: "",
+  status: "",
+});
+
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
 
@@ -67,6 +90,66 @@ const fetchP2HReports = async () => {
     isLoading.value = false;
   }
 };
+
+// Computed Options for Dropdowns
+const companies = computed(() => {
+  const unique = new Set();
+  const list = [];
+  p2hReports.value.forEach((r) => {
+    const val = r.user?.company?.nama_perusahaan;
+    if (val && !unique.has(val)) {
+      unique.add(val);
+      list.push({ id: val, nama_perusahaan: val });
+    }
+  });
+  return list.sort((a, b) =>
+    a.nama_perusahaan.localeCompare(b.nama_perusahaan),
+  );
+});
+
+const departments = computed(() => {
+  const unique = new Set();
+  const list = [];
+  p2hReports.value.forEach((r) => {
+    const val = r.user?.department?.nama_department;
+    if (val && !unique.has(val)) {
+      unique.add(val);
+      list.push({ id: val, nama_department: val });
+    }
+  });
+  return list.sort((a, b) =>
+    a.nama_department.localeCompare(b.nama_department),
+  );
+});
+
+const positions = computed(() => {
+  const unique = new Set();
+  const list = [];
+  p2hReports.value.forEach((r) => {
+    const val = r.user?.position?.nama_posisi;
+    if (val && !unique.has(val)) {
+      unique.add(val);
+      list.push({ id: val, nama_posisi: val });
+    }
+  });
+  return list.sort((a, b) => a.nama_posisi.localeCompare(b.nama_posisi));
+});
+
+// Assuming 'job_level' or 'employment_status' maps to 'status'
+// Adjust property access based on actual API response structure if needed.
+const statuses = computed(() => {
+  const unique = new Set();
+  const list = [];
+  p2hReports.value.forEach((r) => {
+    // Fallback check for common status fields
+    const val = r.user?.job_level || r.user?.employment_status;
+    if (val && !unique.has(val)) {
+      unique.add(val);
+      list.push({ id: val, nama_status: val });
+    }
+  });
+  return list.sort((a, b) => a.nama_status.localeCompare(b.nama_status));
+});
 
 // Format data dari backend ke format tabel
 const tableData = computed(() => {
@@ -117,6 +200,10 @@ const tableData = computed(() => {
       namaPemeriksa: report.user.full_name,
       kategoriLayanan: "Operasional PT",
       perusahaan: report.user.company?.nama_perusahaan || "-",
+      departemen: report.user.department?.nama_department || "-",
+      posisi: report.user.position?.nama_posisi || "-",
+      statusKerja:
+        report.user.job_level || report.user.employment_status || "-",
       hasil:
         report.overall_status === "normal"
           ? "Normal"
@@ -195,6 +282,56 @@ const filteredTableData = computed(() => {
     });
   }
 
+  // Filter berdasarkan Date Range
+  if (appliedFilterDate.value.start && appliedFilterDate.value.end) {
+    const startDate = new Date(appliedFilterDate.value.start);
+    const endDate = new Date(appliedFilterDate.value.end);
+    // Reset time parts for accurate comparison
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(23, 59, 59, 999);
+
+    filtered = filtered.filter((row) => {
+      const rowDate = new Date(row.tanggal);
+      return rowDate >= startDate && rowDate <= endDate;
+    });
+  } else if (appliedFilterDate.value.start) {
+    const startDate = new Date(appliedFilterDate.value.start);
+    startDate.setHours(0, 0, 0, 0);
+    filtered = filtered.filter((row) => new Date(row.tanggal) >= startDate);
+  } else if (appliedFilterDate.value.end) {
+    const endDate = new Date(appliedFilterDate.value.end);
+    endDate.setHours(23, 59, 59, 999);
+    filtered = filtered.filter((row) => new Date(row.tanggal) <= endDate);
+  }
+
+  // Filter Company
+  if (appliedFilterData.value.namaPerusahaan) {
+    filtered = filtered.filter(
+      (row) => row.perusahaan === appliedFilterData.value.namaPerusahaan,
+    );
+  }
+
+  // Filter Department
+  if (appliedFilterData.value.departemen) {
+    filtered = filtered.filter(
+      (row) => row.departemen === appliedFilterData.value.departemen,
+    );
+  }
+
+  // Filter Position
+  if (appliedFilterData.value.posisi) {
+    filtered = filtered.filter(
+      (row) => row.posisi === appliedFilterData.value.posisi,
+    );
+  }
+
+  // Filter Status
+  if (appliedFilterData.value.status) {
+    filtered = filtered.filter(
+      (row) => row.statusKerja === appliedFilterData.value.status,
+    );
+  }
+
   // Filter berdasarkan hasil (checkbox) - hanya jika ada filter yang diterapkan
   const hasAnyFilterSelected =
     appliedFilterHasil.value.normal ||
@@ -259,6 +396,8 @@ const closeFilter = () => {
 
 const applyFilter = () => {
   appliedFilterHasil.value = { ...filterHasil.value };
+  appliedFilterDate.value = { ...filterDate.value };
+  appliedFilterData.value = { ...filterData.value };
   currentPage.value = 1;
   closeFilter();
 };
@@ -452,7 +591,7 @@ onMounted(() => {
               <!-- Table with data -->
               <div
                 v-else
-                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
+                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-150"
               >
                 <table class="w-full border-collapse">
                   <thead class="sticky top-0 z-10">
@@ -762,12 +901,10 @@ onMounted(() => {
                   >
                   <div class="relative">
                     <input
-                      type="text"
+                      v-model="filterDate.start"
+                      type="date"
                       placeholder="hh / bb / tttt"
-                      class="w-full p-2 pr-10 text-xs border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-4 h-4 text-[#4b4b4b]"
+                      class="w-full p-2 text-xs border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>
@@ -778,12 +915,10 @@ onMounted(() => {
                   >
                   <div class="relative">
                     <input
-                      type="text"
+                      v-model="filterDate.end"
+                      type="date"
                       placeholder="hh / bb / tttt"
-                      class="w-full p-2 pr-10 text-xs border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-4 h-4 text-[#4b4b4b]"
+                      class="w-full p-2 text-xs border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>
@@ -882,13 +1017,21 @@ onMounted(() => {
                   >Nama Perusahaan</label
                 >
                 <div class="relative">
-                  <input
-                    type="text"
-                    placeholder="Pilih Perusahaan"
-                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                  />
+                  <select
+                    v-model="filterData.namaPerusahaan"
+                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
+                  >
+                    <option value="">Semua Perusahaan</option>
+                    <option
+                      v-for="company in companies"
+                      :key="company.id"
+                      :value="company.nama_perusahaan"
+                    >
+                      {{ company.nama_perusahaan }}
+                    </option>
+                  </select>
                   <ChevronDownIcon
-                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
                   />
                 </div>
               </div>
@@ -899,13 +1042,21 @@ onMounted(() => {
                   >Departemen</label
                 >
                 <div class="relative">
-                  <input
-                    type="text"
-                    placeholder="Pilih Departemen"
-                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                  />
+                  <select
+                    v-model="filterData.departemen"
+                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
+                  >
+                    <option value="">Semua Departemen</option>
+                    <option
+                      v-for="dept in departments"
+                      :key="dept.id"
+                      :value="dept.nama_department"
+                    >
+                      {{ dept.nama_department }}
+                    </option>
+                  </select>
                   <ChevronDownIcon
-                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
                   />
                 </div>
               </div>
@@ -916,13 +1067,21 @@ onMounted(() => {
                   >Posisi Kerja</label
                 >
                 <div class="relative">
-                  <input
-                    type="text"
-                    placeholder="Pilih Posisi Kerja"
-                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                  />
+                  <select
+                    v-model="filterData.posisi"
+                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
+                  >
+                    <option value="">Semua Posisi</option>
+                    <option
+                      v-for="pos in positions"
+                      :key="pos.id"
+                      :value="pos.nama_posisi"
+                    >
+                      {{ pos.nama_posisi }}
+                    </option>
+                  </select>
                   <ChevronDownIcon
-                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
                   />
                 </div>
               </div>
@@ -933,13 +1092,21 @@ onMounted(() => {
                   >Status Kerja</label
                 >
                 <div class="relative">
-                  <input
-                    type="text"
-                    placeholder="Pilih Status Kerja"
-                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                  />
+                  <select
+                    v-model="filterData.status"
+                    class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
+                  >
+                    <option value="">Semua Status</option>
+                    <option
+                      v-for="status in statuses"
+                      :key="status.id"
+                      :value="status.nama_status"
+                    >
+                      {{ status.nama_status }}
+                    </option>
+                  </select>
                   <ChevronDownIcon
-                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                    class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
                   />
                 </div>
               </div>

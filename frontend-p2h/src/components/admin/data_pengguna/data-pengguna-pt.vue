@@ -679,7 +679,7 @@ const editPengguna = async (rowId) => {
 
               <div
                 v-else
-                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
+                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-150"
               >
                 <table class="w-full border-collapse">
                   <thead class="sticky top-0 z-10">
