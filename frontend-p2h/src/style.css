@@ -249,9 +249,7 @@ input[type="month"]:focus {
 @media (hover: none) and (pointer: coarse) {
   /* Increase tap targets for touch devices */
   button,
-  a,
-  input[type="checkbox"],
-  input[type="radio"] {
+  a {
     min-height: 44px;
     min-width: 44px;
   }

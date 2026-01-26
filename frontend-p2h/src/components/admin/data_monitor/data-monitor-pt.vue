@@ -363,7 +363,9 @@ onMounted(() => {
         <HeaderAdmin />
 
         <!-- Content -->
-        <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
+        <main
+          class="bg-[#EFEFEF] flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1"
+        >
           <!-- Judul - Sticky -->
           <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
@@ -459,13 +461,17 @@ onMounted(() => {
                         class="px-2 md:px-3 py-3 text-center font-semibold text-gray-700 whitespace-nowrap w-10 md:w-12"
                       >
                         <div class="flex items-center justify-center">
-                          <div class="relative w-5 h-5">
+                          <div
+                            class="relative w-5 h-5 shrink-0 flex items-center justify-center"
+                          >
                             <input
                               type="checkbox"
                               :checked="selectAllChecked"
                               @change="toggleSelectAll"
-                              class="w-4 h-4 cursor-pointer rounded border appearance-none bg-white border-gray-500 checked:bg-blue-500 checked:border-blue-500 transition-colors duration-150"
+                              class="shrink-0 cursor-pointer rounded-md border-2 appearance-none bg-white border-gray-600 checked:bg-blue-500 checked:border-blue-500 box-border"
                               style="
+                                width: 1.25rem;
+                                height: 1.25rem;
                                 appearance: none;
                                 -webkit-appearance: none;
                                 -moz-appearance: none;
@@ -475,7 +481,7 @@ onMounted(() => {
                             <!-- Check Icon -->
                             <CheckIcon
                               v-if="selectAllChecked"
-                              class="absolute inset-0 m-auto w-3 h-3 text-white pointer-events-none"
+                              class="absolute inset-0 m-auto w-4 h-4 text-white pointer-events-none"
                             />
                           </div>
                         </div>
@@ -548,14 +554,18 @@ onMounted(() => {
                         class="px-2 md:px-3 py-3 text-center whitespace-nowrap w-10 md:w-12"
                       >
                         <div class="flex items-center justify-center">
-                          <div class="relative w-5 h-5">
+                          <div
+                            class="relative w-5 h-5 shrink-0 flex items-center justify-center"
+                          >
                             <input
                               type="checkbox"
                               :checked="isRowSelected(row.id)"
                               @change="selectRow(row.id)"
                               @click.stop
-                              class="w-4 h-4 cursor-pointer rounded border appearance-none bg-white border-gray-500 checked:bg-blue-500 checked:border-blue-500 transition-colors duration-150"
+                              class="shrink-0 cursor-pointer rounded-md border-2 appearance-none bg-white border-gray-600 checked:bg-blue-500 checked:border-blue-500 box-border"
                               style="
+                                width: 1.25rem;
+                                height: 1.25rem;
                                 appearance: none;
                                 -webkit-appearance: none;
                                 -moz-appearance: none;
@@ -565,7 +575,7 @@ onMounted(() => {
                             <!-- Check Icon -->
                             <CheckIcon
                               v-if="isRowSelected(row.id)"
-                              class="absolute inset-0 m-auto w-3 h-3 text-white pointer-events-none"
+                              class="absolute inset-0 m-auto w-4 h-4 text-white pointer-events-none"
                             />
                           </div>
                         </div>
