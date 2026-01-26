@@ -353,17 +353,19 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
-      <Aside />
+      <!-- Aside Sidebar - Push content style -->
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Main Content Area -->
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
 
         <!-- Content -->
         <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
           <!-- Judul - Sticky -->
-          <div class="mb-2 -mt-1 shrink-0 sticky top-0 z-30 bg-[#EFEFEF] pt-3">
+          <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
               <h1 class="text-base font-bold text-[#523E95] text-left">
                 PT Indominco Mandiri

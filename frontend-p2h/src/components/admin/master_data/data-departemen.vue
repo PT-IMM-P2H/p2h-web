@@ -51,7 +51,7 @@ const fetchData = async () => {
       // Agar logic filtering & sorting yang sudah ada TIDAK RUSAK
       tableData.value = response.data.payload.map((item) => ({
         id: item.id,
-        namaDepartemen: item.nama_department, 
+        namaDepartemen: item.nama_department,
       }));
     }
   } catch (error) {
@@ -65,13 +65,13 @@ const fetchData = async () => {
 // 2. Tambah Departemen
 const submitTambah = async () => {
   if (!formData.nama.trim()) return alert("Nama departemen tidak boleh kosong");
-  
+
   loading.value = true;
   try {
     const response = await api.master.createDepartment({
       nama_department: formData.nama,
     });
-    
+
     if (response.data.status === "success") {
       alert("Departemen berhasil ditambahkan");
       closeTambahDepartemen();
@@ -109,7 +109,8 @@ const submitEdit = async () => {
 // 4. Hapus Departemen (Bulk Delete)
 const handleDeleteSelected = async () => {
   if (selectedRowIds.value.length === 0) return;
-  if (!confirm(`Hapus ${selectedRowIds.value.length} departemen terpilih?`)) return;
+  if (!confirm(`Hapus ${selectedRowIds.value.length} departemen terpilih?`))
+    return;
 
   loading.value = true;
   try {
@@ -160,7 +161,8 @@ const selectRow = (rowId) => {
     selectedRowIds.value.push(rowId);
   }
   selectAllChecked.value =
-    selectedRowIds.value.length === tableData.value.length && tableData.value.length > 0;
+    selectedRowIds.value.length === tableData.value.length &&
+    tableData.value.length > 0;
 };
 
 const toggleSelectAll = () => {
@@ -207,7 +209,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length
+    filteredTableData.value.length,
   );
 });
 
@@ -227,12 +229,12 @@ const sortByDepartmentName = () => {
   if (sortOrder.value === "asc") {
     sortOrder.value = "desc";
     tableData.value = [...tableData.value].sort((a, b) =>
-      b.namaDepartemen.localeCompare(a.namaDepartemen)
+      b.namaDepartemen.localeCompare(a.namaDepartemen),
     );
   } else {
     sortOrder.value = "asc";
     tableData.value = [...tableData.value].sort((a, b) =>
-      a.namaDepartemen.localeCompare(b.namaDepartemen)
+      a.namaDepartemen.localeCompare(b.namaDepartemen),
     );
   }
   currentPage.value = 1;
@@ -245,11 +247,13 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
-      <Aside />
+      <!-- Aside Sidebar - Push content style -->
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Main Content Area -->
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
 
         <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
@@ -420,10 +424,16 @@ onMounted(() => {
                 </table>
               </div>
 
-              <div class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2">
+              <div
+                class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2"
+              >
                 <div class="flex items-center gap-2 text-sm text-gray-700">
                   <span>Tampilkan</span>
-                  <select v-model="itemsPerPage" @change="currentPage = 1" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    v-model="itemsPerPage"
+                    @change="currentPage = 1"
+                    class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option :value="10">10</option>
                     <option :value="20">20</option>
                     <option :value="50">50</option>
@@ -432,9 +442,24 @@ onMounted(() => {
                   <span>baris</span>
                 </div>
                 <div class="flex items-center gap-3">
-                  <button @click="previousPage" :disabled="currentPage === 1" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&lt;</button>
-                  <span class="text-sm text-gray-700 font-medium">{{ startIndex }} - {{ endIndex }} dari {{ filteredTableData.length }}</span>
-                  <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&gt;</button>
+                  <button
+                    @click="previousPage"
+                    :disabled="currentPage === 1"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &lt;
+                  </button>
+                  <span class="text-sm text-gray-700 font-medium"
+                    >{{ startIndex }} - {{ endIndex }} dari
+                    {{ filteredTableData.length }}</span
+                  >
+                  <button
+                    @click="nextPage"
+                    :disabled="currentPage === totalPages"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &gt;
+                  </button>
                 </div>
               </div>
             </div>

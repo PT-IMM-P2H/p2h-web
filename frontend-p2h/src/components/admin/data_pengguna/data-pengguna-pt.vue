@@ -20,7 +20,7 @@ import {
   ArrowDownIcon,
   CheckIcon,
 } from "@heroicons/vue/24/outline";
-import {PencilIcon, CalendarIcon} from "@heroicons/vue/24/solid";
+import { PencilIcon, CalendarIcon } from "@heroicons/vue/24/solid";
 import apiService from "@/services/api";
 import { useSidebarProvider } from "../../../composables/useSidebar";
 
@@ -41,7 +41,8 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 const editingId = ref(null);
 const showBulkUpload = ref(false);
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 const filterData = ref({
   departemen: "",
@@ -59,16 +60,16 @@ const appliedFilterData = ref({
 const opentambahPengguna = () => {
   editingId.value = null;
   formData.value = {
-    full_name: '',
-    phone_number: '',
-    email: '',
-    company_id: '',
-    department_id: '',
-    position_id: '',
-    work_status_id: '',
-    birth_date: '',
-    role: 'user',
-    kategori_pengguna: 'IMM'
+    full_name: "",
+    phone_number: "",
+    email: "",
+    company_id: "",
+    department_id: "",
+    position_id: "",
+    work_status_id: "",
+    birth_date: "",
+    role: "user",
+    kategori_pengguna: "IMM",
   };
   tambahPengguna.value = true;
 };
@@ -76,16 +77,16 @@ const opentambahPengguna = () => {
 const closeTambahPengguna = () => {
   editingId.value = null;
   formData.value = {
-    full_name: '',
-    phone_number: '',
-    email: '',
-    company_id: '',
-    department_id: '',
-    position_id: '',
-    work_status_id: '',
-    birth_date: '',
-    role: 'user',
-    kategori_pengguna: 'IMM'
+    full_name: "",
+    phone_number: "",
+    email: "",
+    company_id: "",
+    department_id: "",
+    position_id: "",
+    work_status_id: "",
+    birth_date: "",
+    role: "user",
+    kategori_pengguna: "IMM",
   };
   tambahPengguna.value = false;
 };
@@ -117,10 +118,12 @@ const handleUploadSuccess = () => {
 };
 
 const exportFilters = computed(() => ({
-  kategori: 'IMM',
+  kategori: "IMM",
   role: appliedFilterData.value.role || undefined,
-  is_active: appliedFilterData.value.status ? (appliedFilterData.value.status === 'Aktif') : undefined,
-  search: searchQuery.value || undefined
+  is_active: appliedFilterData.value.status
+    ? appliedFilterData.value.status === "Aktif"
+    : undefined,
+  search: searchQuery.value || undefined,
 }));
 
 const tableData = ref([]);
@@ -131,23 +134,23 @@ const departments = ref([]);
 const positions = ref([]);
 const statuses = ref([]);
 const roles = [
-  { value: 'user', label: 'User' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'superadmin', label: 'Superadmin' }
+  { value: "user", label: "User" },
+  { value: "admin", label: "Admin" },
+  { value: "superadmin", label: "Superadmin" },
 ];
 
 // Form data untuk tambah pengguna
 const formData = ref({
-  full_name: '',
-  phone_number: '',
-  email: '',
-  company_id: '',
-  department_id: '',
-  position_id: '',
-  work_status_id: '',
-  birth_date: '',
-  role: 'user',
-  kategori_pengguna: 'IMM'
+  full_name: "",
+  phone_number: "",
+  email: "",
+  company_id: "",
+  department_id: "",
+  position_id: "",
+  work_status_id: "",
+  birth_date: "",
+  role: "user",
+  kategori_pengguna: "IMM",
 });
 
 // Fetch master data
@@ -155,29 +158,32 @@ const fetchMasterData = async () => {
   try {
     // Fetch companies
     const companiesRes = await apiService.master.getCompanies();
-    if (companiesRes.data.status === 'success' || companiesRes.data.success) {
+    if (companiesRes.data.status === "success" || companiesRes.data.success) {
       companies.value = companiesRes.data.payload;
     }
-    
+
     // Fetch departments
     const departmentsRes = await apiService.master.getDepartments();
-    if (departmentsRes.data.status === 'success' || departmentsRes.data.success) {
+    if (
+      departmentsRes.data.status === "success" ||
+      departmentsRes.data.success
+    ) {
       departments.value = departmentsRes.data.payload;
     }
-    
+
     // Fetch positions
     const positionsRes = await apiService.master.getPositions();
-    if (positionsRes.data.status === 'success' || positionsRes.data.success) {
+    if (positionsRes.data.status === "success" || positionsRes.data.success) {
       positions.value = positionsRes.data.payload;
     }
-    
+
     // Fetch statuses
     const statusesRes = await apiService.master.getStatuses();
-    if (statusesRes.data.status === 'success' || statusesRes.data.success) {
+    if (statusesRes.data.status === "success" || statusesRes.data.success) {
       statuses.value = statusesRes.data.payload;
     }
   } catch (error) {
-    console.error('Error fetching master data:', error);
+    console.error("Error fetching master data:", error);
   } finally {
     // Cleanup if needed
   }
@@ -189,15 +195,15 @@ const fetchUsers = async () => {
   errorMessage.value = "";
   try {
     const response = await apiService.users.getAll();
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       // Filter hanya user dengan kategori IMM dan is_active = true
       const allUsers = response.data.payload;
-      const immUsers = allUsers.filter(user => 
-        user.kategori_pengguna === 'IMM' && user.is_active === true
+      const immUsers = allUsers.filter(
+        (user) => user.kategori_pengguna === "IMM" && user.is_active === true,
       );
-      
-      tableData.value = immUsers.map(user => ({
+
+      tableData.value = immUsers.map((user) => ({
         id: user.id,
         namaLengkap: user.full_name,
         noHandphone: user.phone_number,
@@ -213,12 +219,13 @@ const fetchUsers = async () => {
     }
   } catch (error) {
     console.error("Error fetching users:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal mengambil data pengguna";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal mengambil data pengguna";
+
     errorMessage.value = errorMsg;
   } finally {
     isLoading.value = false;
@@ -231,43 +238,48 @@ const handleDeleteUsers = async () => {
     alert("Pilih pengguna yang ingin dihapus!");
     return;
   }
-  
-  if (!confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} pengguna?`)) {
+
+  if (
+    !confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} pengguna?`)
+  ) {
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
   let deletedCount = 0;
-  
+
   try {
     // Hapus satu per satu
     for (const id of selectedRowIds.value) {
       await apiService.users.delete(id);
       deletedCount++;
     }
-    
+
     // Reset selection
     selectedRowIds.value = [];
     selectAllChecked.value = false;
-    
+
     // Clear current data to force refresh
     tableData.value = [];
-    
+
     // Refresh data from backend
     await fetchUsers();
-    
+
     alert(`${deletedCount} pengguna berhasil dihapus`);
   } catch (error) {
     console.error("Error deleting users:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal menghapus pengguna";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menghapus pengguna";
+
     errorMessage.value = errorMsg;
-    alert(`Error: ${errorMsg}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`);
+    alert(
+      `Error: ${errorMsg}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`,
+    );
   } finally {
     isLoading.value = false;
   }
@@ -276,17 +288,21 @@ const handleDeleteUsers = async () => {
 // Submit tambah/edit pengguna
 const handleTambahPengguna = async () => {
   // Validasi
-  if (!formData.value.full_name || !formData.value.phone_number || !formData.value.email) {
-    alert('Nama lengkap, nomor telepon, dan email wajib diisi!');
+  if (
+    !formData.value.full_name ||
+    !formData.value.phone_number ||
+    !formData.value.email
+  ) {
+    alert("Nama lengkap, nomor telepon, dan email wajib diisi!");
     return;
   }
-  
+
   isLoading.value = true;
-  errorMessage.value = '';
-  
+  errorMessage.value = "";
+
   try {
     let response;
-    
+
     // Prepare payload - convert empty strings to null for optional fields
     const payload = {
       ...formData.value,
@@ -296,7 +312,7 @@ const handleTambahPengguna = async () => {
       position_id: formData.value.position_id || null,
       work_status_id: formData.value.work_status_id || null,
     };
-    
+
     if (editingId.value) {
       // Mode edit
       response = await apiService.users.update(editingId.value, payload);
@@ -304,42 +320,48 @@ const handleTambahPengguna = async () => {
       // Mode tambah
       response = await apiService.users.create(payload);
     }
-    
-    if (response.data.status === 'success' || response.data.success) {
-      alert(editingId.value ? 'Pengguna berhasil diupdate' : 'Pengguna berhasil ditambahkan');
-      
+
+    if (response.data.status === "success" || response.data.success) {
+      alert(
+        editingId.value
+          ? "Pengguna berhasil diupdate"
+          : "Pengguna berhasil ditambahkan",
+      );
+
       // Reset form
       editingId.value = null;
       formData.value = {
-        full_name: '',
-        phone_number: '',
-        email: '',
-        company_id: '',
-        department_id: '',
-        position_id: '',
-        work_status_id: '',
-        birth_date: '',
-        role: 'user',
-        kategori_pengguna: 'IMM'
+        full_name: "",
+        phone_number: "",
+        email: "",
+        company_id: "",
+        department_id: "",
+        position_id: "",
+        work_status_id: "",
+        birth_date: "",
+        role: "user",
+        kategori_pengguna: "IMM",
       };
-      
+
       // Close modal
       closeTambahPengguna();
-      
+
       // Refresh data
       await fetchUsers();
     } else {
-      errorMessage.value = response.data.message || 'Gagal menyimpan data pengguna';
+      errorMessage.value =
+        response.data.message || "Gagal menyimpan data pengguna";
       alert(errorMessage.value);
     }
   } catch (error) {
-    console.error('Error saving user:', error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || 'Gagal menyimpan data pengguna';
-    
+    console.error("Error saving user:", error);
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menyimpan data pengguna";
+
     errorMessage.value = errorMsg;
     alert(`Error: ${errorMsg}`);
   } finally {
@@ -410,22 +432,22 @@ const filteredTableData = computed(() => {
   // Filter berdasarkan filter yang diterapkan
   if (appliedFilterData.value.departemen) {
     filtered = filtered.filter(
-      (row) => row.departemen === appliedFilterData.value.departemen
+      (row) => row.departemen === appliedFilterData.value.departemen,
     );
   }
   if (appliedFilterData.value.posisi) {
     filtered = filtered.filter(
-      (row) => row.posisi === appliedFilterData.value.posisi
+      (row) => row.posisi === appliedFilterData.value.posisi,
     );
   }
   if (appliedFilterData.value.status) {
     filtered = filtered.filter(
-      (row) => row.status === appliedFilterData.value.status
+      (row) => row.status === appliedFilterData.value.status,
     );
   }
   if (appliedFilterData.value.namaPerusahaan) {
     filtered = filtered.filter(
-      (row) => row.namaPerusahaan === appliedFilterData.value.namaPerusahaan
+      (row) => row.namaPerusahaan === appliedFilterData.value.namaPerusahaan,
     );
   }
 
@@ -450,7 +472,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length
+    filteredTableData.value.length,
   );
 });
 
@@ -470,12 +492,12 @@ const sortByName = () => {
   if (sortOrder.value === "asc") {
     sortOrder.value = "desc";
     tableData.value = [...tableData.value].sort((a, b) =>
-      b.namaLengkap.localeCompare(a.namaLengkap)
+      b.namaLengkap.localeCompare(a.namaLengkap),
     );
   } else {
     sortOrder.value = "asc";
     tableData.value = [...tableData.value].sort((a, b) =>
-      a.namaLengkap.localeCompare(b.namaLengkap)
+      a.namaLengkap.localeCompare(b.namaLengkap),
     );
   }
   currentPage.value = 1;
@@ -485,31 +507,31 @@ const editPengguna = async (rowId) => {
   try {
     // Fetch user detail dari backend
     const response = await apiService.users.getById(rowId);
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       const user = response.data.payload;
-      
+
       // Populate form dengan data user
       editingId.value = rowId;
       formData.value = {
-        full_name: user.full_name || '',
-        phone_number: user.phone_number || '',
-        email: user.email || '',
-        company_id: user.company_id || '',
-        department_id: user.department_id || '',
-        position_id: user.position_id || '',
-        work_status_id: user.work_status_id || '',
-        birth_date: user.birth_date || '',
-        role: user.role || 'user',
-        kategori_pengguna: 'IMM'
+        full_name: user.full_name || "",
+        phone_number: user.phone_number || "",
+        email: user.email || "",
+        company_id: user.company_id || "",
+        department_id: user.department_id || "",
+        position_id: user.position_id || "",
+        work_status_id: user.work_status_id || "",
+        birth_date: user.birth_date || "",
+        role: user.role || "user",
+        kategori_pengguna: "IMM",
       };
-      
+
       // Buka modal
       tambahPengguna.value = true;
     }
   } catch (error) {
-    console.error('Error fetching user detail:', error);
-    alert('Gagal mengambil data pengguna');
+    console.error("Error fetching user detail:", error);
+    alert("Gagal mengambil data pengguna");
   } finally {
     // Cleanup if needed
   }
@@ -517,26 +539,26 @@ const editPengguna = async (rowId) => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
-      <Aside />
+      <!-- Aside Sidebar - Push content style -->
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Main Content Area -->
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
 
         <!-- Content -->
         <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
           <!-- Judul - Sticky -->
-          <div class="mb-2 -mt-1 shrink-0 sticky top-0 z-30 bg-[#EFEFEF] pt-3">
+          <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
               <h1 class="text-base font-bold text-[#523E95] text-left">
                 PT Indominco Mandiri
               </h1>
             </div>
           </div>
-          <div
-            class="bg-white rounded-lg shadow-md p-5 flex flex-col"
-          >
+          <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
             <!-- Toolbar - Sticky -->
             <div
               class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
@@ -563,7 +585,9 @@ const editPengguna = async (rowId) => {
               </div>
 
               <!-- Search - Full width on mobile -->
-              <div class="relative flex w-full md:w-auto md:min-w-50 order-3 md:order-2">
+              <div
+                class="relative flex w-full md:w-auto md:min-w-50 order-3 md:order-2"
+              >
                 <MagnifyingGlassIcon
                   class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
                 />
@@ -580,7 +604,9 @@ const editPengguna = async (rowId) => {
               </div>
 
               <!-- Right Section -->
-              <div class="flex items-center gap-2 md:gap-3 order-2 md:order-3 ml-auto">
+              <div
+                class="flex items-center gap-2 md:gap-3 order-2 md:order-3 ml-auto"
+              >
                 <!-- Filter Button -->
                 <button
                   @click="openFilter"
@@ -610,7 +636,9 @@ const editPengguna = async (rowId) => {
                   "
                 >
                   <TrashIcon class="w-4 h-4" />
-                  <span class="hidden sm:inline">{{ isLoading ? 'Loading...' : 'Hapus' }}</span>
+                  <span class="hidden sm:inline">{{
+                    isLoading ? "Loading..." : "Hapus"
+                  }}</span>
                 </button>
               </div>
             </div>
@@ -621,24 +649,34 @@ const editPengguna = async (rowId) => {
             >
               <!-- Loading & Error Messages -->
               <div v-if="isLoading" class="text-center py-8 text-gray-600">
-                <div class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full" role="status">
+                <div
+                  class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"
+                  role="status"
+                >
                   <span class="sr-only">Loading...</span>
                 </div>
                 <p class="mt-2">Memuat data...</p>
               </div>
-              
+
               <div v-else-if="errorMessage" class="text-center py-8">
                 <p class="text-red-600">{{ errorMessage }}</p>
-                <button @click="fetchUsers" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                <button
+                  @click="fetchUsers"
+                  class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
                   Coba Lagi
                 </button>
               </div>
-              
-              <div v-else-if="tableData.length === 0" class="text-center py-8 text-gray-600">
+
+              <div
+                v-else-if="tableData.length === 0"
+                class="text-center py-8 text-gray-600"
+              >
                 <p>Belum ada data pengguna</p>
               </div>
-              
-              <div v-else
+
+              <div
+                v-else
                 class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
               >
                 <table class="w-full border-collapse">
@@ -653,9 +691,7 @@ const editPengguna = async (rowId) => {
                               type="checkbox"
                               :checked="selectAllChecked"
                               @change="toggleSelectAll"
-                              class="w-4 h-4 cursor-pointer rounded border appearance-none
-                                    bg-white border-gray-500
-                                    checked:bg-blue-500 checked:border-blue-500"
+                              class="w-4 h-4 cursor-pointer rounded border appearance-none bg-white border-gray-500 checked:bg-blue-500 checked:border-blue-500"
                               style="
                                 appearance: none;
                                 -webkit-appearance: none;
@@ -830,7 +866,8 @@ const editPengguna = async (rowId) => {
                     &lt;
                   </button>
                   <span class="text-sm text-gray-700 font-medium">
-                    {{ startIndex }} - {{ endIndex }} dari {{ filteredTableData.length }}
+                    {{ startIndex }} - {{ endIndex }} dari
+                    {{ filteredTableData.length }}
                   </span>
                   <button
                     @click="nextPage"
@@ -855,7 +892,7 @@ const editPengguna = async (rowId) => {
                   class="flex justify-between items-center mb-1 pb-3 border-b border-gray-200"
                 >
                   <h2 class="text-lg md:text-xl font-semibold text-gray-900">
-                    {{ editingId ? 'Edit Pengguna' : 'Tambah Pengguna' }}
+                    {{ editingId ? "Edit Pengguna" : "Tambah Pengguna" }}
                   </h2>
                   <button
                     @click="closeTambahPengguna"
@@ -949,7 +986,11 @@ const editPengguna = async (rowId) => {
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
                         <option value="">Pilih nama perusahaan</option>
-                        <option v-for="company in companies" :key="company.id" :value="company.id">
+                        <option
+                          v-for="company in companies"
+                          :key="company.id"
+                          :value="company.id"
+                        >
                           {{ company.nama_perusahaan }}
                         </option>
                       </select>
@@ -976,7 +1017,11 @@ const editPengguna = async (rowId) => {
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
                         <option value="">Pilih departemen</option>
-                        <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                        <option
+                          v-for="dept in departments"
+                          :key="dept.id"
+                          :value="dept.id"
+                        >
                           {{ dept.nama_department }}
                         </option>
                       </select>
@@ -999,7 +1044,11 @@ const editPengguna = async (rowId) => {
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
                         <option value="">Pilih posisi</option>
-                        <option v-for="pos in positions" :key="pos.id" :value="pos.id">
+                        <option
+                          v-for="pos in positions"
+                          :key="pos.id"
+                          :value="pos.id"
+                        >
                           {{ pos.nama_posisi }}
                         </option>
                       </select>
@@ -1026,7 +1075,11 @@ const editPengguna = async (rowId) => {
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
                         <option value="">Pilih status pekerjaan</option>
-                        <option v-for="status in statuses" :key="status.id" :value="status.id">
+                        <option
+                          v-for="status in statuses"
+                          :key="status.id"
+                          :value="status.id"
+                        >
                           {{ status.nama_status }}
                         </option>
                       </select>
@@ -1059,7 +1112,11 @@ const editPengguna = async (rowId) => {
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
                         <option value="">Pilih role</option>
-                        <option v-for="role in roles" :key="role.value" :value="role.value">
+                        <option
+                          v-for="role in roles"
+                          :key="role.value"
+                          :value="role.value"
+                        >
                           {{ role.label }}
                         </option>
                       </select>
@@ -1076,7 +1133,13 @@ const editPengguna = async (rowId) => {
                     :disabled="isLoading"
                     class="px-6 md:px-6 py-2 text-sm md:text-base bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular disabled:opacity-50"
                   >
-                    {{ isLoading ? 'Loading...' : (editingId ? 'Update Pengguna' : 'Tambah Pengguna') }}
+                    {{
+                      isLoading
+                        ? "Loading..."
+                        : editingId
+                          ? "Update Pengguna"
+                          : "Tambah Pengguna"
+                    }}
                   </button>
                   <button
                     @click="closeTambahPengguna"
@@ -1124,7 +1187,11 @@ const editPengguna = async (rowId) => {
                       class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
                     >
                       <option value="">Semua Perusahaan</option>
-                      <option v-for="company in companies" :key="company.id" :value="company.nama_perusahaan">
+                      <option
+                        v-for="company in companies"
+                        :key="company.id"
+                        :value="company.nama_perusahaan"
+                      >
                         {{ company.nama_perusahaan }}
                       </option>
                     </select>
@@ -1146,7 +1213,11 @@ const editPengguna = async (rowId) => {
                       class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
                     >
                       <option value="">Semua Departemen</option>
-                      <option v-for="dept in departments" :key="dept.id" :value="dept.nama_department">
+                      <option
+                        v-for="dept in departments"
+                        :key="dept.id"
+                        :value="dept.nama_department"
+                      >
                         {{ dept.nama_department }}
                       </option>
                     </select>
@@ -1168,7 +1239,11 @@ const editPengguna = async (rowId) => {
                       class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
                     >
                       <option value="">Semua Posisi</option>
-                      <option v-for="pos in positions" :key="pos.id" :value="pos.nama_posisi">
+                      <option
+                        v-for="pos in positions"
+                        :key="pos.id"
+                        :value="pos.nama_posisi"
+                      >
                         {{ pos.nama_posisi }}
                       </option>
                     </select>
@@ -1190,7 +1265,11 @@ const editPengguna = async (rowId) => {
                       class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
                     >
                       <option value="">Semua Status</option>
-                      <option v-for="status in statuses" :key="status.id" :value="status.nama_status">
+                      <option
+                        v-for="status in statuses"
+                        :key="status.id"
+                        :value="status.nama_status"
+                      >
                         {{ status.nama_status }}
                       </option>
                     </select>

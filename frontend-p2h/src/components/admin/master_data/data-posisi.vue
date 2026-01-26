@@ -79,9 +79,9 @@ const fetchPositions = async () => {
   errorMessage.value = "";
   try {
     const response = await apiService.master.getPositions();
-    
-    if (response.data.status === 'success' || response.data.success) {
-      tableData.value = response.data.payload.map(position => ({
+
+    if (response.data.status === "success" || response.data.success) {
+      tableData.value = response.data.payload.map((position) => ({
         id: position.id,
         namaPosisi: position.nama_posisi,
       }));
@@ -90,12 +90,13 @@ const fetchPositions = async () => {
     }
   } catch (error) {
     console.error("Error fetching positions:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal mengambil data posisi";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal mengambil data posisi";
+
     errorMessage.value = errorMsg;
   } finally {
     isLoading.value = false;
@@ -109,18 +110,18 @@ const handleTambahPosisi = async () => {
     alert("Nama posisi wajib diisi!");
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
-  
+
   try {
     const payload = {
       nama_posisi: formData.value.nama_posisi,
     };
-    
+
     const response = await apiService.master.createPosition(payload);
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       alert("Posisi berhasil ditambahkan");
       closeTambahPosisi();
       await fetchPositions();
@@ -129,12 +130,13 @@ const handleTambahPosisi = async () => {
     }
   } catch (error) {
     console.error("Error creating position:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal menambahkan posisi";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menambahkan posisi";
+
     errorMessage.value = errorMsg;
     alert(`Error: ${errorMsg}`);
   } finally {
@@ -148,22 +150,23 @@ const handleEditPosisi = async () => {
     errorMessage.value = "Nama posisi wajib diisi";
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
   try {
     const response = await apiService.master.updatePosition(editingId.value, {
       nama_posisi: formData.value.nama_posisi,
     });
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       await fetchPositions();
       closeEditPosisi();
       alert("Posisi berhasil diupdate");
     }
   } catch (error) {
     console.error("Error updating position:", error);
-    errorMessage.value = error.response?.data?.detail || "Gagal mengupdate posisi";
+    errorMessage.value =
+      error.response?.data?.detail || "Gagal mengupdate posisi";
   } finally {
     isLoading.value = false;
   }
@@ -175,43 +178,48 @@ const handleDeletePositions = async () => {
     alert("Pilih posisi yang ingin dihapus!");
     return;
   }
-  
-  if (!confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} posisi?`)) {
+
+  if (
+    !confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} posisi?`)
+  ) {
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
   let deletedCount = 0;
-  
+
   try {
     // Hapus satu per satu
     for (const id of selectedRowIds.value) {
       await apiService.master.deletePosition(id);
       deletedCount++;
     }
-    
+
     // Reset selection
     selectedRowIds.value = [];
     selectAllChecked.value = false;
-    
+
     // Clear current data to force refresh
     tableData.value = [];
-    
+
     // Refresh data from backend
     await fetchPositions();
-    
+
     alert(`${deletedCount} posisi berhasil dihapus`);
   } catch (error) {
     console.error("Error deleting positions:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal menghapus posisi";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menghapus posisi";
+
     errorMessage.value = errorMsg;
-    alert(`Error: ${errorMsg}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`);
+    alert(
+      `Error: ${errorMsg}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`,
+    );
   } finally {
     isLoading.value = false;
   }
@@ -286,7 +294,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length
+    filteredTableData.value.length,
   );
 });
 
@@ -299,10 +307,14 @@ const previousPage = () => {
 const sortByPositionName = () => {
   if (sortOrder.value === "asc") {
     sortOrder.value = "desc";
-    tableData.value = [...tableData.value].sort((a, b) => b.namaPosisi.localeCompare(a.namaPosisi));
+    tableData.value = [...tableData.value].sort((a, b) =>
+      b.namaPosisi.localeCompare(a.namaPosisi),
+    );
   } else {
     sortOrder.value = "asc";
-    tableData.value = [...tableData.value].sort((a, b) => a.namaPosisi.localeCompare(b.namaPosisi));
+    tableData.value = [...tableData.value].sort((a, b) =>
+      a.namaPosisi.localeCompare(b.namaPosisi),
+    );
   }
   currentPage.value = 1;
 };
@@ -315,13 +327,14 @@ const nextPage = () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
-      <Aside />
+      <!-- Aside Sidebar - Push content style -->
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Main Content Area -->
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
-
         <!-- Content -->
         <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
           <div
@@ -369,35 +382,45 @@ const nextPage = () => {
                   "
                 >
                   <TrashIcon class="w-4 h-4" />
-                  <span>{{ isLoading ? 'Loading...' : 'Hapus' }}</span>
+                  <span>{{ isLoading ? "Loading..." : "Hapus" }}</span>
                 </button>
               </div>
             </div>
 
             <!-- Table Container with Horizontal Scroll -->
             <div
-              class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4">
-              
+              class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4"
+            >
               <!-- Loading & Error Messages -->
               <div v-if="isLoading" class="text-center py-8 text-gray-600">
-                <div class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full" role="status">
+                <div
+                  class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"
+                  role="status"
+                >
                   <span class="sr-only">Loading...</span>
                 </div>
                 <p class="mt-2">Memuat data...</p>
               </div>
-              
+
               <div v-else-if="errorMessage" class="text-center py-8">
                 <p class="text-red-600">{{ errorMessage }}</p>
-                <button @click="fetchPositions" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                <button
+                  @click="fetchPositions"
+                  class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
                   Coba Lagi
                 </button>
               </div>
-              
-              <div v-else-if="tableData.length === 0" class="text-center py-8 text-gray-600">
+
+              <div
+                v-else-if="tableData.length === 0"
+                class="text-center py-8 text-gray-600"
+              >
                 <p>Belum ada data posisi</p>
               </div>
-              
-              <div v-else
+
+              <div
+                v-else
                 class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
               >
                 <table class="w-full border-collapse">
@@ -411,9 +434,7 @@ const nextPage = () => {
                             type="checkbox"
                             :checked="selectAllChecked"
                             @change="toggleSelectAll"
-                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none
-                                  bg-white border-gray-600
-                                  checked:bg-blue-500 checked:border-blue-500"
+                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none bg-white border-gray-600 checked:bg-blue-500 checked:border-blue-500"
                             style="
                               appearance: none;
                               -webkit-appearance: none;
@@ -439,7 +460,10 @@ const nextPage = () => {
                       >
                         <div class="flex items-center gap-2">
                           <span>Nama Posisi</span>
-                          <ArrowDownIcon v-if="sortOrder === 'asc'" class="w-4 h-4" />
+                          <ArrowDownIcon
+                            v-if="sortOrder === 'asc'"
+                            class="w-4 h-4"
+                          />
                           <ArrowUpIcon v-else class="w-4 h-4" />
                         </div>
                       </th>
@@ -464,9 +488,7 @@ const nextPage = () => {
                             :checked="isRowSelected(row.id)"
                             @change="selectRow(row.id)"
                             @click.stop
-                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none
-                                  bg-white border-gray-600
-                                  checked:bg-blue-500 checked:border-blue-500"
+                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none bg-white border-gray-600 checked:bg-blue-500 checked:border-blue-500"
                             style="
                               appearance: none;
                               -webkit-appearance: none;
@@ -497,7 +519,9 @@ const nextPage = () => {
                           @click="openEditPosisi(row)"
                           class="p-1 hover:bg-gray-100 rounded transition"
                         >
-                          <PencilSquareIcon class="w-4.5 h-4.5 text-black hover:text-blue-800" />
+                          <PencilSquareIcon
+                            class="w-4.5 h-4.5 text-black hover:text-blue-800"
+                          />
                         </button>
                       </td>
                     </tr>
@@ -506,10 +530,16 @@ const nextPage = () => {
               </div>
 
               <!-- Pagination -->
-              <div class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2">
+              <div
+                class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2"
+              >
                 <div class="flex items-center gap-2 text-sm text-gray-700">
                   <span>Tampilkan</span>
-                  <select v-model="itemsPerPage" @change="currentPage = 1" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    v-model="itemsPerPage"
+                    @change="currentPage = 1"
+                    class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option :value="10">10</option>
                     <option :value="20">20</option>
                     <option :value="50">50</option>
@@ -518,9 +548,24 @@ const nextPage = () => {
                   <span>baris</span>
                 </div>
                 <div class="flex items-center gap-3">
-                  <button @click="previousPage" :disabled="currentPage === 1" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&lt;</button>
-                  <span class="text-sm text-gray-700 font-medium">{{ startIndex }} - {{ endIndex }} dari {{ filteredTableData.length }}</span>
-                  <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&gt;</button>
+                  <button
+                    @click="previousPage"
+                    :disabled="currentPage === 1"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &lt;
+                  </button>
+                  <span class="text-sm text-gray-700 font-medium"
+                    >{{ startIndex }} - {{ endIndex }} dari
+                    {{ filteredTableData.length }}</span
+                  >
+                  <button
+                    @click="nextPage"
+                    :disabled="currentPage === totalPages"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &gt;
+                  </button>
                 </div>
               </div>
             </div>
@@ -550,7 +595,10 @@ const nextPage = () => {
                 </div>
 
                 <!-- Error Message -->
-                <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div
+                  v-if="errorMessage"
+                  class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md"
+                >
                   <p class="text-sm text-red-600">{{ errorMessage }}</p>
                 </div>
 
@@ -579,7 +627,7 @@ const nextPage = () => {
                     :disabled="isLoading"
                     class="px-6 md:px-6 py-2 text-sm md:text-sm bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ isLoading ? 'Menyimpan...' : 'Tambah Posisi' }}
+                    {{ isLoading ? "Menyimpan..." : "Tambah Posisi" }}
                   </button>
                   <button
                     @click="closeTambahPosisi"
@@ -617,7 +665,10 @@ const nextPage = () => {
                 </div>
 
                 <!-- Error Message -->
-                <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div
+                  v-if="errorMessage"
+                  class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md"
+                >
                   <p class="text-sm text-red-600">{{ errorMessage }}</p>
                 </div>
 
@@ -646,7 +697,7 @@ const nextPage = () => {
                     :disabled="isLoading"
                     class="px-6 md:px-6 py-2 text-sm md:text-sm bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ isLoading ? 'Menyimpan...' : 'Edit Posisi' }}
+                    {{ isLoading ? "Menyimpan..." : "Edit Posisi" }}
                   </button>
                   <button
                     @click="closeEditPosisi"

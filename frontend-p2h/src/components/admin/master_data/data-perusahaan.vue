@@ -84,9 +84,9 @@ const fetchCompanies = async () => {
   errorMessage.value = "";
   try {
     const response = await apiService.master.getCompanies();
-    
-    if (response.data.status === 'success' || response.data.success) {
-      tableData.value = response.data.payload.map(company => ({
+
+    if (response.data.status === "success" || response.data.success) {
+      tableData.value = response.data.payload.map((company) => ({
         id: company.id,
         namaPerusahaan: company.nama_perusahaan,
         status: company.status || "-",
@@ -96,12 +96,13 @@ const fetchCompanies = async () => {
     }
   } catch (error) {
     console.error("Error fetching companies:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal mengambil data perusahaan";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal mengambil data perusahaan";
+
     errorMessage.value = errorMsg;
   } finally {
     isLoading.value = false;
@@ -115,33 +116,35 @@ const handleTambahPerusahaan = async () => {
     alert("Nama perusahaan wajib diisi!");
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
-  
+
   try {
     const payload = {
       nama_perusahaan: formData.value.nama_perusahaan,
       status: formData.value.status || null,
     };
-    
+
     const response = await apiService.master.createCompany(payload);
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       alert("Perusahaan berhasil ditambahkan");
       closeTambahPerusahaan();
       await fetchCompanies();
     } else {
-      errorMessage.value = response.data.message || "Gagal menambahkan perusahaan";
+      errorMessage.value =
+        response.data.message || "Gagal menambahkan perusahaan";
     }
   } catch (error) {
     console.error("Error creating company:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal menambahkan perusahaan";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menambahkan perusahaan";
+
     errorMessage.value = errorMsg;
     alert(`Error: ${errorMsg}`);
   } finally {
@@ -155,7 +158,7 @@ const handleEditPerusahaan = async () => {
     errorMessage.value = "Nama perusahaan wajib diisi";
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
   try {
@@ -163,15 +166,16 @@ const handleEditPerusahaan = async () => {
       nama_perusahaan: formData.value.nama_perusahaan,
       status: formData.value.status || null,
     });
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       await fetchCompanies();
       closeEditPerusahaan();
       alert("Perusahaan berhasil diupdate");
     }
   } catch (error) {
     console.error("Error updating company:", error);
-    errorMessage.value = error.response?.data?.detail || "Gagal mengupdate perusahaan";
+    errorMessage.value =
+      error.response?.data?.detail || "Gagal mengupdate perusahaan";
   } finally {
     isLoading.value = false;
   }
@@ -183,43 +187,48 @@ const handleDeleteCompanies = async () => {
     alert("Pilih perusahaan yang ingin dihapus!");
     return;
   }
-  
-  if (!confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} perusahaan?`)) {
+
+  if (
+    !confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} perusahaan?`)
+  ) {
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
   let deletedCount = 0;
-  
+
   try {
     // Hapus satu per satu
     for (const id of selectedRowIds.value) {
       await apiService.master.deleteCompany(id);
       deletedCount++;
     }
-    
+
     // Reset selection
     selectedRowIds.value = [];
     selectAllChecked.value = false;
-    
+
     // Clear current data to force refresh
     tableData.value = [];
-    
+
     // Refresh data from backend
     await fetchCompanies();
-    
+
     alert(`${deletedCount} perusahaan berhasil dihapus`);
   } catch (error) {
     console.error("Error deleting companies:", error);
-    
-    const errorMsg = error.response?.data?.detail 
-      || error.response?.data?.message 
-      || error.message 
-      || "Gagal menghapus perusahaan";
-    
+
+    const errorMsg =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menghapus perusahaan";
+
     errorMessage.value = errorMsg;
-    alert(`Error: ${errorMsg}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`);
+    alert(
+      `Error: ${errorMsg}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`,
+    );
   } finally {
     isLoading.value = false;
   }
@@ -294,7 +303,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length
+    filteredTableData.value.length,
   );
 });
 
@@ -307,10 +316,14 @@ const previousPage = () => {
 const sortByCompanyName = () => {
   if (sortOrder.value === "asc") {
     sortOrder.value = "desc";
-    tableData.value = [...tableData.value].sort((a, b) => b.namaPerusahaan.localeCompare(a.namaPerusahaan));
+    tableData.value = [...tableData.value].sort((a, b) =>
+      b.namaPerusahaan.localeCompare(a.namaPerusahaan),
+    );
   } else {
     sortOrder.value = "asc";
-    tableData.value = [...tableData.value].sort((a, b) => a.namaPerusahaan.localeCompare(b.namaPerusahaan));
+    tableData.value = [...tableData.value].sort((a, b) =>
+      a.namaPerusahaan.localeCompare(b.namaPerusahaan),
+    );
   }
   currentPage.value = 1;
 };
@@ -323,11 +336,13 @@ const nextPage = () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
-      <Aside />
+      <!-- Aside Sidebar - Push content style -->
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Main Content Area -->
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
 
         <!-- Content -->
@@ -377,35 +392,45 @@ const nextPage = () => {
                   "
                 >
                   <TrashIcon class="w-4 h-4" />
-                  <span>{{ isLoading ? 'Loading...' : 'Hapus' }}</span>
+                  <span>{{ isLoading ? "Loading..." : "Hapus" }}</span>
                 </button>
               </div>
             </div>
 
             <!-- Table Container with Horizontal Scroll -->
             <div
-              class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4">
-              
+              class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4"
+            >
               <!-- Loading & Error Messages -->
               <div v-if="isLoading" class="text-center py-8 text-gray-600">
-                <div class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full" role="status">
+                <div
+                  class="animate-spin inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full"
+                  role="status"
+                >
                   <span class="sr-only">Loading...</span>
                 </div>
                 <p class="mt-2">Memuat data...</p>
               </div>
-              
+
               <div v-else-if="errorMessage" class="text-center py-8">
                 <p class="text-red-600">{{ errorMessage }}</p>
-                <button @click="fetchCompanies" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                <button
+                  @click="fetchCompanies"
+                  class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
                   Coba Lagi
                 </button>
               </div>
-              
-              <div v-else-if="tableData.length === 0" class="text-center py-8 text-gray-600">
+
+              <div
+                v-else-if="tableData.length === 0"
+                class="text-center py-8 text-gray-600"
+              >
                 <p>Belum ada data perusahaan</p>
               </div>
-              
-              <div v-else
+
+              <div
+                v-else
                 class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
               >
                 <table class="w-full border-collapse">
@@ -419,9 +444,7 @@ const nextPage = () => {
                             type="checkbox"
                             :checked="selectAllChecked"
                             @change="toggleSelectAll"
-                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none
-                                  bg-white border-gray-600
-                                  checked:bg-blue-500 checked:border-blue-500"
+                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none bg-white border-gray-600 checked:bg-blue-500 checked:border-blue-500"
                             style="
                               appearance: none;
                               -webkit-appearance: none;
@@ -447,7 +470,10 @@ const nextPage = () => {
                       >
                         <div class="flex items-center gap-2">
                           <span>Nama Perusahaan</span>
-                          <ArrowDownIcon v-if="sortOrder === 'asc'" class="w-4 h-4" />
+                          <ArrowDownIcon
+                            v-if="sortOrder === 'asc'"
+                            class="w-4 h-4"
+                          />
                           <ArrowUpIcon v-else class="w-4 h-4" />
                         </div>
                       </th>
@@ -477,9 +503,7 @@ const nextPage = () => {
                             :checked="isRowSelected(row.id)"
                             @change="selectRow(row.id)"
                             @click.stop
-                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none
-                                  bg-white border-gray-600
-                                  checked:bg-blue-500 checked:border-blue-500"
+                            class="w-5 h-5 cursor-pointer rounded-md border-2 appearance-none bg-white border-gray-600 checked:bg-blue-500 checked:border-blue-500"
                             style="
                               appearance: none;
                               -webkit-appearance: none;
@@ -515,7 +539,9 @@ const nextPage = () => {
                           @click="openEditPerusahaan(row)"
                           class="p-1 hover:bg-gray-100 rounded transition"
                         >
-                          <PencilSquareIcon class="w-4.5 h-4.5 text-black hover:text-blue-800" />
+                          <PencilSquareIcon
+                            class="w-4.5 h-4.5 text-black hover:text-blue-800"
+                          />
                         </button>
                       </td>
                     </tr>
@@ -524,10 +550,16 @@ const nextPage = () => {
               </div>
 
               <!-- Pagination -->
-              <div class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2">
+              <div
+                class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2"
+              >
                 <div class="flex items-center gap-2 text-sm text-gray-700">
                   <span>Tampilkan</span>
-                  <select v-model="itemsPerPage" @change="currentPage = 1" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    v-model="itemsPerPage"
+                    @change="currentPage = 1"
+                    class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option :value="10">10</option>
                     <option :value="20">20</option>
                     <option :value="50">50</option>
@@ -536,9 +568,24 @@ const nextPage = () => {
                   <span>baris</span>
                 </div>
                 <div class="flex items-center gap-3">
-                  <button @click="previousPage" :disabled="currentPage === 1" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&lt;</button>
-                  <span class="text-sm text-gray-700 font-medium">{{ startIndex }} - {{ endIndex }} dari {{ filteredTableData.length }}</span>
-                  <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&gt;</button>
+                  <button
+                    @click="previousPage"
+                    :disabled="currentPage === 1"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &lt;
+                  </button>
+                  <span class="text-sm text-gray-700 font-medium"
+                    >{{ startIndex }} - {{ endIndex }} dari
+                    {{ filteredTableData.length }}</span
+                  >
+                  <button
+                    @click="nextPage"
+                    :disabled="currentPage === totalPages"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &gt;
+                  </button>
                 </div>
               </div>
             </div>
@@ -568,7 +615,10 @@ const nextPage = () => {
                 </div>
 
                 <!-- Error Message -->
-                <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div
+                  v-if="errorMessage"
+                  class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md"
+                >
                   <p class="text-sm text-red-600">{{ errorMessage }}</p>
                 </div>
 
@@ -615,7 +665,7 @@ const nextPage = () => {
                     :disabled="isLoading"
                     class="px-6 md:px-6 py-2 text-sm md:text-sm bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ isLoading ? 'Menyimpan...' : 'Tambah Perusahaan' }}
+                    {{ isLoading ? "Menyimpan..." : "Tambah Perusahaan" }}
                   </button>
                   <button
                     @click="closeTambahPerusahaan"
@@ -653,7 +703,10 @@ const nextPage = () => {
                 </div>
 
                 <!-- Error Message -->
-                <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                <div
+                  v-if="errorMessage"
+                  class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md"
+                >
                   <p class="text-sm text-red-600">{{ errorMessage }}</p>
                 </div>
 
@@ -700,7 +753,7 @@ const nextPage = () => {
                     :disabled="isLoading"
                     class="px-6 md:px-6 py-2 text-sm md:text-sm bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ isLoading ? 'Menyimpan...' : 'Edit Perusahaan' }}
+                    {{ isLoading ? "Menyimpan..." : "Edit Perusahaan" }}
                   </button>
                   <button
                     @click="closeEditPerusahaan"

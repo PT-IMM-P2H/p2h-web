@@ -36,7 +36,8 @@ const sortOrder = ref("asc");
 const isLoading = ref(false);
 const errorMessage = ref("");
 const showBulkUpload = ref(false);
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const filterData = ref({
   vehicle_type: "",
   warna_lambung: "",
@@ -83,11 +84,13 @@ const handleUploadSuccess = () => {
 };
 
 const exportFilters = computed(() => ({
-  kategori: 'TRAVEL',
+  kategori: "TRAVEL",
   vehicle_type: appliedFilterData.value.vehicle_type || undefined,
   shift_type: appliedFilterData.value.shift_type || undefined,
-  is_active: appliedFilterData.value.status ? (appliedFilterData.value.status === 'Aktif') : undefined,
-  search: searchQuery.value || undefined
+  is_active: appliedFilterData.value.status
+    ? appliedFilterData.value.status === "Aktif"
+    : undefined,
+  search: searchQuery.value || undefined,
 }));
 
 const tableData = ref([]);
@@ -97,15 +100,21 @@ const fetchVehicles = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    console.log('🔄 [Travel] Fetching vehicles...');
+    console.log("🔄 [Travel] Fetching vehicles...");
     const response = await apiService.vehicles.getAll();
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       // Filter hanya kategori Travel
-      const allVehicles = response.data.payload.filter(v => v.kategori_unit === 'TRAVEL');
-      console.log('✅ [Travel] Vehicles fetched:', allVehicles.length, 'vehicles');
-      
-      tableData.value = allVehicles.map(vehicle => ({
+      const allVehicles = response.data.payload.filter(
+        (v) => v.kategori_unit === "TRAVEL",
+      );
+      console.log(
+        "✅ [Travel] Vehicles fetched:",
+        allVehicles.length,
+        "vehicles",
+      );
+
+      tableData.value = allVehicles.map((vehicle) => ({
         id: vehicle.id,
         nomorLambung: vehicle.no_lambung,
         warnaNomorLambung: vehicle.warna_no_lambung || "-",
@@ -124,8 +133,11 @@ const fetchVehicles = async () => {
       errorMessage.value = response.data.message || "Gagal mengambil data";
     }
   } catch (error) {
-    console.error('❌ [Travel] Error fetching vehicles:', error);
-    errorMessage.value = error.response?.data?.detail || error.message || "Gagal mengambil data kendaraan";
+    console.error("❌ [Travel] Error fetching vehicles:", error);
+    errorMessage.value =
+      error.response?.data?.detail ||
+      error.message ||
+      "Gagal mengambil data kendaraan";
   } finally {
     isLoading.value = false;
   }
@@ -137,10 +149,17 @@ onMounted(() => {
 });
 
 // Watch untuk auto-fetch ketika filter diterapkan
-watch(appliedFilterData, () => {
-  console.log('🔄 Filter changed, fetching vehicles...', appliedFilterData.value);
-  fetchVehicles();
-}, { deep: true });
+watch(
+  appliedFilterData,
+  () => {
+    console.log(
+      "🔄 Filter changed, fetching vehicles...",
+      appliedFilterData.value,
+    );
+    fetchVehicles();
+  },
+  { deep: true },
+);
 
 // Handler untuk format nomor lambung saat blur
 // Note: Unit travel belum ada form input, handler ini untuk konsistensi
@@ -207,17 +226,17 @@ const filteredTableData = computed(() => {
   // Filter berdasarkan filter yang diterapkan
   if (appliedFilterData.value.vehicle_type) {
     filtered = filtered.filter(
-      (row) => row.tipe === appliedFilterData.value.vehicle_type
+      (row) => row.tipe === appliedFilterData.value.vehicle_type,
     );
   }
   if (appliedFilterData.value.warna_lambung) {
     filtered = filtered.filter(
-      (row) => row.warnaNomorLambung === appliedFilterData.value.warna_lambung
+      (row) => row.warnaNomorLambung === appliedFilterData.value.warna_lambung,
     );
   }
   if (appliedFilterData.value.perusahaan) {
     filtered = filtered.filter(
-      (row) => row.perusahaan === appliedFilterData.value.perusahaan
+      (row) => row.perusahaan === appliedFilterData.value.perusahaan,
     );
   }
 
@@ -242,7 +261,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length
+    filteredTableData.value.length,
   );
 });
 
@@ -300,17 +319,19 @@ const getDateStyle = (dateString) => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
-      <Aside />
+      <!-- Aside Sidebar - Push content style -->
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Main Content Area -->
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
 
         <!-- Content -->
         <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
           <!-- Judul -->
-          <div class="mb-2 -mt-1 shrink-0 sticky top-0 z-30 bg-[#EFEFEF] pt-3">
+          <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
               <h1 class="text-base font-bold text-[#523E95] text-left">
                 Travel
@@ -584,10 +605,16 @@ const getDateStyle = (dateString) => {
               </div>
 
               <!-- Pagination -->
-              <div class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2">
+              <div
+                class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2"
+              >
                 <div class="flex items-center gap-2 text-sm text-gray-700">
                   <span>Tampilkan</span>
-                  <select v-model="itemsPerPage" @change="currentPage = 1" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    v-model="itemsPerPage"
+                    @change="currentPage = 1"
+                    class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option :value="10">10</option>
                     <option :value="20">20</option>
                     <option :value="50">50</option>
@@ -596,9 +623,24 @@ const getDateStyle = (dateString) => {
                   <span>baris</span>
                 </div>
                 <div class="flex items-center gap-3">
-                  <button @click="previousPage" :disabled="currentPage === 1" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&lt;</button>
-                  <span class="text-sm text-gray-700 font-medium">{{ startIndex }} - {{ endIndex }} dari {{ filteredTableData.length }}</span>
-                  <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&gt;</button>
+                  <button
+                    @click="previousPage"
+                    :disabled="currentPage === 1"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &lt;
+                  </button>
+                  <span class="text-sm text-gray-700 font-medium"
+                    >{{ startIndex }} - {{ endIndex }} dari
+                    {{ filteredTableData.length }}</span
+                  >
+                  <button
+                    @click="nextPage"
+                    :disabled="currentPage === totalPages"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &gt;
+                  </button>
                 </div>
               </div>
             </div>

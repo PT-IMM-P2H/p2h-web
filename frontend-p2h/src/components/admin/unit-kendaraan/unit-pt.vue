@@ -39,7 +39,8 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 const editingId = ref(null);
 const showBulkUpload = ref(false);
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const filterData = ref({
   vehicle_type: "",
   warna_lambung: "",
@@ -54,38 +55,43 @@ const appliedFilterData = ref({
 const opentambahUnitKendaraan = () => {
   editingId.value = null;
   formData.value = {
-    no_lambung: '',
-    warna_no_lambung: '',
-    plat_nomor: '',
-    vehicle_type: 'Light Vehicle',
-    merk: '',
+    no_lambung: "",
+    warna_no_lambung: "",
+    plat_nomor: "",
+    vehicle_type: "Light Vehicle",
+    merk: "",
     user_id: null,
     company_id: null,
-    no_rangka: '',
-    no_mesin: '',
-    stnk_expiry: '',
-    pajak_expiry: '',
-    kir_expiry: ''
+    no_rangka: "",
+    no_mesin: "",
+    stnk_expiry: "",
+    pajak_expiry: "",
+    kir_expiry: "",
   };
-  console.log('📋 Modal opened - Users available:', allUsers.value.length, 'Companies available:', allCompanies.value.length);
+  console.log(
+    "📋 Modal opened - Users available:",
+    allUsers.value.length,
+    "Companies available:",
+    allCompanies.value.length,
+  );
   tambahUnitKendaraan.value = true;
 };
 
 const closeTambahUnitKendaraan = () => {
   editingId.value = null;
   formData.value = {
-    no_lambung: '',
-    warna_no_lambung: '',
-    plat_nomor: '',
-    vehicle_type: 'Light Vehicle',
-    merk: '',
+    no_lambung: "",
+    warna_no_lambung: "",
+    plat_nomor: "",
+    vehicle_type: "Light Vehicle",
+    merk: "",
     user_id: null,
     company_id: null,
-    no_rangka: '',
-    no_mesin: '',
-    stnk_expiry: '',
-    pajak_expiry: '',
-    kir_expiry: ''
+    no_rangka: "",
+    no_mesin: "",
+    stnk_expiry: "",
+    pajak_expiry: "",
+    kir_expiry: "",
   };
   tambahUnitKendaraan.value = false;
 };
@@ -117,29 +123,31 @@ const handleUploadSuccess = () => {
 };
 
 const exportFilters = computed(() => ({
-  kategori: 'IMM',
+  kategori: "IMM",
   vehicle_type: appliedFilterData.value.vehicle_type || undefined,
   shift_type: appliedFilterData.value.shift_type || undefined,
-  is_active: appliedFilterData.value.status ? (appliedFilterData.value.status === 'Aktif') : undefined,
-  search: searchQuery.value || undefined
+  is_active: appliedFilterData.value.status
+    ? appliedFilterData.value.status === "Aktif"
+    : undefined,
+  search: searchQuery.value || undefined,
 }));
 
 const tableData = ref([]);
 
 // Form data untuk tambah/edit kendaraan
 const formData = ref({
-  no_lambung: '',
-  warna_no_lambung: '',
-  plat_nomor: '',
-  vehicle_type: 'Light Vehicle',
-  merk: '',
+  no_lambung: "",
+  warna_no_lambung: "",
+  plat_nomor: "",
+  vehicle_type: "Light Vehicle",
+  merk: "",
   user_id: null,
   company_id: null,
-  no_rangka: '',
-  no_mesin: '',
-  stnk_expiry: '',
-  pajak_expiry: '',
-  kir_expiry: ''
+  no_rangka: "",
+  no_mesin: "",
+  stnk_expiry: "",
+  pajak_expiry: "",
+  kir_expiry: "",
 });
 
 // Users and Companies data
@@ -150,9 +158,9 @@ const allCompanies = ref([]);
 const fetchUsers = async () => {
   try {
     const response = await apiService.users.getAll();
-    if (response.data.status === 'success') {
+    if (response.data.status === "success") {
       allUsers.value = response.data.payload;
-      console.log('✅ Users fetched:', allUsers.value.length, 'users');
+      console.log("✅ Users fetched:", allUsers.value.length, "users");
     }
   } catch (error) {
     console.error("Error fetching users:", error);
@@ -163,9 +171,13 @@ const fetchUsers = async () => {
 const fetchCompanies = async () => {
   try {
     const response = await apiService.master.getCompanies();
-    if (response.data.status === 'success') {
+    if (response.data.status === "success") {
       allCompanies.value = response.data.payload;
-      console.log('✅ Companies fetched:', allCompanies.value.length, 'companies');
+      console.log(
+        "✅ Companies fetched:",
+        allCompanies.value.length,
+        "companies",
+      );
     }
   } catch (error) {
     console.error("Error fetching companies:", error);
@@ -178,9 +190,9 @@ const fetchVehicles = async () => {
   errorMessage.value = "";
   try {
     const response = await apiService.vehicles.getAll();
-    
-    if (response.data.status === 'success' || response.data.success) {
-      tableData.value = response.data.payload.map(vehicle => ({
+
+    if (response.data.status === "success" || response.data.success) {
+      tableData.value = response.data.payload.map((vehicle) => ({
         id: vehicle.id,
         nomorLambung: vehicle.no_lambung,
         warnaNomorLambung: vehicle.warna_no_lambung || "-",
@@ -201,7 +213,11 @@ const fetchVehicles = async () => {
     }
   } catch (error) {
     console.error("Error fetching vehicles:", error);
-    errorMessage.value = error.response?.data?.detail || error.response?.data?.message || error.message || "Gagal mengambil data kendaraan";
+    errorMessage.value =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal mengambil data kendaraan";
   } finally {
     isLoading.value = false;
   }
@@ -213,31 +229,39 @@ const handleDeleteVehicles = async () => {
     alert("Pilih kendaraan yang ingin dihapus!");
     return;
   }
-  
-  if (!confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} kendaraan?`)) {
+
+  if (
+    !confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} kendaraan?`)
+  ) {
     return;
   }
-  
+
   isLoading.value = true;
   errorMessage.value = "";
   let deletedCount = 0;
-  
+
   try {
     for (const id of selectedRowIds.value) {
       await apiService.vehicles.delete(id);
       deletedCount++;
     }
-    
+
     selectedRowIds.value = [];
     selectAllChecked.value = false;
     tableData.value = [];
-    
+
     await fetchVehicles();
     alert(`${deletedCount} kendaraan berhasil dihapus`);
   } catch (error) {
     console.error("Error deleting vehicles:", error);
-    errorMessage.value = error.response?.data?.detail || error.response?.data?.message || error.message || "Gagal menghapus kendaraan";
-    alert(`Error: ${errorMessage.value}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`);
+    errorMessage.value =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menghapus kendaraan";
+    alert(
+      `Error: ${errorMessage.value}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`,
+    );
   } finally {
     isLoading.value = false;
   }
@@ -246,53 +270,62 @@ const handleDeleteVehicles = async () => {
 // Submit tambah/edit kendaraan
 const handleTambahUnitKendaraan = async () => {
   if (!formData.value.no_lambung || !formData.value.vehicle_type) {
-    alert('Nomor lambung dan tipe kendaraan wajib diisi!');
+    alert("Nomor lambung dan tipe kendaraan wajib diisi!");
     return;
   }
-  
+
   isLoading.value = true;
-  errorMessage.value = '';
-  
+  errorMessage.value = "";
+
   try {
     let response;
-    
+
     // Add default shift_type for backend (not shown in UI)
     const payload = {
       ...formData.value,
-      shift_type: 'shift',
-      kategori_unit: 'IMM'
+      shift_type: "shift",
+      kategori_unit: "IMM",
     };
-    
+
     if (editingId.value) {
       response = await apiService.vehicles.update(editingId.value, payload);
     } else {
       response = await apiService.vehicles.create(payload);
     }
-    
-    if (response.data.status === 'success' || response.data.success) {
-      alert(editingId.value ? 'Kendaraan berhasil diupdate' : 'Kendaraan berhasil ditambahkan');
-      
+
+    if (response.data.status === "success" || response.data.success) {
+      alert(
+        editingId.value
+          ? "Kendaraan berhasil diupdate"
+          : "Kendaraan berhasil ditambahkan",
+      );
+
       editingId.value = null;
       formData.value = {
-        no_lambung: '',
-        warna_no_lambung: '',
-        plat_nomor: '',
-        vehicle_type: 'Light Vehicle',
-        merk: '',
-        stnk_expiry: '',
-        pajak_expiry: '',
-        kir_expiry: ''
+        no_lambung: "",
+        warna_no_lambung: "",
+        plat_nomor: "",
+        vehicle_type: "Light Vehicle",
+        merk: "",
+        stnk_expiry: "",
+        pajak_expiry: "",
+        kir_expiry: "",
       };
-      
+
       closeTambahUnitKendaraan();
       await fetchVehicles();
     } else {
-      errorMessage.value = response.data.message || 'Gagal menyimpan data kendaraan';
+      errorMessage.value =
+        response.data.message || "Gagal menyimpan data kendaraan";
       alert(errorMessage.value);
     }
   } catch (error) {
-    console.error('Error saving vehicle:', error);
-    errorMessage.value = error.response?.data?.detail || error.response?.data?.message || error.message || 'Gagal menyimpan data kendaraan';
+    console.error("Error saving vehicle:", error);
+    errorMessage.value =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menyimpan data kendaraan";
     alert(`Error: ${errorMessage.value}`);
   } finally {
     isLoading.value = false;
@@ -303,27 +336,27 @@ const handleTambahUnitKendaraan = async () => {
 const editKendaraan = async (rowId) => {
   try {
     const response = await apiService.vehicles.getById(rowId);
-    
-    if (response.data.status === 'success' || response.data.success) {
+
+    if (response.data.status === "success" || response.data.success) {
       const vehicle = response.data.payload;
-      
+
       editingId.value = rowId;
       formData.value = {
-        no_lambung: vehicle.no_lambung || '',
-        warna_no_lambung: vehicle.warna_no_lambung || '',
-        plat_nomor: vehicle.plat_nomor || '',
-        vehicle_type: vehicle.vehicle_type || 'LIGHT_VEHICLE',
-        merk: vehicle.merk || '',
-        stnk_expiry: vehicle.stnk_expiry || '',
-        pajak_expiry: vehicle.pajak_expiry || '',
-        kir_expiry: vehicle.kir_expiry || ''
+        no_lambung: vehicle.no_lambung || "",
+        warna_no_lambung: vehicle.warna_no_lambung || "",
+        plat_nomor: vehicle.plat_nomor || "",
+        vehicle_type: vehicle.vehicle_type || "LIGHT_VEHICLE",
+        merk: vehicle.merk || "",
+        stnk_expiry: vehicle.stnk_expiry || "",
+        pajak_expiry: vehicle.pajak_expiry || "",
+        kir_expiry: vehicle.kir_expiry || "",
       };
-      
+
       tambahUnitKendaraan.value = true;
     }
   } catch (error) {
-    console.error('Error fetching vehicle detail:', error);
-    alert('Gagal mengambil data kendaraan');
+    console.error("Error fetching vehicle detail:", error);
+    alert("Gagal mengambil data kendaraan");
   } finally {
     // Cleanup if needed
   }
@@ -337,15 +370,24 @@ onMounted(() => {
 });
 
 // Watch untuk auto-fetch ketika filter diterapkan
-watch(appliedFilterData, () => {
-  console.log('🔄 Filter changed, fetching vehicles...', appliedFilterData.value);
-  fetchVehicles();
-}, { deep: true });
+watch(
+  appliedFilterData,
+  () => {
+    console.log(
+      "🔄 Filter changed, fetching vehicles...",
+      appliedFilterData.value,
+    );
+    fetchVehicles();
+  },
+  { deep: true },
+);
 
 // Handler untuk format nomor lambung saat blur
 const handleHullNumberBlur = () => {
   if (formData.value.no_lambung) {
-    formData.value.no_lambung = formatHullNumberOnBlur(formData.value.no_lambung);
+    formData.value.no_lambung = formatHullNumberOnBlur(
+      formData.value.no_lambung,
+    );
   }
 };
 
@@ -406,17 +448,17 @@ const filteredTableData = computed(() => {
   // Filter berdasarkan filter yang diterapkan
   if (appliedFilterData.value.vehicle_type) {
     filtered = filtered.filter(
-      (row) => row.tipe === appliedFilterData.value.vehicle_type
+      (row) => row.tipe === appliedFilterData.value.vehicle_type,
     );
   }
   if (appliedFilterData.value.warna_lambung) {
     filtered = filtered.filter(
-      (row) => row.warnaNomorLambung === appliedFilterData.value.warna_lambung
+      (row) => row.warnaNomorLambung === appliedFilterData.value.warna_lambung,
     );
   }
   if (appliedFilterData.value.perusahaan) {
     filtered = filtered.filter(
-      (row) => row.perusahaan === appliedFilterData.value.perusahaan
+      (row) => row.perusahaan === appliedFilterData.value.perusahaan,
     );
   }
 
@@ -441,7 +483,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length
+    filteredTableData.value.length,
   );
 });
 
@@ -461,12 +503,12 @@ const sortByName = () => {
   if (sortOrder.value === "asc") {
     sortOrder.value = "desc";
     tableData.value = [...tableData.value].sort((a, b) =>
-      b.nomorLambung.localeCompare(a.nomorLambung)
+      b.nomorLambung.localeCompare(a.nomorLambung),
     );
   } else {
     sortOrder.value = "asc";
     tableData.value = [...tableData.value].sort((a, b) =>
-      a.nomorLambung.localeCompare(b.nomorLambung)
+      a.nomorLambung.localeCompare(b.nomorLambung),
     );
   }
   currentPage.value = 1;
@@ -523,17 +565,19 @@ const getDateStyle = (dateString) => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col font-['Montserrat']">
+  <div class="h-screen flex flex-col font-['Montserrat']">
     <div class="flex flex-1 overflow-hidden">
-      <Aside />
+      <!-- Aside Sidebar - Push content style -->
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <div class="flex flex-col flex-1 overflow-hidden">
+      <!-- Main Content Area -->
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
 
         <!-- Content -->
         <main class="bg-[#EFEFEF] flex-1 flex flex-col p-3 overflow-y-auto">
           <!-- Judul -->
-          <div class="mb-2 -mt-1 shrink-0 sticky top-0 z-30 bg-[#EFEFEF] pt-3">
+          <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
               <h1 class="text-base font-bold text-[#523E95] text-left">
                 PT Indominco Mandiri
@@ -627,11 +671,23 @@ const getDateStyle = (dateString) => {
                       ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
                       : 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed'
                   "
-                  :title="selectedRowIds.length > 0 ? 'Hapus kendaraan terpilih' : 'Pilih kendaraan untuk dihapus'"
-                  :aria-label="selectedRowIds.length > 0 ? `Hapus ${selectedRowIds.length} kendaraan terpilih` : 'Pilih kendaraan untuk dihapus'"
+                  :title="
+                    selectedRowIds.length > 0
+                      ? 'Hapus kendaraan terpilih'
+                      : 'Pilih kendaraan untuk dihapus'
+                  "
+                  :aria-label="
+                    selectedRowIds.length > 0
+                      ? `Hapus ${selectedRowIds.length} kendaraan terpilih`
+                      : 'Pilih kendaraan untuk dihapus'
+                  "
                 >
                   <TrashIcon class="w-4 h-4" />
-                  <span class="sr-only">{{ selectedRowIds.length > 0 ? `Hapus ${selectedRowIds.length} kendaraan` : 'Hapus kendaraan' }}</span>
+                  <span class="sr-only">{{
+                    selectedRowIds.length > 0
+                      ? `Hapus ${selectedRowIds.length} kendaraan`
+                      : "Hapus kendaraan"
+                  }}</span>
                 </button>
               </div>
             </div>
@@ -650,7 +706,9 @@ const getDateStyle = (dateString) => {
                         class="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap min-w-12"
                       >
                         <div class="relative w-5 h-5">
-                          <label for="select-all-vehicles" class="sr-only">Pilih semua kendaraan</label>
+                          <label for="select-all-vehicles" class="sr-only"
+                            >Pilih semua kendaraan</label
+                          >
                           <input
                             id="select-all-vehicles"
                             name="select-all-vehicles"
@@ -757,7 +815,11 @@ const getDateStyle = (dateString) => {
                     >
                       <td class="px-4 py-3 whitespace-nowrap min-w-12">
                         <div class="relative w-5 h-5">
-                          <label :for="`select-vehicle-${row.id}`" class="sr-only">Pilih {{ row.noLambung }}</label>
+                          <label
+                            :for="`select-vehicle-${row.id}`"
+                            class="sr-only"
+                            >Pilih {{ row.noLambung }}</label
+                          >
                           <input
                             :id="`select-vehicle-${row.id}`"
                             :name="`select-vehicle-${row.id}`"
@@ -791,10 +853,10 @@ const getDateStyle = (dateString) => {
                           class="px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap"
                           :style="{
                             backgroundColor: getWarnaNomorLambungStyle(
-                              row.warnaNomorLambung
+                              row.warnaNomorLambung,
                             ).bg,
                             color: getWarnaNomorLambungStyle(
-                              row.warnaNomorLambung
+                              row.warnaNomorLambung,
                             ).text,
                           }"
                         >
@@ -889,10 +951,16 @@ const getDateStyle = (dateString) => {
               </div>
 
               <!-- Pagination -->
-              <div class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2">
+              <div
+                class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2"
+              >
                 <div class="flex items-center gap-2 text-sm text-gray-700">
                   <span>Tampilkan</span>
-                  <select v-model="itemsPerPage" @change="currentPage = 1" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <select
+                    v-model="itemsPerPage"
+                    @change="currentPage = 1"
+                    class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
                     <option :value="10">10</option>
                     <option :value="20">20</option>
                     <option :value="50">50</option>
@@ -901,9 +969,24 @@ const getDateStyle = (dateString) => {
                   <span>baris</span>
                 </div>
                 <div class="flex items-center gap-3">
-                  <button @click="previousPage" :disabled="currentPage === 1" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&lt;</button>
-                  <span class="text-sm text-gray-700 font-medium">{{ startIndex }} - {{ endIndex }} dari {{ filteredTableData.length }}</span>
-                  <button @click="nextPage" :disabled="currentPage === totalPages" class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition">&gt;</button>
+                  <button
+                    @click="previousPage"
+                    :disabled="currentPage === 1"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &lt;
+                  </button>
+                  <span class="text-sm text-gray-700 font-medium"
+                    >{{ startIndex }} - {{ endIndex }} dari
+                    {{ filteredTableData.length }}</span
+                  >
+                  <button
+                    @click="nextPage"
+                    :disabled="currentPage === totalPages"
+                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                  >
+                    &gt;
+                  </button>
                 </div>
               </div>
             </div>
@@ -920,7 +1003,11 @@ const getDateStyle = (dateString) => {
                   class="flex justify-between items-center mb-2 pb-3 border-b border-gray-200"
                 >
                   <h2 class="text-lg md:text-xl font-semibold text-gray-900">
-                    {{ editingId ? 'Edit Unit Kendaraan' : 'Tambah Unit Kendaraan' }}
+                    {{
+                      editingId
+                        ? "Edit Unit Kendaraan"
+                        : "Tambah Unit Kendaraan"
+                    }}
                   </h2>
                   <button
                     @click="closeTambahUnitKendaraan"
@@ -956,7 +1043,9 @@ const getDateStyle = (dateString) => {
                         class="absolute right-3 top-2.5 w-4 h-4 text-[#b2b2b2]"
                       />
                     </div>
-                    <p class="text-xs text-gray-500 mt-1">Format akan otomatis menjadi P.309 saat menyimpan</p>
+                    <p class="text-xs text-gray-500 mt-1">
+                      Format akan otomatis menjadi P.309 saat menyimpan
+                    </p>
                   </div>
 
                   <div>
@@ -1044,7 +1133,9 @@ const getDateStyle = (dateString) => {
                       >
                         <option value="">Pilih tipe kendaraan</option>
                         <option value="Light Vehicle">Light Vehicle</option>
-                        <option value="Electric Vehicle">Electric Vehicle</option>
+                        <option value="Electric Vehicle">
+                          Electric Vehicle
+                        </option>
                         <option value="Double Cabin">Double Cabin</option>
                         <option value="Single Cabin">Single Cabin</option>
                         <option value="Bus">Bus</option>
@@ -1072,8 +1163,18 @@ const getDateStyle = (dateString) => {
                         v-model="formData.user_id"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
-                        <option :value="null">{{ allUsers.length === 0 ? 'Loading users...' : 'Pilih user' }}</option>
-                        <option v-for="user in allUsers" :key="user.id" :value="user.id">
+                        <option :value="null">
+                          {{
+                            allUsers.length === 0
+                              ? "Loading users..."
+                              : "Pilih user"
+                          }}
+                        </option>
+                        <option
+                          v-for="user in allUsers"
+                          :key="user.id"
+                          :value="user.id"
+                        >
                           {{ user.full_name }}
                         </option>
                       </select>
@@ -1098,8 +1199,18 @@ const getDateStyle = (dateString) => {
                         v-model="formData.company_id"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
-                        <option :value="null">{{ allCompanies.length === 0 ? 'Loading companies...' : 'Pilih nama perusahaan' }}</option>
-                        <option v-for="company in allCompanies" :key="company.id" :value="company.id">
+                        <option :value="null">
+                          {{
+                            allCompanies.length === 0
+                              ? "Loading companies..."
+                              : "Pilih nama perusahaan"
+                          }}
+                        </option>
+                        <option
+                          v-for="company in allCompanies"
+                          :key="company.id"
+                          :value="company.id"
+                        >
                           {{ company.nama_perusahaan }}
                         </option>
                       </select>
@@ -1207,7 +1318,11 @@ const getDateStyle = (dateString) => {
                     :disabled="isLoading"
                     class="px-6 md:px-6 py-2 text-sm md:text-base bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular"
                   >
-                    {{ editingId ? 'Update Unit Kendaraan' : 'Tambah Unit Kendaraan' }}
+                    {{
+                      editingId
+                        ? "Update Unit Kendaraan"
+                        : "Tambah Unit Kendaraan"
+                    }}
                   </button>
                   <button
                     @click="closeTambahUnitKendaraan"
