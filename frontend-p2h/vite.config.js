@@ -12,8 +12,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      // Tambahan penting untuk mengatasi warning "eval" / CSP
-      'vue-i18n': 'vue-i18n/dist/vue-i18n.cjs.prod.js',
+      'vue-i18n': 'vue-i18n/dist/vue-i18n.cjs.prod.js', // << TAMBAHKAN INI
     },
   },
 })
