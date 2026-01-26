@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/vue/24/solid";
 import { PhoneIcon } from "@heroicons/vue/24/outline";
 import { api } from "../services/api";
+import { STORAGE_KEYS } from "../constants";
 
 const router = useRouter();
 const showPassword = ref(false);
@@ -28,40 +29,40 @@ const errorMessage = ref("");
 
 const handleSignIn = async (event) => {
   if (event) event.preventDefault();
-  
+
   if (!phoneNumber.value || !password.value) {
     errorMessage.value = "Nomor HP dan Password harus diisi";
     return;
   }
-  
+
   try {
     loading.value = true;
     errorMessage.value = "";
-    
+
     // OAuth2PasswordRequestForm mengharapkan username dan password sebagai form data
     const formData = new FormData();
-    formData.append('username', phoneNumber.value);
-    formData.append('password', password.value);
-    
+    formData.append("username", phoneNumber.value);
+    formData.append("password", password.value);
+
     const response = await api.post("/auth/login", formData, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
     });
-    
+
     console.log("Login response:", response.data);
-    
+
     // Backend menggunakan status: 'success' bukan success: true
-    if (response.data.status === 'success' && response.data.payload) {
+    if (response.data.status === "success" && response.data.payload) {
       const { access_token, user } = response.data.payload;
-      
+
       console.log("User data:", user);
       console.log("User role:", user.role);
-      
+
       // Simpan token dan user data ke localStorage
-      localStorage.setItem("access_token", access_token);
-      localStorage.setItem("user_data", JSON.stringify(user));
-      
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, access_token);
+      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+
       // Redirect berdasarkan role
       if (user.role === "superadmin" || user.role === "admin") {
         console.log("Redirecting to dashboard...");
@@ -73,7 +74,8 @@ const handleSignIn = async (event) => {
     }
   } catch (error) {
     console.error("Login error:", error);
-    errorMessage.value = error.response?.data?.detail || "Nomor HP atau Password salah";
+    errorMessage.value =
+      error.response?.data?.detail || "Nomor HP atau Password salah";
   } finally {
     loading.value = false;
   }
@@ -91,22 +93,23 @@ const handleWaLink = () => {
 <template>
   <div
     class="fixed inset-0 flex items-center justify-center bg-cover bg-center font-sans"
-    style="background-image: url('image_asset/BG_2.png')"
+    style="background-image: url(&quot;image_asset/BG_2.png&quot;)"
   >
     <div
       class="w-105 h-auto bg-white rounded-[15px] flex items-center justify-center p-2.5 m-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.2),0_2px_8px_rgba(0,0,0,0.15)]"
     >
       <div class="w-full px-7.5 py-5 flex flex-col gap-3.75">
-        <img 
-          src="/image_asset/IMM.svg" 
-          alt="Logo PT Indominco Mandiri" 
-          class="w-37.5 h-auto block mx-auto" 
+        <img
+          src="/image_asset/IMM.svg"
+          alt="Logo PT Indominco Mandiri"
+          class="w-37.5 h-auto block mx-auto"
         />
 
         <p
           class="m-0 mb-1 mt-3 leading-tight text-center text-black text-[14px] font-sans font-medium mx-auto"
         >
-          Pelaksanaan Pemeriksaan Harian Kendaraan Operasional PT Indominco Mandiri
+          Pelaksanaan Pemeriksaan Harian Kendaraan Operasional PT Indominco
+          Mandiri
         </p>
 
         <!-- Login Form -->
@@ -138,7 +141,9 @@ const handleWaLink = () => {
             <button
               type="button"
               @click="togglePasswordVisibility"
-              :aria-label="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+              :aria-label="
+                showPassword ? 'Sembunyikan password' : 'Tampilkan password'
+              "
               class="absolute right-3 top-1/2 -translate-y-1/2 bg-none border-none p-0 cursor-pointer w-5 h-5 flex items-center justify-center transition-all duration-300 hover:opacity-70"
             >
               <EyeIcon
@@ -153,7 +158,10 @@ const handleWaLink = () => {
           </div>
 
           <!-- Error Message -->
-          <div v-if="errorMessage" class="p-3 bg-red-50 border-l-4 border-red-500 rounded">
+          <div
+            v-if="errorMessage"
+            class="p-3 bg-red-50 border-l-4 border-red-500 rounded"
+          >
             <p class="text-red-700 text-sm">{{ errorMessage }}</p>
           </div>
 
@@ -210,8 +218,8 @@ const handleWaLink = () => {
         <h3
           class="text-[#333] text-[17px] font-regular mb-5 leading-normal text-left mt-0"
         >
-          Silahkan hubungi Admin Transportasi Manajemen IMM agar kami dapat memberikan informasi
-          lebih lanjut tentang password anda.
+          Silahkan hubungi Admin Transportasi Manajemen IMM agar kami dapat
+          memberikan informasi lebih lanjut tentang password anda.
         </h3>
 
         <p
@@ -223,7 +231,11 @@ const handleWaLink = () => {
             href="#"
             @click.prevent="handleWaLink"
             class="text-[#646cff] text-[16px] font-medium underline decoration-1"
-            style="text-decoration: underline; text-decoration-thickness: 1.2px; text-underline-offset: 3px;"
+            style="
+              text-decoration: underline;
+              text-decoration-thickness: 1.2px;
+              text-underline-offset: 3px;
+            "
           >
             0822-5444-2400
           </a>
