@@ -462,13 +462,17 @@ const getDateStyle = (dateString) => {
             </div>
           </div>
           <div
-            class="bg-white rounded-lg shadow-md p-5 flex-1 flex flex-col overflow-hidden"
+            class="bg-white rounded-lg shadow-md p-5 flex-1 flex flex-col overflow-hidden min-h-0"
           >
-            <div>
+            <!-- NOTIFICATION WRAPPER (HANYA MUNCUL JIKA ADA ISI) -->
+            <div
+              v-if="errorMessage || isLoading"
+              class="space-y-3 mb-4 shrink-0"
+            >
               <!-- Error Message -->
               <div
                 v-if="errorMessage"
-                class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
+                class="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
               >
                 {{ errorMessage }}
               </div>
@@ -476,14 +480,15 @@ const getDateStyle = (dateString) => {
               <!-- Loading State -->
               <div
                 v-if="isLoading"
-                class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm"
+                class="p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm"
               >
                 Memuat data...
               </div>
             </div>
+
             <!-- Toolbar -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
             >
               <!-- Left Section -->
               <div class="flex items-center gap-3">
