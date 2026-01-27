@@ -154,6 +154,20 @@ const apiService = {
     delete: (id) => api.delete(`/vehicles/${id}`),
   },
 
+  // G. BULK UPLOAD
+  bulkUpload: {
+    downloadUsersTemplate: () => api.get('/bulk-upload/templates/users', { responseType: 'blob' }),
+    downloadVehiclesTemplate: () => api.get('/bulk-upload/templates/vehicles', { responseType: 'blob' }),
+    uploadUsers: (formData, onUploadProgress) => api.post('/bulk-upload/users', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress
+    }),
+    uploadVehicles: (formData, onUploadProgress) => api.post('/bulk-upload/vehicles', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress
+    })
+  },
+
   // F. LAPORAN P2H
   p2h: {
     submit: (data) => api.post('/p2h/reports', data),
