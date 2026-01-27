@@ -22,8 +22,10 @@ class VehicleType(enum.Enum):
 
     
 class ShiftType(enum.Enum):
-    SHIFT = "shift"
-    NON_SHIFT = "non_shift"
+    """Tipe shift kendaraan berdasarkan warna nomor lambung"""
+    SHIFT = "shift"              # Kuning - 3x sehari, reset jam 05:00
+    NON_SHIFT = "non_shift"      # Hijau & Biru - 1x sehari, reset jam 00:00
+    LONG_SHIFT = "long_shift"    # Long Shift - 2x sehari, reset jam 05:00
 
 class UnitKategori(enum.Enum):
     IMM = "IMM"
