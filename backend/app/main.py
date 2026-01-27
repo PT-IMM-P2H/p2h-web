@@ -14,6 +14,11 @@ from app.config import settings
 from app.database import engine
 from app.utils.response import base_response
 
+# Alembic Imports
+from alembic.config import Config
+from alembic import command
+from sqlalchemy import inspect
+
 # =========================================================
 # LOGGING
 # =========================================================
@@ -61,19 +66,29 @@ def run_alembic_migration():
         return
 
     try:
+        # Create Alembic configuration object
+        alembic_cfg = Config("alembic.ini")
+        
+        # Check if database needs stamping (Tables exist but no alembic_version)
+        with engine.connect() as connection:
+            inspector = inspect(connection)
+            tables = inspector.get_table_names()
+            
+            has_alembic = "alembic_version" in tables
+            has_tables = "users" in tables or "checklist_templates" in tables
+            
+            if has_tables and not has_alembic:
+                logger.warning("⚠️  Database has tables but no alembic_version! Stamping head...")
+                command.stamp(alembic_cfg, "head")
+                logger.info("✅ Database stamped to head")
+        
         logger.info("🧬 Running Alembic migrations...")
-        result = subprocess.run(
-            ["alembic", "upgrade", "head"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
+        command.upgrade(alembic_cfg, "head")
         logger.info("✅ Alembic migration completed")
-        logger.debug(result.stdout)
 
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         logger.error("❌ Alembic migration failed")
-        logger.error(e.stderr)
+        logger.error(str(e))
         # ❗ JANGAN raise → app tetap jalan
 
 # =========================================================
@@ -93,9 +108,9 @@ async def lifespan(app: FastAPI):
     print(f"🔧 Railway Mode  : {'Yes' if os.getenv('RAILWAY_ENVIRONMENT_NAME') else 'No (Local)'}")
     print("=" * 60 + "\n")
 
-    # ✅ AUTO MIGRATE - Now handled in Railway startCommand
-    # Migration runs BEFORE app starts: alembic upgrade head && python -m app.seeds.seed_users && uvicorn...
-    # run_alembic_migration()
+    # ✅ AUTO MIGRATE - Now handled internally
+    # Migration runs BEFORE app starts
+    run_alembic_migration()
 
     # Scheduler
     try:
