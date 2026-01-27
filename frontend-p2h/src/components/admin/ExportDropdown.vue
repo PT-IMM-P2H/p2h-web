@@ -64,7 +64,7 @@
     >
       <div class="py-1" role="menu">
         <button
-          @click="handleExport('excel')"
+          @click="handleExport('xlsx')"
           :disabled="exporting"
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           role="menuitem"
