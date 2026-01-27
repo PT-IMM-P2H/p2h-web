@@ -71,6 +71,7 @@ QUICK_START.md
 # Excel data files
 *.xlsx
 *.xls
+!backend/templates/*.xlsx
 ~$*.xlsx
 ~$*.xls
 
