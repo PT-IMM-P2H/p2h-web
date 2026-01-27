@@ -1313,6 +1313,7 @@ const editPengguna = async (rowId) => {
     <BulkUploadModal
       :is-open="showBulkUpload"
       title="Upload Data Pengguna PT"
+      upload-type="users"
       :upload-endpoint="`${API_BASE_URL}/bulk-upload/users`"
       :template-endpoint="`${API_BASE_URL}/bulk-upload/templates/users`"
       @close="closeBulkUpload"
