@@ -33,7 +33,7 @@ async def bulk_upload_users(
     Bulk upload users from Excel file
     
     Expected columns:
-    - Email * (required)
+    - Email (optional)
     - Nama Lengkap * (required)
     - Nomor Telepon * (required)
     - Tanggal Lahir (YYYY-MM-DD) (optional)
@@ -106,18 +106,11 @@ async def bulk_upload_users(
             
             try:
                 # Skip completely empty rows
-                if pd.isna(row.get('email')) and pd.isna(row.get('full_name')):
+                if pd.isna(row.get('phone_number')) and pd.isna(row.get('full_name')):
                     continue
                 
-                # Validate required fields
-                if pd.isna(row.get('email')) or not row.get('email'):
-                    errors.append(BulkUploadError(
-                        row=row_num,
-                        field='email',
-                        message='Email wajib diisi',
-                        data=row.to_dict()
-                    ))
-                    continue
+                # Validate required fields (email sekarang optional)
+                # Email validation dihapus karena sudah nullable=True di model
                 
                 if pd.isna(row.get('full_name')) or not row.get('full_name'):
                     errors.append(BulkUploadError(
@@ -155,17 +148,19 @@ async def bulk_upload_users(
                     ))
                     continue
                 
-                # Check for duplicate email
-                email = str(row['email']).strip().lower()
-                existing_user = db.query(User).filter(User.email == email).first()
-                if existing_user:
-                    errors.append(BulkUploadError(
-                        row=row_num,
-                        field='email',
-                        message=f'Email {email} sudah terdaftar',
-                        data=row.to_dict()
-                    ))
-                    continue
+                # Check for duplicate email (only if email provided)
+                email = None
+                if not pd.isna(row.get('email')) and row.get('email'):
+                    email = str(row['email']).strip().lower()
+                    existing_user = db.query(User).filter(User.email == email).first()
+                    if existing_user:
+                        errors.append(BulkUploadError(
+                            row=row_num,
+                            field='email',
+                            message=f'Email {email} sudah terdaftar',
+                            data=row.to_dict()
+                        ))
+                        continue
                 
                 # Check for duplicate phone
                 # Phone already processed by converter, just clean up
