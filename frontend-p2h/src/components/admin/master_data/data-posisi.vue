@@ -344,7 +344,7 @@ const nextPage = () => {
           >
             <!-- Toolbar -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-0 bg-white z-20 pt-5 -mt-5"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-0 bg-white z-20"
             >
               <!-- Left Section -->
               <div class="flex items-center gap-3">
