@@ -24,20 +24,23 @@ const p2hReports = ref([]);
 const fetchP2HReports = async () => {
   try {
     isLoading.value = true;
-    console.log('🔄 Fetching P2H reports...');
-    const response = await api.get('/p2h/reports?limit=100');
-    console.log('✅ P2H reports fetched:', response.data);
+    console.log("🔄 Fetching P2H reports...");
+    const response = await api.get("/p2h/reports?limit=100");
+    console.log("✅ P2H reports fetched:", response.data);
     p2hReports.value = response.data.payload;
-    console.log('📊 Total reports:', p2hReports.value.length);
+    console.log("📊 Total reports:", p2hReports.value.length);
   } catch (error) {
-    console.error('❌ Gagal fetch P2H reports:', error);
-    console.error('Error details:', error.response?.data);
+    console.error("❌ Gagal fetch P2H reports:", error);
+    console.error("Error details:", error.response?.data);
     if (error.response?.status === 401) {
-      alert('Sesi Anda telah berakhir. Silakan login terlebih dahulu.');
+      alert("Sesi Anda telah berakhir. Silakan login terlebih dahulu.");
       // Redirect ke login jika diperlukan
       // window.location.href = '/login';
     } else {
-      alert('Gagal memuat data P2H: ' + (error.response?.data?.detail || error.message));
+      alert(
+        "Gagal memuat data P2H: " +
+          (error.response?.data?.detail || error.message),
+      );
     }
   } finally {
     isLoading.value = false;
@@ -46,28 +49,33 @@ const fetchP2HReports = async () => {
 
 // Format data untuk riwayat table
 const riwayatData = computed(() => {
-  return p2hReports.value.map(report => ({
+  return p2hReports.value.map((report) => ({
     id: report.id,
     tanggal: report.submission_date,
     waktu: report.submission_time,
     shift: report.shift_number,
     nomor: report.vehicle.no_lambung,
-    warnaLambung: report.vehicle.warna_no_lambung || '-',
+    warnaLambung: report.vehicle.warna_no_lambung || "-",
     merek: report.vehicle.merk,
     tipe: report.vehicle.vehicle_type,
     platKendaraan: report.vehicle.plat_nomor,
     hasil: report.overall_status,
-    status: report.overall_status === 'normal' ? 'Normal' : 
-            report.overall_status === 'abnormal' ? 'Abnormal' : 'Warning',
-    user: report.user.full_name
+    status:
+      report.overall_status === "normal"
+        ? "Normal"
+        : report.overall_status === "abnormal"
+          ? "Abnormal"
+          : "Warning",
+    user: report.user.full_name,
   }));
 });
 
-
 const handleCariKendaraan = () => {
   if (nomorLambung.value.trim()) {
-    const normalizedInput = nomorLambung.value.toLowerCase().replace(/[\s.-]/g, "");
-    
+    const normalizedInput = nomorLambung.value
+      .toLowerCase()
+      .replace(/[\s.-]/g, "");
+
     hasilPencarian.value = riwayatData.value.filter((report) => {
       const normalizedNomor = report.nomor.toLowerCase().replace(/[\s.-]/g, "");
       return normalizedNomor.includes(normalizedInput);
@@ -111,7 +119,7 @@ const getHasilStyle = (hasil) => {
 
 // Pagination computed
 const totalPages = computed(() =>
-  Math.ceil(sortedRiwayatData.value.length / itemsPerPage.value)
+  Math.ceil(sortedRiwayatData.value.length / itemsPerPage.value),
 );
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
@@ -120,10 +128,13 @@ const paginatedData = computed(() => {
 });
 
 const startIndex = computed(
-  () => (currentPage.value - 1) * itemsPerPage.value + 1
+  () => (currentPage.value - 1) * itemsPerPage.value + 1,
 );
 const endIndex = computed(() =>
-  Math.min(currentPage.value * itemsPerPage.value, sortedRiwayatData.value.length)
+  Math.min(
+    currentPage.value * itemsPerPage.value,
+    sortedRiwayatData.value.length,
+  ),
 );
 
 // Pagination functions
@@ -152,8 +163,8 @@ onMounted(() => {
 
     <!-- Content -->
     <main
-      class="flex-1 flex flex-col bg-cover bg-center bg-no-repeat px-2 md:px-2 pt-24 md:pt-8 pb-40 md:pb-20 overflow-y-auto"
-      style="background-image: url(/image_asset/BG_2.png)"
+      class="flex-1 flex flex-col bg-cover bg-center bg-no-repeat bg-fixed px-2 md:px-2 pt-24 md:pt-8 pb-40 md:pb-20 overflow-y-auto"
+      style="background-image: url(&quot;/image_asset/BG_2.png&quot;)"
     >
       <div class="flex flex-col items-center gap-4 w-full">
         <!-- Konten Utama -->
@@ -195,18 +206,37 @@ onMounted(() => {
           >
             <div
               v-for="kendaraan in hasilPencarian.filter(
-                (k) => k.status === 'sudah'
+                (k) => k.status === 'sudah',
               )"
               :key="kendaraan.id"
               class="w-auto h-auto flex flex-col border-2 border-[#2DA642] bg-[#C5FFCF] rounded-xl shadow-lg max-w-full md:max-w-5xl p-4 md:p-4 gap-2"
             >
               <div class="flex justify-between items-start">
                 <div class="flex-1">
-                  <p class="text-sm text-gray-700">Nomor lambung : <span class="font-semibold">{{ kendaraan.nomor }}</span></p>
-                  <p class="text-sm text-gray-700">Warna nomor lambung : <span class="font-semibold">{{ kendaraan.warnaLambung }}</span></p>
-                  <p class="text-sm text-gray-700">Merek Kendaraan : <span class="font-semibold">{{ kendaraan.merek }}</span></p>
-                  <p class="text-sm text-gray-700">Tipe Kendaraan : <span class="font-semibold">{{ kendaraan.tipe }}</span></p>
-                  <p class="text-sm text-gray-700">Plat Kendaraan : <span class="font-semibold">{{ kendaraan.platKendaraan }}</span></p>
+                  <p class="text-sm text-gray-700">
+                    Nomor lambung :
+                    <span class="font-semibold">{{ kendaraan.nomor }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Warna nomor lambung :
+                    <span class="font-semibold">{{
+                      kendaraan.warnaLambung
+                    }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Merek Kendaraan :
+                    <span class="font-semibold">{{ kendaraan.merek }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Tipe Kendaraan :
+                    <span class="font-semibold">{{ kendaraan.tipe }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Plat Kendaraan :
+                    <span class="font-semibold">{{
+                      kendaraan.platKendaraan
+                    }}</span>
+                  </p>
                 </div>
                 <button
                   @click="handleSelectKendaraan(kendaraan)"
@@ -218,18 +248,37 @@ onMounted(() => {
             </div>
             <div
               v-for="kendaraan in hasilPencarian.filter(
-                (k) => k.status === 'belum'
+                (k) => k.status === 'belum',
               )"
               :key="kendaraan.id"
               class="w-auto h-auto flex flex-col border-2 border-[#A62D2D] bg-[#FFC5C5] rounded-xl shadow-lg max-w-full md:max-w-5xl p-4 md:p-4 gap-2"
             >
               <div class="flex justify-between items-start">
                 <div class="flex-1">
-                  <p class="text-sm text-gray-700">Nomor lambung : <span class="font-semibold">{{ kendaraan.nomor }}</span></p>
-                  <p class="text-sm text-gray-700">Warna nomor lambung : <span class="font-semibold">{{ kendaraan.warnaLambung }}</span></p>
-                  <p class="text-sm text-gray-700">Merek Kendaraan : <span class="font-semibold">{{ kendaraan.merek }}</span></p>
-                  <p class="text-sm text-gray-700">Tipe Kendaraan : <span class="font-semibold">{{ kendaraan.tipe }}</span></p>
-                  <p class="text-sm text-gray-700">Plat Kendaraan : <span class="font-semibold">{{ kendaraan.platKendaraan }}</span></p>
+                  <p class="text-sm text-gray-700">
+                    Nomor lambung :
+                    <span class="font-semibold">{{ kendaraan.nomor }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Warna nomor lambung :
+                    <span class="font-semibold">{{
+                      kendaraan.warnaLambung
+                    }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Merek Kendaraan :
+                    <span class="font-semibold">{{ kendaraan.merek }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Tipe Kendaraan :
+                    <span class="font-semibold">{{ kendaraan.tipe }}</span>
+                  </p>
+                  <p class="text-sm text-gray-700">
+                    Plat Kendaraan :
+                    <span class="font-semibold">{{
+                      kendaraan.platKendaraan
+                    }}</span>
+                  </p>
                 </div>
                 <button
                   @click="handleSelectKendaraan(kendaraan)"
@@ -353,28 +402,56 @@ onMounted(() => {
                 <tr v-if="isLoading">
                   <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                     <div class="flex items-center justify-center gap-2">
-                      <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        class="animate-spin h-5 w-5 text-blue-600"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       <span class="font-semibold">Memuat data...</span>
                     </div>
                   </td>
                 </tr>
-                
+
                 <!-- Empty State -->
                 <tr v-else-if="!isLoading && paginatedData.length === 0">
                   <td colspan="10" class="px-4 py-8 text-center text-gray-500">
                     <div class="flex flex-col items-center gap-2">
-                      <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      <svg
+                        class="w-12 h-12 text-gray-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        ></path>
                       </svg>
                       <p class="font-semibold text-lg">Belum ada data P2H</p>
-                      <p class="text-sm">Data akan muncul setelah ada laporan P2H yang disubmit</p>
+                      <p class="text-sm">
+                        Data akan muncul setelah ada laporan P2H yang disubmit
+                      </p>
                     </div>
                   </td>
                 </tr>
-                
+
                 <!-- Data Rows -->
                 <tr
                   v-else

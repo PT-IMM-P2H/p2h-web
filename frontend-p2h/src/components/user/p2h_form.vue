@@ -7,6 +7,7 @@ import {
   InformationCircleIcon,
   MagnifyingGlassIcon,
   CheckCircleIcon,
+  PencilSquareIcon,
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@heroicons/vue/24/solid";
@@ -318,7 +319,7 @@ onMounted(() => {
     <NavBar />
 
     <main
-      class="flex-1 flex flex-col items-center bg-zinc-100 px-4 pt-24 pb-25 md:pb-30 bg-cover bg-fixed bg-center"
+      class="flex-1 flex flex-col items-center bg-zinc-100 px-4 pt-20 pb-40 md:pb-30 bg-cover bg-fixed bg-center"
       style="background-image: url(&quot;/image_asset/BG_2.png&quot;)"
     >
       <div class="w-full max-w-4xl space-y-4">
@@ -390,6 +391,29 @@ onMounted(() => {
         </div>
 
         <div class="flex flex-col gap-4 font-bold">
+          <!-- Kilometer Kendaraan -->
+          <!-- <div
+            class="p-6 bg-white rounded-2xl shadow-sm border border-zinc-200"
+          >
+            <label class="block text-base mb-3 text-zinc-900">
+              Jarak Kilometer Kendaraan
+            </label>
+
+            <div class="relative">
+              <input
+                v-model.number="selectedDistance"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Masukkan jarak (km)"
+                class="w-full p-3.5 pr-10 bg-white border-2 border-zinc-300 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold text-zinc-900 transition-colors"
+              />
+              <PencilSquareIcon
+                class="h-5 w-5 absolute right-4 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none"
+              />
+            </div>
+          </div> -->
+
           <!-- Info Waktu Real-Time -->
           <div
             v-if="currentShiftInfo"
