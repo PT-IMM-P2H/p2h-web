@@ -365,7 +365,7 @@ async def bulk_upload_vehicles(
     - Tahun Pembuatan (optional)
     - Tanggal Expired STNK (YYYY-MM-DD) (optional)
     - Tanggal Expired KIR (YYYY-MM-DD) (optional)
-    - Shift Type * (required: Shift 1/Shift 2)
+    - Shift Type * (required: Shift/Non Shift/Long Shift)
     
     Returns:
     - success_count: Number of successfully imported vehicles
@@ -496,17 +496,17 @@ async def bulk_upload_vehicles(
                 
                 # Validate shift type
                 shift_str = str(row['shift_type']).strip().lower()
-                if 'shift 1' in shift_str or shift_str == '1':
+                if 'shift 1' in shift_str or 'shift 2' in shift_str or 'shift 3' in shift_str or shift_str in ['1', '2', '3', 'shift']:
                     shift_type = 'shift'
-                elif 'shift 2' in shift_str or shift_str == '2':
-                    shift_type = 'shift'
+                elif 'long' in shift_str:
+                    shift_type = 'long_shift'
                 elif 'non' in shift_str:
                     shift_type = 'non_shift'
                 else:
                     errors.append(BulkUploadError(
                         row=row_num,
                         field='shift_type',
-                        message=f'Shift type tidak valid: {row["shift_type"]}. Gunakan: Shift 1 atau Shift 2',
+                        message=f'Shift type tidak valid: {row["shift_type"]}. Gunakan: Shift/Non Shift/Long Shift',
                         data=row.to_dict()
                     ))
                     continue
