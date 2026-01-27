@@ -686,17 +686,8 @@ const getDateStyle = (dateString) => {
             class="bg-white rounded-lg shadow-md p-5 flex-1 flex flex-col overflow-hidden min-h-0"
           >
             <!-- NOTIFICATION WRAPPER (HANYA MUNCUL JIKA ADA ISI) -->
-            <div
-              v-if="errorMessage || isLoading"
-              class="flex flex-col space-y-3 mb-4 shrink-0"
-            >
+            <div class="flex flex-col space-y-3 mb-4 shrink-0">
               <!-- Error Message -->
-              <div
-                v-if="errorMessage"
-                class="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
-              >
-                {{ errorMessage }}
-              </div>
 
               <!-- Loading State -->
               <div
