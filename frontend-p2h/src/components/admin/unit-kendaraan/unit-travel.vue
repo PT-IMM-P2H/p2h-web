@@ -42,11 +42,19 @@ const filterData = ref({
   vehicle_type: "",
   warna_lambung: "",
   perusahaan: "",
+  merk: "",
+  stnk_date: "",
+  pajak_date: "",
+  kir_date: "",
 });
 const appliedFilterData = ref({
   vehicle_type: "",
   warna_lambung: "",
   perusahaan: "",
+  merk: "",
+  stnk_date: "",
+  pajak_date: "",
+  kir_date: "",
 });
 
 const opentambahUnitKendaraan = () => {
@@ -143,6 +151,24 @@ const fetchVehicles = async () => {
   }
 };
 
+// Extract unique values for dropdowns
+const uniqueCompanies = computed(() => {
+  const companies = tableData.value
+    .map((row) => row.perusahaan)
+    .filter(Boolean);
+  return [...new Set(companies)].sort();
+});
+
+const uniqueTypes = computed(() => {
+  const types = tableData.value.map((row) => row.tipe).filter(Boolean);
+  return [...new Set(types)].sort();
+});
+
+const uniqueMerks = computed(() => {
+  const merks = tableData.value.map((row) => row.merek).filter(Boolean);
+  return [...new Set(merks)].sort();
+});
+
 // Load data saat component mounted
 onMounted(() => {
   fetchVehicles();
@@ -224,20 +250,115 @@ const filteredTableData = computed(() => {
   }
 
   // Filter berdasarkan filter yang diterapkan
+  if (appliedFilterData.value.perusahaan) {
+    filtered = filtered.filter(
+      (row) => row.perusahaan === appliedFilterData.value.perusahaan,
+    );
+  }
   if (appliedFilterData.value.vehicle_type) {
     filtered = filtered.filter(
       (row) => row.tipe === appliedFilterData.value.vehicle_type,
     );
   }
-  if (appliedFilterData.value.warna_lambung) {
+  if (appliedFilterData.value.merk) {
     filtered = filtered.filter(
-      (row) => row.warnaNomorLambung === appliedFilterData.value.warna_lambung,
+      (row) => row.merek === appliedFilterData.value.merk,
     );
   }
-  if (appliedFilterData.value.perusahaan) {
-    filtered = filtered.filter(
-      (row) => row.perusahaan === appliedFilterData.value.perusahaan,
-    );
+  if (appliedFilterData.value.stnk_date) {
+    filtered = filtered.filter((row) => {
+      // row.tglSTNK format: "DD Bulan YYYY" (e.g. "15 Januari 2025")
+      // appliedFilterData.value.stnk_date format: "YYYY-MM-DD"
+      if (!row.tglSTNK || row.tglSTNK === "-") return false;
+
+      // Conversion helper
+      const bulanMap = {
+        Januari: "01",
+        Februari: "02",
+        Maret: "03",
+        April: "04",
+        Mei: "05",
+        Juni: "06",
+        Juli: "07",
+        Agustus: "08",
+        September: "09",
+        Oktober: "10",
+        November: "11",
+        Desember: "12",
+      };
+      const parts = row.tglSTNK.split(" "); // ["15", "Januari", "2025"]
+      if (parts.length < 3) return false;
+      const rowDate = `${parts[2]}-${bulanMap[parts[1]]}-${parts[0].padStart(2, "0")}`;
+
+      return rowDate === appliedFilterData.value.stnk_date;
+    });
+  }
+  if (appliedFilterData.value.pajak_date) {
+    filtered = filtered.filter((row) => {
+      if (!row.tglPajak || row.tglPajak === "-") return false;
+      const bulanMap = {
+        Januari: "01",
+        Februari: "02",
+        Maret: "03",
+        April: "04",
+        Mei: "05",
+        Juni: "06",
+        Juli: "07",
+        Agustus: "08",
+        September: "09",
+        Oktober: "10",
+        November: "11",
+        Desember: "12",
+      };
+      const parts = row.tglPajak.split(" ");
+      if (parts.length < 3) return false;
+      const rowDate = `${parts[2]}-${bulanMap[parts[1]]}-${parts[0].padStart(2, "0")}`;
+      return rowDate === appliedFilterData.value.pajak_date;
+    });
+  }
+  if (appliedFilterData.value.kir_date) {
+    filtered = filtered.filter((row) => {
+      if (!row.kirKuer || row.kirKuer === "-") return false;
+      const bulanMap = {
+        Januari: "01",
+        Februari: "02",
+        Maret: "03",
+        April: "04",
+        Mei: "05",
+        Juni: "06",
+        Juli: "07",
+        Agustus: "08",
+        September: "09",
+        Oktober: "10",
+        November: "11",
+        Desember: "12",
+      };
+      // kirKuer might be "YYYY-MM-DD" or "DD Bulan YYYY", assuming consistent display format
+      // If it is fetched as "YYYY-MM-DD" from backend, display might be formatted.
+      // Based on fetchVehicles map: kirKuer: vehicle.kir_expiry || "-" (likely YYYY-MM-DD from backend)
+      // Check display logic: fetchVehicles does not format it, but template uses row.kirKuer directly.
+      // Wait, formatHullNumberOnBlur is imported but not used.
+      // Let's check fetchVehicles again.
+      // tglSTNK: vehicle.stnk_expiry || "-"
+      // vehicle.stnk_expiry is typically Date object or ISO string.
+      // If backend sends YYYY-MM-DD, then we need to match it.
+
+      // However, `getDateStyle` parses "DD Bulan YYYY". This implies the backend returns "DD Bulan YYYY" OR it is formatted somewhere.
+      // Checking `apiService`... `getAll` returns raw data.
+      // Wait, checking `export.py`... `format_datetime` returns "YYYY-MM-DD".
+      // Let's re-verify `fetchVehicles`. It maps directly.
+      // If `getDateStyle` works, then `tglSTNK` IS "DD Bulan YYYY".
+      // But `export.py` sends "YYYY-MM-DD".
+      // Maybe the backend `vehicle.stnk_expiry` property accessor does formatting?
+      // Or `getAll` router response does?
+      // Assuming `tglSTNK` is "DD Bulan YYYY" for now as per `getDateStyle`.
+
+      const parts = row.kirKuer.split(" ");
+      if (parts.length < 3) return false; // Likely raw YYYY-MM-DD if length is 1
+
+      const rowDate = `${parts[2]}-${bulanMap[parts[1]]}-${parts[0].padStart(2, "0")}`;
+      return rowDate === appliedFilterData.value.kir_date;
+    });
   }
 
   return filtered;
@@ -343,6 +464,23 @@ const getDateStyle = (dateString) => {
           <div
             class="bg-white rounded-lg shadow-md p-5 flex-1 flex flex-col overflow-hidden"
           >
+            <div>
+              <!-- Error Message -->
+              <div
+                v-if="errorMessage"
+                class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
+              >
+                {{ errorMessage }}
+              </div>
+
+              <!-- Loading State -->
+              <div
+                v-if="isLoading"
+                class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm"
+              >
+                Memuat data...
+              </div>
+            </div>
             <!-- Toolbar -->
             <div
               class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
@@ -906,10 +1044,17 @@ const getDateStyle = (dateString) => {
                   >
                   <div class="relative">
                     <select
-                      v-model="filterData.namaPerusahaan"
+                      v-model="filterData.perusahaan"
                       class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
                     >
                       <option value="">Pilih Perusahaan</option>
+                      <option
+                        v-for="comp in uniqueCompanies"
+                        :key="comp"
+                        :value="comp"
+                      >
+                        {{ comp }}
+                      </option>
                     </select>
                     <ChevronDownIcon
                       class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
@@ -925,10 +1070,17 @@ const getDateStyle = (dateString) => {
                   >
                   <div class="relative">
                     <select
-                      v-model="filterData.departemen"
+                      v-model="filterData.vehicle_type"
                       class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
                     >
                       <option value="">Pilih Tipe</option>
+                      <option
+                        v-for="type in uniqueTypes"
+                        :key="type"
+                        :value="type"
+                      >
+                        {{ type }}
+                      </option>
                     </select>
                     <ChevronDownIcon
                       class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
@@ -944,10 +1096,17 @@ const getDateStyle = (dateString) => {
                   >
                   <div class="relative">
                     <select
-                      v-model="filterData.posisi"
+                      v-model="filterData.merk"
                       class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
                     >
                       <option value="">Pilih Merek</option>
+                      <option
+                        v-for="merk in uniqueMerks"
+                        :key="merk"
+                        :value="merk"
+                      >
+                        {{ merk }}
+                      </option>
                     </select>
                     <ChevronDownIcon
                       class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
@@ -963,12 +1122,9 @@ const getDateStyle = (dateString) => {
                   >
                   <div class="relative">
                     <input
-                      type="text"
-                      placeholder="hh/bb/tttt"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                      v-model="filterData.stnk_date"
+                      type="date"
+                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>
@@ -981,12 +1137,9 @@ const getDateStyle = (dateString) => {
                   >
                   <div class="relative">
                     <input
-                      type="text"
-                      placeholder="hh/bb/tttt"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                      v-model="filterData.pajak_date"
+                      type="date"
+                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>
@@ -999,12 +1152,9 @@ const getDateStyle = (dateString) => {
                   >
                   <div class="relative">
                     <input
-                      type="text"
-                      placeholder="hh/bb/tttt"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                      v-model="filterData.kir_date"
+                      type="date"
+                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>

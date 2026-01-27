@@ -59,7 +59,7 @@ class User(Base):
     full_name = Column(String(100), nullable=False)
     
     # Kredensial Login Utama (Sesuai arahan: Tanpa Username & First Name)
-    email = Column(String(100), unique=True, index=True, nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=True)
     phone_number = Column(String(20), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     
