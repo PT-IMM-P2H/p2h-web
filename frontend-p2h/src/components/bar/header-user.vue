@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useUserProfile } from "../../composables/useUserProfile";
 
 const router = useRouter();
@@ -90,11 +90,13 @@ const isAdminAccess = computed(() => {
 });
 
 // Fetch profile if authenticated and not loaded
-if (isAuthenticated.value && !userProfile.value) {
-  fetchUserProfile().catch(() => {
-    // Handle error silently or log
-  });
-}
+onMounted(() => {
+  if (isAuthenticated.value && !userProfile.value) {
+    fetchUserProfile().catch(() => {
+      // Handle error silently or log
+    });
+  }
+});
 </script>
 
 <template>
@@ -141,7 +143,7 @@ if (isAuthenticated.value && !userProfile.value) {
         Form P2H
       </button>
       <button
-        v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
+        v-if="isAuthenticated && isAdminAccess"
         @click="hadlehasilP2H"
         :class="getButtonClass('hasil-form')"
         :style="{ color: getButtonColor('hasil-form') }"
@@ -170,7 +172,7 @@ if (isAuthenticated.value && !userProfile.value) {
 
       <!-- admin -->
       <button
-        v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
+        v-if="isAuthenticated && isAdminAccess"
         @click="hadledashboard"
         :class="getButtonClass('dashboard')"
         :style="{ color: getButtonColor('dashboard') }"
@@ -238,7 +240,7 @@ if (isAuthenticated.value && !userProfile.value) {
           Form P2H
         </button>
         <button
-          v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
+          v-if="isAuthenticated && isAdminAccess"
           @click="hadlehasilP2H"
           :class="getButtonClass('hasil-form')"
           :style="{ color: getButtonColor('hasil-form') }"
@@ -273,7 +275,7 @@ if (isAuthenticated.value && !userProfile.value) {
           Log Kendaraan
         </button>
         <button
-          v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
+          v-if="isAuthenticated && isAdminAccess"
           @click="hadledashboard"
           :class="getButtonClass('dashboard')"
           :style="{ color: getButtonColor('dashboard') }"
