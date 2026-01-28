@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.dependencies import get_current_user
 from app.utils.response import base_response
+from app.utils.datetime import get_current_datetime
 from app.services.dashboard_service import dashboard_service
 from app.repositories.dashboard_repository import dashboard_repository
 
@@ -89,9 +90,9 @@ async def get_monthly_reports(
     
     # Controller layer: Validation
     if year is None:
-        year = datetime.now().year
+        year = get_current_datetime().year
     
-    current_year = datetime.now().year
+    current_year = get_current_datetime().year
     if year < 2020 or year > current_year + 5:
         raise HTTPException(
             status_code=400,
@@ -363,7 +364,7 @@ async def get_card_details(
         
     elif card_type == "total_pending":
         # Get vehicles without P2H today (or in date range)
-        today = datetime.now().date()
+        today = get_current_datetime().date()
         check_date = end_dt if end_dt else today
         
         # Get vehicles that have NOT submitted P2H on check_date

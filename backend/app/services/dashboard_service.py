@@ -6,8 +6,9 @@ Orchestrates repositories and handles business logic
 
 from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
-from datetime import date, datetime
+from datetime import date
 
+from app.utils.datetime import get_current_datetime
 from app.repositories.dashboard_repository import DashboardRepository
 from app.repositories.p2h_repository import P2HRepository
 from app.repositories.vehicle_repository import VehicleRepository
@@ -47,7 +48,7 @@ class DashboardService:
         stats = self.dashboard_repo.get_statistics(db, start_date, end_date, vehicle_type)
         
         # Business logic: Calculate pending P2H
-        today = datetime.now().date()
+        today = get_current_datetime().date()
         vehicles_reported_today = self.p2h_repo.get_vehicles_reported_on_date(db, today)
         total_pending_p2h = max(stats["total_vehicles"] - vehicles_reported_today, 0)
         
