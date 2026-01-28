@@ -17,7 +17,8 @@ from app.schemas.p2h import (
 from app.services.p2h_service import p2h_service
 from app.dependencies import get_current_user, require_role
 from app.utils.response import base_response
-from datetime import datetime, time
+from app.utils.datetime import get_current_time, get_shift_number
+from datetime import time
 
 router = APIRouter()
 
@@ -30,7 +31,7 @@ async def get_current_shift():
     Shift 2: 15:00 - 23:00
     Shift 3: 23:00 - 07:00
     """
-    current_time = datetime.now().time()
+    current_time = get_current_time()
     
     shift_1_start = time(7, 0)   # 07:00
     shift_1_end = time(15, 0)    # 15:00
