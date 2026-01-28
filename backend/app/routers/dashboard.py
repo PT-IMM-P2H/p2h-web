@@ -14,7 +14,7 @@ from app.repositories.dashboard_repository import dashboard_repository
 router = APIRouter(
     prefix="/dashboard", 
     tags=["Dashboard"],
-    dependencies=[Depends(require_role([UserRole.ADMIN, UserRole.SUPERADMIN]))]
+    dependencies=[Depends(require_role([UserRole.admin, UserRole.superadmin]))]
 )
 
 
