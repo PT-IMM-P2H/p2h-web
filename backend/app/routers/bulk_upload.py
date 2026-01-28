@@ -300,52 +300,234 @@ async def bulk_upload_users(
 
 
 @router.get("/templates/users")
-async def download_users_template():
-    """Download Excel template for bulk user upload"""
-    import os
-    from fastapi.responses import FileResponse
+async def download_users_template(db: Session = Depends(get_db)):
+    """Download Excel template for bulk user upload - auto-generated with latest master data"""
+    from fastapi.responses import StreamingResponse
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.worksheet.datavalidation import DataValidation
+    from app.models.user import Company, Department, Position, WorkStatus
     
-    template_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        'templates',
-        'template_data_pengguna.xlsx'
-    )
+    # Fetch fresh master data from database
+    companies = [c.nama_perusahaan for c in db.query(Company).filter(Company.deleted_at == None).all()]
+    departments = [d.nama_department for d in db.query(Department).filter(Department.deleted_at == None).all()]
+    positions = [p.nama_posisi for p in db.query(Position).filter(Position.deleted_at == None).all()]
+    work_statuses = [w.nama_status for w in db.query(WorkStatus).filter(WorkStatus.deleted_at == None).all()]
+    roles = [e.value for e in UserRole]
+    categories = [e.value for e in UserKategori]
     
-    if not os.path.exists(template_path):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Template file tidak ditemukan"
-        )
+    # Create workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Data Pengguna"
     
-    return FileResponse(
-        path=template_path,
-        filename='template_data_pengguna.xlsx',
-        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    headers = ["Nama Lengkap *", "Nomor Telepon *", "Email *", "Tanggal Lahir (DD-MM-YYYY)", 
+               "Nama Perusahaan *", "Kategori *", "Department *", "Position *", "Status Kerja *", "Role *"]
+    
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True, name="Arial", size=11)
+    border = Border(left=Side(style='thin'), right=Side(style='thin'), 
+                   top=Side(style='thin'), bottom=Side(style='thin'))
+    
+    # Set headers
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+        ws.column_dimensions[cell.column_letter].width = 22
+    
+    # Reference sheet
+    ws_ref = wb.create_sheet("Data Referensi")
+    
+    def populate_ref(col, title, values):
+        ws_ref[f'{col}1'] = title
+        ws_ref[f'{col}1'].font = Font(bold=True, color="4472C4", name="Arial")
+        for i, val in enumerate(values, 2):
+            ws_ref[f'{col}{i}'] = val
+        ws_ref.column_dimensions[col].width = 25
+        return len(values)
+    
+    len_roles = populate_ref('A', 'Role', roles)
+    len_cat = populate_ref('B', 'Kategori', categories)
+    len_dept = populate_ref('C', 'Department', departments)
+    len_pos = populate_ref('D', 'Position', positions)
+    len_status = populate_ref('E', 'Status Kerja', work_statuses)
+    len_comp = populate_ref('F', 'Nama Perusahaan', companies)
+    
+    # Add data validations
+    if len_roles > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$A$2:$A${len_roles+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Role yang tersedia'
+        dv.errorTitle = 'Invalid Role'
+        ws.add_data_validation(dv)
+        dv.add('J2:J1000')
+    
+    if len_cat > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$B$2:$B${len_cat+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Kategori yang tersedia'
+        dv.errorTitle = 'Invalid Kategori'
+        ws.add_data_validation(dv)
+        dv.add('F2:F1000')
+    
+    if len_dept > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$C$2:$C${len_dept+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Department yang tersedia'
+        dv.errorTitle = 'Invalid Department'
+        ws.add_data_validation(dv)
+        dv.add('G2:G1000')
+    
+    if len_pos > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$D$2:$D${len_pos+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Position yang tersedia'
+        dv.errorTitle = 'Invalid Position'
+        ws.add_data_validation(dv)
+        dv.add('H2:H1000')
+    
+    if len_status > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$E$2:$E${len_status+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Status Kerja yang tersedia'
+        dv.errorTitle = 'Invalid Status Kerja'
+        ws.add_data_validation(dv)
+        dv.add('I2:I1000')
+    
+    if len_comp > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$F$2:$F${len_comp+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Perusahaan yang tersedia'
+        dv.errorTitle = 'Invalid Perusahaan'
+        ws.add_data_validation(dv)
+        dv.add('E2:E1000')
+    
+    # Add empty row with highlighting for mandatory fields
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=2, column=col_num)
+        cell.value = ""
+        cell.border = border
+        if "*" in headers[col_num - 1]:
+            cell.fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+    
+    # Format phone number column as TEXT
+    for row in range(2, 1001):
+        ws.cell(row=row, column=2).number_format = '@'
+    
+    ws.freeze_panes = 'A2'
+    
+    # Save to stream
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename=template_data_pengguna.xlsx'}
     )
 
 
 @router.get("/templates/vehicles")
-async def download_vehicles_template():
-    """Download Excel template for bulk vehicle upload"""
-    import os
-    from fastapi.responses import FileResponse
+async def download_vehicles_template(db: Session = Depends(get_db)):
+    """Download Excel template for bulk vehicle upload - auto-generated with latest master data"""
+    from fastapi.responses import StreamingResponse
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.worksheet.datavalidation import DataValidation
+    from app.models.vehicle import VehicleType, ShiftType, UnitKategori
     
-    template_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-        'templates',
-        'template_data_kendaraan.xlsx'
-    )
+    # Fetch fresh master data
+    vehicle_types = [e.value for e in VehicleType]
+    categories = [e.value for e in UnitKategori]
+    shift_types = [e.value for e in ShiftType]
     
-    if not os.path.exists(template_path):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Template file tidak ditemukan"
-        )
+    # Create workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Data Kendaraan"
     
-    return FileResponse(
-        path=template_path,
-        filename='template_data_kendaraan.xlsx',
-        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    headers = ["Nomor Polisi *", "Nomor Lambung", "Lokasi Kendaraan", "Tipe Kendaraan *", 
+               "Kategori *", "Merek", "Tahun Pembuatan", "Tanggal Expired STNK (YYYY-MM-DD)", 
+               "Tanggal Expired Pajak (YYYY-MM-DD)", "Tanggal Expired KIR (YYYY-MM-DD)", "Shift Type *"]
+    
+    header_fill = PatternFill(start_color="70AD47", end_color="70AD47", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True, name="Arial", size=11)
+    border = Border(left=Side(style='thin'), right=Side(style='thin'), 
+                   top=Side(style='thin'), bottom=Side(style='thin'))
+    
+    # Set headers
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+        ws.column_dimensions[cell.column_letter].width = 25
+    
+    # Reference sheet
+    ws_ref = wb.create_sheet("Data Referensi")
+    
+    def populate_ref(col, title, values):
+        ws_ref[f'{col}1'] = title
+        ws_ref[f'{col}1'].font = Font(bold=True, color="70AD47", name="Arial")
+        for i, val in enumerate(values, 2):
+            ws_ref[f'{col}{i}'] = val
+        ws_ref.column_dimensions[col].width = 25
+        return len(values)
+    
+    len_types = populate_ref('A', 'Tipe Kendaraan', vehicle_types)
+    len_cat = populate_ref('B', 'Kategori', categories)
+    len_shift = populate_ref('C', 'Shift Type', shift_types)
+    len_lokasi = populate_ref('D', 'Lokasi Kendaraan', ['Port', 'KM. 30'])
+    
+    # Add data validations
+    if len_types > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$A$2:$A${len_types+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Tipe Kendaraan yang tersedia'
+        dv.errorTitle = 'Invalid Tipe'
+        ws.add_data_validation(dv)
+        dv.add('D2:D1000')
+    
+    if len_cat > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$B$2:$B${len_cat+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Kategori yang tersedia'
+        dv.errorTitle = 'Invalid Kategori'
+        ws.add_data_validation(dv)
+        dv.add('E2:E1000')
+    
+    if len_shift > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$C$2:$C${len_shift+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Shift yang tersedia'
+        dv.errorTitle = 'Invalid Shift'
+        ws.add_data_validation(dv)
+        dv.add('K2:K1000')
+    
+    if len_lokasi > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$D$2:$D${len_lokasi+1}", allow_blank=True)
+        dv.error = 'Pilih Port atau KM. 30'
+        dv.errorTitle = 'Invalid Lokasi'
+        ws.add_data_validation(dv)
+        dv.add('C2:C1000')
+    
+    # Add empty row with highlighting for mandatory fields
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=2, column=col_num)
+        cell.value = ""
+        cell.border = border
+        if "*" in headers[col_num - 1]:
+            cell.fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+    
+    ws.freeze_panes = 'A2'
+    
+    # Save to stream
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename=template_data_kendaraan.xlsx'}
     )
 
 
