@@ -42,8 +42,9 @@ const showBulkUpload = ref(false);
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const filterData = ref({
-  vehicle_type: "",
   warna_lambung: "",
+  vehicle_type: "",
+  lokasi_kendaraan: "",
   perusahaan: "",
   merk: "",
   stnk_date: "",
@@ -62,7 +63,8 @@ const opentambahUnitKendaraan = () => {
     no_lambung: "",
     warna_no_lambung: "",
     plat_nomor: "",
-    vehicle_type: "Light Vehicle",
+    lokasi_kendaraan: "",
+    vehicle_type: "",
     merk: "",
     user_id: null,
     company_id: null,
@@ -87,7 +89,8 @@ const closeTambahUnitKendaraan = () => {
     no_lambung: "",
     warna_no_lambung: "",
     plat_nomor: "",
-    vehicle_type: "Light Vehicle",
+    lokasi_kendaraan: "",
+    vehicle_type: "",
     merk: "",
     user_id: null,
     company_id: null,
@@ -143,7 +146,8 @@ const formData = ref({
   no_lambung: "",
   warna_no_lambung: "",
   plat_nomor: "",
-  vehicle_type: "Light Vehicle",
+  vehicle_type: "",
+  lokasi_kendaraan: "",
   merk: "",
   user_id: null,
   company_id: null,
@@ -201,6 +205,7 @@ const fetchVehicles = async () => {
         nomorLambung: vehicle.no_lambung,
         warnaNomorLambung: vehicle.warna_no_lambung || "-",
         nomorPolisi: vehicle.plat_nomor || "-",
+        lokasi_kendaraan: vehicle.lokasi_kendaraan || "-",
         tipe: vehicle.vehicle_type,
         merek: vehicle.merk || "-",
         user: vehicle.user?.full_name || "-",
@@ -327,7 +332,7 @@ const handleTambahUnitKendaraan = async () => {
         no_lambung: "",
         warna_no_lambung: "",
         plat_nomor: "",
-        vehicle_type: "Light Vehicle",
+        vehicle_type: "",
         merk: "",
         stnk_expiry: "",
         pajak_expiry: "",
@@ -367,7 +372,7 @@ const editKendaraan = async (rowId) => {
         no_lambung: vehicle.no_lambung || "",
         warna_no_lambung: vehicle.warna_no_lambung || "",
         plat_nomor: vehicle.plat_nomor || "",
-        vehicle_type: vehicle.vehicle_type || "LIGHT_VEHICLE",
+        vehicle_type: vehicle.vehicle_type || "",
         merk: vehicle.merk || "",
         stnk_expiry: vehicle.stnk_expiry || "",
         pajak_expiry: vehicle.pajak_expiry || "",
@@ -861,6 +866,11 @@ const getDateStyle = (dateString) => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
+                        Lokasi Kendaraan
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
+                      >
                         Tipe
                       </th>
                       <th
@@ -969,6 +979,11 @@ const getDateStyle = (dateString) => {
                         >
                           {{ row.warnaNomorLambung }}
                         </span>
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
+                      >
+                        {{ row.nomorPolisi }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
@@ -1128,7 +1143,7 @@ const getDateStyle = (dateString) => {
                   </button>
                 </div>
 
-                <!-- Row -->
+                <!-- Tambah Unit Kendaraan -->
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <label
@@ -1198,6 +1213,28 @@ const getDateStyle = (dateString) => {
                       />
                       <PencilIcon
                         class="absolute right-3 top-2.5 w-4 h-4 text-[#b2b2b2]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      for="vehicle_type"
+                      class="block text-base font-medium text-gray-800 mb-1 mt-1"
+                      >Lokasi Kendaraan</label
+                    >
+                    <div class="relative">
+                      <select
+                        id="lokasi_kendaraan"
+                        name="lokasi_kendaraan"
+                        v-model="formData.lokasi_kendaraan"
+                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
+                      >
+                        <option value="">Port</option>
+                        <option value="Light Vehicle">KM. 30</option>
+                      </select>
+                      <ChevronDownIcon
+                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
                       />
                     </div>
                   </div>
@@ -1482,6 +1519,27 @@ const getDateStyle = (dateString) => {
                       <option value="Putih">Hijau</option>
                       <option value="Kuning">Kuning</option>
                       <option value="Hitam">Biru</option>
+                    </select>
+                    <ChevronDownIcon
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                    />
+                  </div>
+                </div>
+
+                <!-- Lokasi Kendaraan -->
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-800 mb-2 mt-2"
+                    >Lokasi Kendaraan</label
+                  >
+                  <div class="relative">
+                    <select
+                      v-model="filterData.lokasi_kendaraan"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
+                    >
+                      <option value="">Pilih Warna</option>
+                      <option value="Port">Port</option>
+                      <option value="KM 30">KM 30</option>
                     </select>
                     <ChevronDownIcon
                       class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"

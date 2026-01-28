@@ -193,7 +193,6 @@ const tableData = computed(() => {
       shift: shiftName,
       shiftRaw: report.shift_number,
       noLambung: report.vehicle.no_lambung,
-      // kilometerKendaraan: report.vehicle.kilometer_kendaraan,
       nomorPolisi: report.vehicle.plat_nomor || "-",
       warnaLambung: report.vehicle.warna_no_lambung || "-",
       tipe: report.vehicle.vehicle_type,
@@ -637,11 +636,6 @@ onMounted(() => {
                         No. Lambung
                       </th>
                       <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
-                      >
-                        Kilometer Kendaraan
-                      </th>
-                      <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
                         Nomor Polisi
@@ -735,11 +729,6 @@ onMounted(() => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-24"
                       >
                         {{ row.noLambung }}
-                      </td>
-                      <td
-                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-24"
-                      >
-                        {{ row.kilometerKendaraan }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
