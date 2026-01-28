@@ -690,8 +690,11 @@ const sortByName = () => {
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
+                      ></th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
                       >
-                        No. Handphone
+                        Nomor Telepon
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
@@ -701,22 +704,37 @@ const sortByName = () => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
+                        Tanggal Lahir (DD-MM-YYYY)
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
+                      >
                         Nama Perusahaan
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
-                        Departemen
+                        Kategori
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
+                      >
+                        Department
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Posisi
+                        Position
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Status
+                        Status Kerja
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
+                      >
+                        Role
                       </th>
 
                       <th
@@ -777,9 +795,19 @@ const sortByName = () => {
                         {{ row.email }}
                       </td>
                       <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-24"
+                      >
+                        {{ row.birth_date }}
+                      </td>
+                      <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
                       >
                         {{ row.namaPerusahaan }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
+                      >
+                        TRAVEl
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
@@ -795,6 +823,11 @@ const sortByName = () => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
                       >
                         {{ row.status }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
+                      >
+                        {{ row.role }}
                       </td>
 
                       <td
@@ -986,7 +1019,7 @@ const sortByName = () => {
                     <label
                       for="department_id_travel"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Departemen</label
+                      >Department</label
                     >
                     <div class="relative">
                       <select
@@ -1013,7 +1046,7 @@ const sortByName = () => {
                     <label
                       for="position_id_travel"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Posisi</label
+                      >Position</label
                     >
                     <div class="relative">
                       <select
@@ -1044,7 +1077,7 @@ const sortByName = () => {
                     <label
                       for="work_status_id_travel"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Status Pekerjaan</label
+                      >Status Kerja</label
                     >
                     <div class="relative">
                       <select
@@ -1070,7 +1103,7 @@ const sortByName = () => {
                   <div>
                     <label
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Tanggal Lahir</label
+                      >Tanggal Lahir (DD-MM-YYYY)</label
                     >
                     <input
                       v-model="formData.birth_date"

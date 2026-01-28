@@ -68,8 +68,8 @@ const opentambahPengguna = () => {
     position_id: "",
     work_status_id: "",
     birth_date: "",
-    role: "user",
-    kategori_pengguna: "IMM",
+    role: "",
+    kategori_pengguna: "",
   };
   tambahPengguna.value = true;
 };
@@ -85,8 +85,8 @@ const closeTambahPengguna = () => {
     position_id: "",
     work_status_id: "",
     birth_date: "",
-    role: "user",
-    kategori_pengguna: "IMM",
+    role: "=",
+    kategori_pengguna: "",
   };
   tambahPengguna.value = false;
 };
@@ -149,8 +149,8 @@ const formData = ref({
   position_id: "",
   work_status_id: "",
   birth_date: "",
-  role: "user",
-  kategori_pengguna: "IMM",
+  role: "",
+  kategori_pengguna: "",
 });
 
 // Fetch master data
@@ -728,7 +728,7 @@ const editPengguna = async (rowId) => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
                       >
-                        No. Handphone
+                        Nomor Telepon
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
@@ -738,22 +738,37 @@ const editPengguna = async (rowId) => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
+                        Tanggal Lahir (DD-MM-YYYY)
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
+                      >
                         Nama Perusahaan
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
-                        Departemen
+                        Kategori
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
+                      >
+                        Department
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Posisi
+                        Position
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Status
+                        Status Kerja
+                      </th>
+                      <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-16"
+                      >
+                        Role
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-16"
@@ -811,7 +826,17 @@ const editPengguna = async (rowId) => {
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
                       >
+                        {{ row.birth_date }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
+                      >
                         {{ row.namaPerusahaan }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
+                      >
+                        IMM
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
@@ -827,6 +852,11 @@ const editPengguna = async (rowId) => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
                       >
                         {{ row.status }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
+                      >
+                        {{ row.role }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-16"
@@ -1016,7 +1046,7 @@ const editPengguna = async (rowId) => {
                     <label
                       for="department_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Departemen</label
+                      >Department</label
                     >
                     <div class="relative">
                       <select
@@ -1043,7 +1073,7 @@ const editPengguna = async (rowId) => {
                     <label
                       for="position_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Posisi</label
+                      >Position</label
                     >
                     <div class="relative">
                       <select
@@ -1074,7 +1104,7 @@ const editPengguna = async (rowId) => {
                     <label
                       for="work_status_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Status Pekerjaan</label
+                      >Status Kerja</label
                     >
                     <div class="relative">
                       <select
@@ -1100,7 +1130,7 @@ const editPengguna = async (rowId) => {
                   <div>
                     <label
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Tanggal Lahir</label
+                      >Tanggal Lahir (DD-MM-YYYY)</label
                     >
                     <input
                       type="date"
