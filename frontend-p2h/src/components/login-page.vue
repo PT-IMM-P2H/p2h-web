@@ -62,11 +62,15 @@ const handleSignIn = async (event) => {
       // Simpan token dan user data ke localStorage
       localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, access_token);
       localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(user));
+      localStorage.setItem('user_role', user.role); // Untuk router guard
 
       // Redirect berdasarkan role
       if (user.role === "superadmin" || user.role === "admin") {
         console.log("Redirecting to dashboard...");
         await router.push("/dashboard");
+      } else if (user.role === "viewer") {
+        console.log("Redirecting to monitor...");
+        await router.push("/monitor-kendaraan");
       } else {
         console.log("Redirecting to form-p2h...");
         await router.push("/form-p2h");
