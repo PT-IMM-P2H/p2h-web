@@ -52,9 +52,14 @@ const filterData = ref({
   kir_date: "",
 });
 const appliedFilterData = ref({
-  vehicle_type: "",
   warna_lambung: "",
+  vehicle_type: "",
+  lokasi_kendaraan: "",
   perusahaan: "",
+  merk: "",
+  stnk_date: "",
+  pajak_date: "",
+  kir_date: "",
 });
 
 const opentambahUnitKendaraan = () => {
@@ -64,7 +69,7 @@ const opentambahUnitKendaraan = () => {
     warna_no_lambung: "",
     plat_nomor: "",
     lokasi_kendaraan: "",
-    vehicle_type: "",
+    vehicle_type: "Light Vehicle",
     merk: "",
     user_id: null,
     company_id: null,
@@ -90,7 +95,7 @@ const closeTambahUnitKendaraan = () => {
     warna_no_lambung: "",
     plat_nomor: "",
     lokasi_kendaraan: "",
-    vehicle_type: "",
+    vehicle_type: "Light Vehicle",
     merk: "",
     user_id: null,
     company_id: null,
@@ -146,8 +151,8 @@ const formData = ref({
   no_lambung: "",
   warna_no_lambung: "",
   plat_nomor: "",
-  vehicle_type: "",
   lokasi_kendaraan: "",
+  vehicle_type: "Light Vehicle",
   merk: "",
   user_id: null,
   company_id: null,
@@ -232,24 +237,6 @@ const fetchVehicles = async () => {
   }
 };
 
-// Extract unique values for dropdowns
-const uniqueCompanies = computed(() => {
-  const companies = tableData.value
-    .map((row) => row.perusahaan)
-    .filter(Boolean);
-  return [...new Set(companies)].sort();
-});
-
-const uniqueTypes = computed(() => {
-  const types = tableData.value.map((row) => row.tipe).filter(Boolean);
-  return [...new Set(types)].sort();
-});
-
-const uniqueMerks = computed(() => {
-  const merks = tableData.value.map((row) => row.merek).filter(Boolean);
-  return [...new Set(merks)].sort();
-});
-
 // Hapus kendaraan (soft delete)
 const handleDeleteVehicles = async () => {
   if (selectedRowIds.value.length === 0) {
@@ -332,7 +319,7 @@ const handleTambahUnitKendaraan = async () => {
         no_lambung: "",
         warna_no_lambung: "",
         plat_nomor: "",
-        vehicle_type: "",
+        vehicle_type: "Light Vehicle",
         merk: "",
         stnk_expiry: "",
         pajak_expiry: "",
@@ -372,7 +359,8 @@ const editKendaraan = async (rowId) => {
         no_lambung: vehicle.no_lambung || "",
         warna_no_lambung: vehicle.warna_no_lambung || "",
         plat_nomor: vehicle.plat_nomor || "",
-        vehicle_type: vehicle.vehicle_type || "",
+        lokasi_kendaraan: vehicle.lokasi_kendaraan || "",
+        vehicle_type: vehicle.vehicle_type || "LIGHT_VEHICLE",
         merk: vehicle.merk || "",
         stnk_expiry: vehicle.stnk_expiry || "",
         pajak_expiry: vehicle.pajak_expiry || "",
@@ -688,113 +676,110 @@ const getDateStyle = (dateString) => {
             </div>
           </div>
           <div
-            class="bg-white rounded-lg shadow-md p-5 flex-1 flex flex-col overflow-hidden min-h-0"
+            class="bg-white rounded-lg shadow-md p-5 flex-1 flex flex-col overflow-hidden"
           >
-            <!-- NOTIFICATION WRAPPER (HANYA MUNCUL JIKA ADA ISI) -->
-            <div class="flex flex-col space-y-3 mb-4 shrink-0">
-              <!-- Error Message -->
-              <div
-                v-if="errorMessage"
-                class="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
-              >
-                {{ errorMessage }}
+            <!-- Error Message -->
+            <div
+              v-if="errorMessage"
+              class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
+            >
+              {{ errorMessage }}
+            </div>
+
+            <!-- Loading State -->
+            <div
+              v-if="isLoading"
+              class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm"
+            >
+              Memuat data...
+            </div>
+
+            <!-- Toolbar -->
+            <div
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
+            >
+              <!-- Left Section -->
+              <div class="flex items-center gap-3">
+                <!-- Tambah pengguna Button -->
+                <button
+                  @click="opentambahUnitKendaraan"
+                  class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-white bg-[#6444C6] hover:bg-[#5c3db8] transition text-sm"
+                >
+                  <UserPlusIcon class="w-5 h-5" />
+                  <span>Tambah unit kendaraan</span>
+                </button>
+
+                <!-- Upload button -->
+                <button
+                  @click="openBulkUpload"
+                  class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
+                >
+                  <CloudArrowUpIcon class="w-4 h-4" />
+                  <span>Upload</span>
+                </button>
               </div>
 
-              <!-- Loading State -->
-              <div
-                v-if="isLoading"
-                class="p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm"
-              >
-                Memuat data...
-              </div>
-
-              <!-- Toolbar -->
-              <div
-                class="flex flex-wrap items-center gap-2 md:gap-3 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
-              >
-                <!-- Left Section -->
-                <div class="flex items-center gap-3">
-                  <!-- Tambah pengguna Button -->
-                  <button
-                    @click="opentambahUnitKendaraan"
-                    class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-white bg-[#6444C6] hover:bg-[#5c3db8] transition text-sm"
-                  >
-                    <UserPlusIcon class="w-5 h-5" />
-                    <span>Tambah unit kendaraan</span>
-                  </button>
-
-                  <!-- Upload button -->
-                  <button
-                    @click="openBulkUpload"
-                    class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
-                  >
-                    <CloudArrowUpIcon class="w-4 h-4" />
-                    <span>Upload</span>
-                  </button>
-                </div>
-
-                <!-- Right Section -->
-                <div class="flex items-center gap-3">
-                  <!-- Search Input with Icon Inside -->
-                  <div class="relative flex min-w-50">
-                    <MagnifyingGlassIcon
-                      class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                    />
-                    <input
-                      id="search-query"
-                      name="search"
-                      v-model="searchQuery"
-                      @input="currentPage = 1"
-                      type="text"
-                      placeholder="Cari..."
-                      aria-label="Cari kendaraan"
-                      class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <!-- Filter Button -->
-                  <button
-                    @click="openFilter"
-                    class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
-                  >
-                    <Bars3BottomLeftIcon class="w-4 h-4" />
-                    <span>Filter</span>
-                  </button>
-
-                  <!-- Export Dropdown -->
-                  <ExportDropdown
-                    :export-endpoint="`${API_BASE_URL}/export/vehicles`"
-                    :filters="exportFilters"
+              <!-- Right Section -->
+              <div class="flex items-center gap-3">
+                <!-- Search Input with Icon Inside -->
+                <div class="relative flex min-w-50">
+                  <MagnifyingGlassIcon
+                    class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
                   />
-
-                  <!-- Delete Button -->
-                  <button
-                    :disabled="selectedRowIds.length === 0"
-                    class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm"
-                    :class="
-                      selectedRowIds.length > 0
-                        ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
-                        : 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed'
-                    "
-                    :title="
-                      selectedRowIds.length > 0
-                        ? 'Hapus kendaraan terpilih'
-                        : 'Pilih kendaraan untuk dihapus'
-                    "
-                    :aria-label="
-                      selectedRowIds.length > 0
-                        ? `Hapus ${selectedRowIds.length} kendaraan terpilih`
-                        : 'Pilih kendaraan untuk dihapus'
-                    "
-                  >
-                    <TrashIcon class="w-4 h-4" />
-                    <span class="sr-only">{{
-                      selectedRowIds.length > 0
-                        ? `Hapus ${selectedRowIds.length} kendaraan`
-                        : "Hapus kendaraan"
-                    }}</span>
-                  </button>
+                  <input
+                    id="search-query"
+                    name="search"
+                    v-model="searchQuery"
+                    @input="currentPage = 1"
+                    type="text"
+                    placeholder="Cari..."
+                    aria-label="Cari kendaraan"
+                    class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
+
+                <!-- Filter Button -->
+                <button
+                  @click="openFilter"
+                  class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
+                >
+                  <Bars3BottomLeftIcon class="w-4 h-4" />
+                  <span>Filter</span>
+                </button>
+
+                <!-- Export Dropdown -->
+                <ExportDropdown
+                  :export-endpoint="`${API_BASE_URL}/export/vehicles`"
+                  :filters="exportFilters"
+                />
+
+                <!-- Delete Button -->
+                <button
+                  :disabled="selectedRowIds.length === 0"
+                  class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm"
+                  :class="
+                    selectedRowIds.length > 0
+                      ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
+                      : 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed'
+                  "
+                  :title="
+                    selectedRowIds.length > 0
+                      ? 'Hapus kendaraan terpilih'
+                      : 'Pilih kendaraan untuk dihapus'
+                  "
+                  :aria-label="
+                    selectedRowIds.length > 0
+                      ? `Hapus ${selectedRowIds.length} kendaraan terpilih`
+                      : 'Pilih kendaraan untuk dihapus'
+                  "
+                >
+                  <TrashIcon class="w-4 h-4" />
+                  <span class="sr-only">{{
+                    selectedRowIds.length > 0
+                      ? `Hapus ${selectedRowIds.length} kendaraan`
+                      : "Hapus kendaraan"
+                  }}</span>
+                </button>
               </div>
             </div>
 
@@ -864,7 +849,7 @@ const getDateStyle = (dateString) => {
                         Nomor Polisi
                       </th>
                       <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
                         Lokasi Kendaraan
                       </th>
@@ -988,7 +973,7 @@ const getDateStyle = (dateString) => {
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
                       >
-                        {{ row.nomorPolisi }}
+                        {{ row.lokasi_kendaraan }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
@@ -1143,7 +1128,7 @@ const getDateStyle = (dateString) => {
                   </button>
                 </div>
 
-                <!-- Tambah Unit Kendaraan -->
+                <!-- Row -->
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <label
@@ -1219,7 +1204,7 @@ const getDateStyle = (dateString) => {
 
                   <div>
                     <label
-                      for="vehicle_type"
+                      for="lokasi_kendaraan"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Lokasi Kendaraan</label
                     >
@@ -1230,15 +1215,18 @@ const getDateStyle = (dateString) => {
                         v-model="formData.lokasi_kendaraan"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
-                        <option value="">Port</option>
-                        <option value="Light Vehicle">KM. 30</option>
+                        <option value="">Pilih lokasi kendaraan</option>
+                        <option value="Port">Port</option>
+                        <option value="KM. 30">KM. 30</option>
                       </select>
                       <ChevronDownIcon
                         class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
                       />
                     </div>
                   </div>
+                </div>
 
+                <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
                       for="merk"
@@ -1259,9 +1247,7 @@ const getDateStyle = (dateString) => {
                       />
                     </div>
                   </div>
-                </div>
 
-                <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
                       for="vehicle_type"
@@ -1511,38 +1497,14 @@ const getDateStyle = (dateString) => {
                     >Warna Nomor Lambung</label
                   >
                   <div class="relative">
-                    <select
+                    <input
                       v-model="filterData.warna_lambung"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
-                    >
-                      <option value="">Pilih Warna</option>
-                      <option value="Putih">Hijau</option>
-                      <option value="Kuning">Kuning</option>
-                      <option value="Hitam">Biru</option>
-                    </select>
-                    <ChevronDownIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                      type="text"
+                      placeholder="Pilih Warna (Putih/Kuning/Hitam)"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
-                  </div>
-                </div>
-
-                <!-- Lokasi Kendaraan -->
-                <div>
-                  <label
-                    class="block text-sm font-medium text-gray-800 mb-2 mt-2"
-                    >Lokasi Kendaraan</label
-                  >
-                  <div class="relative">
-                    <select
-                      v-model="filterData.lokasi_kendaraan"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
-                    >
-                      <option value="">Pilih Warna</option>
-                      <option value="Port">Port</option>
-                      <option value="KM 30">KM 30</option>
-                    </select>
                     <ChevronDownIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
                     />
                   </div>
                 </div>
@@ -1554,21 +1516,14 @@ const getDateStyle = (dateString) => {
                     >Nama Perusahaan</label
                   >
                   <div class="relative">
-                    <select
+                    <input
                       v-model="filterData.perusahaan"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
-                    >
-                      <option value="">Pilih Perusahaan</option>
-                      <option
-                        v-for="comp in uniqueCompanies"
-                        :key="comp"
-                        :value="comp"
-                      >
-                        {{ comp }}
-                      </option>
-                    </select>
+                      type="text"
+                      placeholder="Ketik Nama Perusahaan"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                    />
                     <ChevronDownIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
                     />
                   </div>
                 </div>
@@ -1580,21 +1535,14 @@ const getDateStyle = (dateString) => {
                     >Tipe Kendaraan</label
                   >
                   <div class="relative">
-                    <select
+                    <input
                       v-model="filterData.vehicle_type"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
-                    >
-                      <option value="">Pilih Tipe</option>
-                      <option
-                        v-for="type in uniqueTypes"
-                        :key="type"
-                        :value="type"
-                      >
-                        {{ type }}
-                      </option>
-                    </select>
+                      type="text"
+                      placeholder="Light Vehicle/Bus/Truck/dll"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                    />
                     <ChevronDownIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
                     />
                   </div>
                 </div>
@@ -1606,21 +1554,33 @@ const getDateStyle = (dateString) => {
                     >Merek</label
                   >
                   <div class="relative">
-                    <select
+                    <input
                       v-model="filterData.merk"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] appearance-none"
-                    >
-                      <option value="">Pilih Merek</option>
-                      <option
-                        v-for="merk in uniqueMerks"
-                        :key="merk"
-                        :value="merk"
-                      >
-                        {{ merk }}
-                      </option>
-                    </select>
+                      type="text"
+                      placeholder="Pilih Merek"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                    />
                     <ChevronDownIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                    />
+                  </div>
+                </div>
+
+                <!-- Lokasi Kendaraan -->
+                <div>
+                  <label
+                    class="block text-sm font-medium text-gray-800 mb-2 mt-2"
+                    >Lokasi Kendaraan</label
+                  >
+                  <div class="relative">
+                    <input
+                      v-model="filterData.lokasi_kendaraan"
+                      type="text"
+                      placeholder="Port / KM. 30"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                    />
+                    <ChevronDownIcon
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
                     />
                   </div>
                 </div>
@@ -1635,7 +1595,10 @@ const getDateStyle = (dateString) => {
                     <input
                       v-model="filterData.stnk_date"
                       type="date"
-                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                    />
+                    <CalendarIcon
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
                     />
                   </div>
                 </div>
@@ -1650,7 +1613,10 @@ const getDateStyle = (dateString) => {
                     <input
                       v-model="filterData.pajak_date"
                       type="date"
-                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                    />
+                    <CalendarIcon
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
                     />
                   </div>
                 </div>
@@ -1665,7 +1631,10 @@ const getDateStyle = (dateString) => {
                     <input
                       v-model="filterData.kir_date"
                       type="date"
-                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
+                    />
+                    <CalendarIcon
+                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
                     />
                   </div>
                 </div>
