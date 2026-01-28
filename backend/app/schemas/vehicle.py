@@ -32,6 +32,7 @@ class VehicleBase(BaseModel):
     no_lambung: str = Field(..., min_length=1, max_length=20)
     warna_no_lambung: Optional[str] = Field(None, max_length=20)
     plat_nomor: Optional[str] = Field(None, max_length=20)
+     lokasi_kendaraan: Optional[str] = Field(None, max_length=100)
     vehicle_type: VehicleType
     merk: Optional[str] = Field(None, max_length=50)
     user_id: Optional[UUID] = None
@@ -72,6 +73,7 @@ class VehicleUpdate(BaseModel):
     no_lambung: Optional[str] = Field(None, min_length=1, max_length=20)
     warna_no_lambung: Optional[str] = Field(None, max_length=20)
     plat_nomor: Optional[str] = Field(None, max_length=20)
+    lokasi_kendaraan: Optional[str] = Field(None, max_length=100)
     vehicle_type: Optional[VehicleType] = None
     merk: Optional[str] = Field(None, max_length=50)
     user_id: Optional[UUID] = None
