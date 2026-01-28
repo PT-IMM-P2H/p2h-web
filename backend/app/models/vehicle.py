@@ -39,6 +39,7 @@ class Vehicle(Base):
     no_lambung = Column(String(50), unique=True, nullable=True, index=True)
     warna_no_lambung = Column(String(20), nullable=True)
     plat_nomor = Column(String(20), nullable=False, index=True)
+    lokasi_kendaraan = Column(String(100), nullable=True)
     vehicle_type = Column(SQLEnum(VehicleType, values_callable=lambda x: [e.value for e in x]), nullable=False)
     merk = Column(String(100), nullable=True)
     
