@@ -116,6 +116,13 @@ router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('access_token');
     const userRole = localStorage.getItem('user_role');
     
+    console.log('🔍 Navigation Guard:', {
+        from: from.name,
+        to: to.name,
+        hasToken: !!token,
+        userRole: userRole
+    });
+    
     // Route yang tidak perlu autentikasi
     const publicRoutes = ['login', 'main', 'monitor-kendaraan'];
     
