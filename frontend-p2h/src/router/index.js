@@ -156,6 +156,7 @@ router.beforeEach((to, from, next) => {
             if (!publicRoutes.includes(to.name)) {
                 return next({ name: 'monitor-kendaraan' });
             }
+            return next(); // Important: allow navigation
         }
         
         // User biasa tidak boleh akses admin routes
@@ -167,6 +168,7 @@ router.beforeEach((to, from, next) => {
             if (to.name === 'login' || to.name === 'main') {
                 return next({ name: 'form-p2h' });
             }
+            return next(); // Important: allow navigation
         }
         
         // Admin/Superadmin redirect dari login ke dashboard
@@ -174,6 +176,7 @@ router.beforeEach((to, from, next) => {
             if (to.name === 'login' || to.name === 'main') {
                 return next({ name: 'dashboard' });
             }
+            return next(); // Important: allow navigation to other routes
         }
     }
     
