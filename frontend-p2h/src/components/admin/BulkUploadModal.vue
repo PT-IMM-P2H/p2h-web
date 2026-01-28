@@ -405,51 +405,51 @@ const formatFileSize = (bytes) => {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 };
 
-const downloadTemplate = async () => {
-  try {
-    // Determine method based on uploadType or endpoint
-    let downloadMethod;
-    if (props.uploadType === "users") {
-      downloadMethod = apiService.bulkUpload.downloadUsersTemplate;
-    } else {
-      downloadMethod = apiService.bulkUpload.downloadVehiclesTemplate;
+const downloadTemplate = () => {
+  // Determine template type from uploadType prop
+  const templateType = props.uploadType === "users" ? "users" : "vehicles";
+  const baseUrl = import.meta.env.VITE_API_BASE_URL;
+  
+  // Get auth token from localStorage
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    alert('Sesi login tidak ditemukan. Silahkan login kembali.');
+    return;
+  }
+  
+  // Create download link with auth header via fetch
+  const url = `${baseUrl}/bulk-upload/templates/${templateType}`;
+  
+  fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`
     }
-
-    const response = await downloadMethod();
-
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Gagal mendownload template');
+    }
+    return response.blob();
+  })
+  .then(blob => {
     // Create download link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-
-    // Extract filename from Content-Disposition header or use default
-    const contentDisposition = response.headers["content-disposition"];
-    let filename =
-      props.uploadType === "users"
-        ? "template_data_pengguna.xlsx"
-        : "template_data_kendaraan.xlsx";
-
-    if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(
-        /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/i,
-      );
-      if (filenameMatch && filenameMatch[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, "");
-      }
-    }
-
-    link.setAttribute("download", filename);
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = templateType === 'users' 
+      ? 'template_data_pengguna.xlsx' 
+      : 'template_data_kendaraan.xlsx';
     document.body.appendChild(link);
     link.click();
     link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    console.error("Error downloading template:", error);
-    alert(
-      "Gagal mendownload template: " +
-        (error.response?.data?.message || error.message),
-    );
-  }
+    window.URL.revokeObjectURL(downloadUrl);
+  })
+  .catch(error => {
+    console.error('Error downloading template:', error);
+    alert('Gagal mendownload template. Pastikan Anda memiliki akses admin.');
+  });
 };
 
 const handleUpload = async () => {
