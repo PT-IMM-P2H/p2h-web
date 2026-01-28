@@ -1,20 +1,22 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { computed, ref, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { useUserProfile } from "../../composables/useUserProfile";
 import { STORAGE_KEYS } from "../../constants";
 
 const router = useRouter();
 const isMenuOpen = ref(false);
-const { clearProfile, userProfile, fetchUserProfile } = useUserProfile();
+const { clearProfile } = useUserProfile();
 
 const handleLogout = () => {
   // Clear user profile cache
   clearProfile();
-  // Clear localStorage token
-  // Clear localStorage token
+  // Clear localStorage keys using constants
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
-  localStorage.removeItem("access_token"); // Backward compatibility cleanup
+  localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+  localStorage.removeItem("token"); // Cleanup legacy key
+  localStorage.removeItem("access_token"); // Cleanup legacy key  
+  localStorage.removeItem("user_role"); // For authorization guard
   // Redirect to login
   router.push("/login");
   isMenuOpen.value = false;
@@ -82,22 +84,7 @@ const isMonitorPage = computed(
 
 // Check if user is authenticated
 const isAuthenticated = computed(() => {
-  return !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-});
-
-// Check if user is admin or superadmin
-const isAdminAccess = computed(() => {
-  const role = userProfile.value?.role;
-  return role === "admin" || role === "superadmin";
-});
-
-// Fetch profile if authenticated and not loaded
-onMounted(() => {
-  if (isAuthenticated.value && !userProfile.value) {
-    fetchUserProfile().catch(() => {
-      // Handle error silently or log
-    });
-  }
+  return !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || !!localStorage.getItem("access_token");
 });
 </script>
 
@@ -144,6 +131,7 @@ onMounted(() => {
         Form P2H
       </button>
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadlehasilP2H"
         :class="getButtonClass('hasil-form')"
         :style="{ color: getButtonColor('hasil-form') }"
@@ -152,6 +140,7 @@ onMounted(() => {
         Hasil P2H
       </button>
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadlepriwayat"
         :class="getButtonClass('riwayat-user')"
         :style="{ color: getButtonColor('riwayat-user') }"
@@ -160,6 +149,7 @@ onMounted(() => {
         Riwayat
       </button>
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadleprofile"
         :class="getButtonClass('profile-user')"
         :style="{ color: getButtonColor('profile-user') }"
@@ -170,6 +160,7 @@ onMounted(() => {
 
       <!-- admin -->
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="hadledashboard"
         :class="getButtonClass('dashboard')"
         :style="{ color: getButtonColor('dashboard') }"
@@ -178,10 +169,11 @@ onMounted(() => {
         Dashboard
       </button>
 
-      <div class="h-5 w-px bg-gray-300"></div>
+      <div v-if="isAuthenticated" class="h-5 w-px bg-gray-300"></div>
 
       <!-- Logout button (only if authenticated) -->
       <button
+        v-if="isAuthenticated && !isMonitorPage"
         @click="handleLogout"
         class="text-xs lg:text-sm font-medium text-red-500 hover:text-red-700 transition-all duration-200 whitespace-nowrap"
       >
@@ -190,6 +182,7 @@ onMounted(() => {
 
       <!-- Login button (only if not authenticated) -->
       <button
+        v-if="!isAuthenticated"
         @click="handleLogin"
         class="text-xs lg:text-sm font-medium text-blue-600 hover:text-blue-800 transition-all duration-200 whitespace-nowrap"
       >
@@ -234,6 +227,7 @@ onMounted(() => {
           Form P2H
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadlehasilP2H"
           :class="getButtonClass('hasil-form')"
           :style="{ color: getButtonColor('hasil-form') }"
@@ -242,6 +236,7 @@ onMounted(() => {
           Hasil P2H
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadlepriwayat"
           :class="getButtonClass('riwayat-user')"
           :style="{ color: getButtonColor('riwayat-user') }"
@@ -250,6 +245,7 @@ onMounted(() => {
           Riwayat
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadleprofile"
           :class="getButtonClass('profile-user')"
           :style="{ color: getButtonColor('profile-user') }"
@@ -266,6 +262,7 @@ onMounted(() => {
           Log Kendaraan
         </button>
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="hadledashboard"
           :class="getButtonClass('dashboard')"
           :style="{ color: getButtonColor('dashboard') }"
@@ -273,10 +270,11 @@ onMounted(() => {
         >
           Dashboard
         </button>
-        <hr class="border-gray-200 my-2" />
+        <hr v-if="isAuthenticated" class="border-gray-200 my-2" />
 
         <!-- Logout (only if authenticated) -->
         <button
+          v-if="isAuthenticated && !isMonitorPage"
           @click="handleLogout"
           class="block w-full text-left px-3 py-2.5 text-sm font-medium text-red-500 rounded-md hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
         >
@@ -285,6 +283,7 @@ onMounted(() => {
 
         <!-- Login (only if not authenticated) -->
         <button
+          v-if="!isAuthenticated"
           @click="handleLogin"
           class="block w-full text-left px-3 py-2.5 text-sm font-medium text-blue-600 rounded-md hover:bg-blue-50 hover:text-blue-800 transition-colors duration-200"
         >
