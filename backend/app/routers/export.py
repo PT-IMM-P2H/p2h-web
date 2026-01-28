@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 import pandas as pd
 import io
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Optional, List
 from reportlab.lib import colors
+from app.utils.datetime import get_current_datetime
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -18,7 +19,7 @@ from reportlab.lib.units import inch
 import xlsxwriter
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_role
 from app.models.user import User, UserRole, UserKategori
 from app.models.vehicle import Vehicle, UnitKategori, ShiftType
 from app.models.p2h import P2HReport, InspectionStatus
@@ -53,13 +54,21 @@ async def export_users(
 ):
     """
     Export users data to Excel, PDF, or CSV
+    [ADMIN & SUPERADMIN ONLY]
     
     Filters:
-    - role: superadmin/admin/user
+    - role: superadmin/admin/user/viewer
     - kategori: IMM/TRAVEL
     - is_active: true/false
     - search: Search in name, email, phone
     """
+    
+    # Authorization: Only admin and superadmin can export
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hanya Admin dan Superadmin yang dapat mengekspor data"
+        )
     
     # Build query
     query = db.query(User)
@@ -129,9 +138,9 @@ async def export_users(
     df = pd.DataFrame(data)
     
     # Generate file based on format
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_current_datetime().strftime("%Y%m%d_%H%M%S")
     
-    if format.lower() in ["excel", "xlsx"]:
+    if format.lower() == "excel":
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name='Data Pengguna', index=False)
@@ -258,6 +267,7 @@ async def export_vehicles(
 ):
     """
     Export vehicles data to Excel, PDF, or CSV
+    [ADMIN & SUPERADMIN ONLY]
     
     Filters:
     - kategori: IMM/TRAVEL
@@ -266,6 +276,13 @@ async def export_vehicles(
     - is_active: true/false
     - search: Search in plat_nomor, no_lambung
     """
+    
+    # Authorization: Only admin and superadmin can export
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hanya Admin dan Superadmin yang dapat mengekspor data"
+        )
     
     # Build query
     query = db.query(Vehicle)
@@ -336,9 +353,9 @@ async def export_vehicles(
         })
     
     df = pd.DataFrame(data)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_current_datetime().strftime("%Y%m%d_%H%M%S")
     
-    if format.lower() in ["excel", "xlsx"]:
+    if format.lower() == "excel":
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name='Data Kendaraan', index=False)
@@ -455,6 +472,7 @@ async def export_p2h_reports(
 ):
     """
     Export P2H reports to Excel, PDF, or CSV
+    [ADMIN & SUPERADMIN ONLY]
     
     Filters:
     - kategori: IMM/TRAVEL
@@ -463,6 +481,13 @@ async def export_p2h_reports(
     - end_date: Filter to date
     - search: Search in vehicle plat or user name
     """
+    
+    # Authorization: Only admin and superadmin can export
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Hanya Admin dan Superadmin yang dapat mengekspor data"
+        )
     
     # Build query with joins
     query = db.query(P2HReport).join(Vehicle).join(User)
@@ -549,9 +574,9 @@ async def export_p2h_reports(
         })
     
     df = pd.DataFrame(data)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = get_current_datetime().strftime("%Y%m%d_%H%M%S")
     
-    if format.lower() in ["excel", "xlsx"]:
+    if format.lower() == "excel":
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name='Laporan P2H', index=False)
