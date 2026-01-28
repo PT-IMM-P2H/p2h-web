@@ -550,6 +550,21 @@ onMounted(() => {
                       : 'text-red-900'
                 "
               >
+                Lokasi Kendaraan :
+                <span class="font-semibold text-zinc-800">{{
+                  vehicleData.lokasi_kendaraan || "-"
+                }}</span>
+              </p>
+              <p
+                class="text-sm font-bold"
+                :class="
+                  p2hStatus?.color === 'green'
+                    ? 'text-green-900'
+                    : p2hStatus?.color === 'yellow'
+                      ? 'text-yellow-900'
+                      : 'text-red-900'
+                "
+              >
                 Merek Kendaraan :
                 <span class="font-semibold text-zinc-800">{{
                   vehicleData.merk
