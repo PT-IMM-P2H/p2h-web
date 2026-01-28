@@ -147,10 +147,12 @@ const { clearProfile } = useUserProfile();
 const handleLogout = () => {
   // Clear user profile cache
   clearProfile();
-  // Clear localStorage keys
+  // Clear localStorage keys using constants
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   localStorage.removeItem("token"); // Cleanup legacy key
+  localStorage.removeItem("access_token"); // Cleanup legacy key
+  localStorage.removeItem("user_role"); // For authorization guard
   // Redirect to login
   router.push("/login");
 };
