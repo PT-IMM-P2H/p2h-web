@@ -24,6 +24,7 @@ import {
   Bars3Icon,
 } from "@heroicons/vue/24/outline";
 import { useSidebar } from "../../composables/useSidebar";
+import { STORAGE_KEYS } from "../../constants";
 
 // Use sidebar composable
 const { isSidebarOpen, closeSidebar } = useSidebar();
@@ -146,8 +147,10 @@ const { clearProfile } = useUserProfile();
 const handleLogout = () => {
   // Clear user profile cache
   clearProfile();
-  // Clear localStorage token
-  localStorage.removeItem("token");
+  // Clear localStorage keys
+  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+  localStorage.removeItem(STORAGE_KEYS.USER_DATA);
+  localStorage.removeItem("token"); // Cleanup legacy key
   // Redirect to login
   router.push("/login");
 };

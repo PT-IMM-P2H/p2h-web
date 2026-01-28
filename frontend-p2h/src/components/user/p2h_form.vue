@@ -12,7 +12,9 @@ import {
   ChevronDownIcon,
 } from "@heroicons/vue/24/solid";
 import { api } from "../../services/api";
+import { api } from "../../services/api";
 import { useUserProfile } from "../../composables/useUserProfile";
+import { STORAGE_KEYS } from "../../constants";
 
 const router = useRouter();
 
@@ -36,7 +38,7 @@ const shiftWarning = ref(""); // Peringatan jika pilih shift salah
 const { userProfile, fetchUserProfile, getUserFullName } = useUserProfile();
 
 const checkAuthentication = () => {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   isAuthenticated.value = !!token;
 };
 

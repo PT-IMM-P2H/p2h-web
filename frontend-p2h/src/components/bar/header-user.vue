@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { computed, ref, onMounted } from "vue";
 import { useUserProfile } from "../../composables/useUserProfile";
+import { STORAGE_KEYS } from "../../constants";
 
 const router = useRouter();
 const isMenuOpen = ref(false);
@@ -11,8 +12,9 @@ const handleLogout = () => {
   // Clear user profile cache
   clearProfile();
   // Clear localStorage token
-  localStorage.removeItem("token");
-  localStorage.removeItem("access_token"); // Ensure both are cleared if used
+  // Clear localStorage token
+  localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+  localStorage.removeItem("access_token"); // Backward compatibility cleanup
   // Redirect to login
   router.push("/login");
   isMenuOpen.value = false;
@@ -80,7 +82,7 @@ const isMonitorPage = computed(
 
 // Check if user is authenticated
 const isAuthenticated = computed(() => {
-  return !!localStorage.getItem("access_token");
+  return !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
 });
 
 // Check if user is admin or superadmin
