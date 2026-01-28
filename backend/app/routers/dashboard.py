@@ -4,14 +4,18 @@ from datetime import datetime
 from typing import Optional
 
 from app.database import get_db
-from app.models.user import User
-from app.dependencies import get_current_user
+from app.models.user import User, UserRole
+from app.dependencies import get_current_user, require_role
 from app.utils.response import base_response
 from app.utils.datetime import get_current_datetime
 from app.services.dashboard_service import dashboard_service
 from app.repositories.dashboard_repository import dashboard_repository
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+router = APIRouter(
+    prefix="/dashboard", 
+    tags=["Dashboard"],
+    dependencies=[Depends(require_role([UserRole.ADMIN, UserRole.SUPERADMIN]))]
+)
 
 
 @router.get("/statistics")
