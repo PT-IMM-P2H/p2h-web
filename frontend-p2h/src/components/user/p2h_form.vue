@@ -7,13 +7,10 @@ import {
   InformationCircleIcon,
   MagnifyingGlassIcon,
   CheckCircleIcon,
-  PencilSquareIcon,
   ExclamationTriangleIcon,
   ChevronDownIcon,
 } from "@heroicons/vue/24/solid";
 import { api } from "../../services/api";
-import { useUserProfile } from "../../composables/useUserProfile";
-import { STORAGE_KEYS } from "../../constants";
 
 const router = useRouter();
 
@@ -33,11 +30,33 @@ const selectedDuration = ref("");
 const currentShiftInfo = ref(null); // Info shift dari backend
 const shiftWarning = ref(""); // Peringatan jika pilih shift salah
 
-// User data management using composable
-const { userProfile, fetchUserProfile, getUserFullName } = useUserProfile();
+// User data for welcome message
+const userData = ref({
+  full_name: "User",
+});
+
+// --- LOGIKA BUSINESS ---
+
+// Fetch user profile for welcome message
+const fetchUserProfile = async () => {
+  // Only fetch if user is authenticated
+  if (!isAuthenticated.value) {
+    userData.value.full_name = "User";
+    return;
+  }
+
+  try {
+    const response = await api.get("/users/me");
+    userData.value.full_name = response.data.payload.full_name || "User";
+  } catch (error) {
+    console.error("❌ Gagal fetch user profile:", error);
+    // Keep default name if fetch fails
+    userData.value.full_name = "User";
+  }
+};
 
 const checkAuthentication = () => {
-  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+  const token = localStorage.getItem("access_token");
   isAuthenticated.value = !!token;
 };
 
@@ -58,33 +77,47 @@ const validateShiftTime = () => {
   if (!currentShiftInfo.value || !selectedShift.value) return true;
 
   const selected = selectedShift.value;
-  const currentShiftNum = currentShiftInfo.value.current_shift;
+  const currentTime = new Date();
+  const hour = currentTime.getHours();
 
-  // Non-shift dan long shift punya aturan validasi berbeda
-  if (selected === "non-shift") {
-    // Non-shift hanya bisa diisi saat Shift 1 (07:00-15:00)
-    if (currentShiftNum !== 1) {
-      shiftWarning.value = `⚠️ Non Shift hanya bisa diisi pada jam 06:30 - 15:00. Waktu sekarang: ${currentShiftInfo.value.shift_info.name}.`;
+  // Validasi berdasarkan shift yang dipilih
+  if (selected === "non-shift" || selected === "0") {
+    // Non-Shift: 00:00 - 16:00
+    if (hour >= 16) {
+      shiftWarning.value = `⚠️ Non-Shift hanya bisa diisi sebelum jam 16:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
       return false;
     }
-  } else if (selected === "long-shift-1") {
-    // Long Shift 1 bisa diisi dari jam 06:30 sampai 00:00 (Shift 1 dan Shift 2)
-    if (currentShiftNum === 3) {
-      shiftWarning.value = `⚠️ Long Shift 1 hanya bisa diisi pada jam 06:30 - 00:00. Waktu sekarang: ${currentShiftInfo.value.shift_info.name}.`;
+  } else if (selected === "long-shift-1" || selected === "11") {
+    // Long Shift 1: 06:00 - 19:00
+    if (hour < 6 || hour >= 19) {
+      shiftWarning.value = `⚠️ Long Shift 1 hanya bisa diisi pada jam 06:00-19:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
       return false;
     }
-  } else if (selected === "long-shift-2") {
-    // Long Shift 2 bisa diisi dari jam 23:30 sampai 07:00 (Shift 3)
-    if (currentShiftNum !== 3) {
-      shiftWarning.value = `⚠️ Long Shift 2 hanya bisa diisi pada jam 23:30 - 07:00. Waktu sekarang: ${currentShiftInfo.value.shift_info.name}.`;
+  } else if (selected === "long-shift-2" || selected === "12") {
+    // Long Shift 2: 18:00 - 07:00 (melewati midnight)
+    if (hour < 18 && hour >= 7) {
+      shiftWarning.value = `⚠️ Long Shift 2 hanya bisa diisi pada jam 18:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
       return false;
     }
   } else {
     // Regular shift validation
     const selectedShiftNum = parseInt(selected);
-    if (selectedShiftNum !== currentShiftNum) {
-      const currentInfo = currentShiftInfo.value.shift_info;
-      shiftWarning.value = `⚠️ Waktu sekarang adalah ${currentInfo.name} (${currentInfo.time_range}). Anda hanya bisa mengisi P2H untuk shift tersebut.`;
+    
+    // Shift 1: 06:00 - 15:00
+    if (selectedShiftNum === 1 && (hour < 6 || hour >= 15)) {
+      shiftWarning.value = `⚠️ Shift 1 hanya bisa diisi pada jam 06:00-15:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+      return false;
+    }
+    
+    // Shift 2: 14:00 - 23:00
+    if (selectedShiftNum === 2 && (hour < 14 || hour >= 23)) {
+      shiftWarning.value = `⚠️ Shift 2 hanya bisa diisi pada jam 14:00-23:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+      return false;
+    }
+    
+    // Shift 3: 22:00 - 07:00 (melewati midnight)
+    if (selectedShiftNum === 3 && (hour < 22 && hour >= 7)) {
+      shiftWarning.value = `⚠️ Shift 3 hanya bisa diisi pada jam 22:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
       return false;
     }
   }
@@ -290,11 +323,7 @@ const getOptionClass = (id, opt) => {
 onMounted(() => {
   checkAuthentication();
   fetchCurrentShift(); // Fetch shift info saat component dimount
-
-  // Fetch user profile if needed
-  if (isAuthenticated.value && !userProfile.value) {
-    fetchUserProfile().catch((err) => console.error(err));
-  }
+  fetchUserProfile(); // Fetch user profile untuk welcome message
 });
 </script>
 
@@ -303,13 +332,13 @@ onMounted(() => {
     <NavBar />
 
     <main
-      class="flex-1 flex flex-col items-center bg-zinc-100 px-4 pt-20 pb-40 md:pb-30 bg-cover bg-fixed bg-center"
+      class="flex-1 flex flex-col items-center bg-zinc-100 px-4 pt-24 pb-25 md:pb-30 bg-cover bg-fixed bg-center"
       style="background-image: url(&quot;/image_asset/BG_2.png&quot;)"
     >
       <div class="w-full max-w-4xl space-y-4">
         <div class="p-8 bg-white rounded-2xl shadow-sm border border-zinc-200">
           <h1 class="text-2xl font-extrabold mb-2 text-zinc-900 leading-tight">
-            Selamat datang {{ getUserFullName() }}
+            Selamat datang {{ userData.full_name }}
           </h1>
           <p class="text-zinc-600 text-sm leading-relaxed">
             Mohon mengisi informasi keadaan kendaraan hari ini sebelum anda
