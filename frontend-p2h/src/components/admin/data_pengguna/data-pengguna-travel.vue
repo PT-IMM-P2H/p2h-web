@@ -205,6 +205,7 @@ const fetchUsers = async () => {
         namaLengkap: user.full_name,
         noHandphone: user.phone_number,
         email: user.email,
+        birth_date: user.birth_date || "-",
         namaPerusahaan: user.company?.nama_perusahaan || "-",
         departemen: user.department?.nama_department || "-",
         posisi: user.position?.nama_posisi || "-",
@@ -704,7 +705,7 @@ const sortByName = () => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
-                        Tanggal Lahir (DD-MM-YYYY)
+                        Tanggal Lahir
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
@@ -1103,7 +1104,7 @@ const sortByName = () => {
                   <div>
                     <label
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Tanggal Lahir (DD-MM-YYYY)</label
+                      >Tanggal Lahir</label
                     >
                     <input
                       v-model="formData.birth_date"

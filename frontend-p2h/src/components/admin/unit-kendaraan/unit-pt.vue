@@ -678,108 +678,114 @@ const getDateStyle = (dateString) => {
           <div
             class="bg-white rounded-lg shadow-md p-5 flex-1 flex flex-col overflow-hidden"
           >
-            <!-- Error Message -->
-            <div
-              v-if="errorMessage"
-              class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
-            >
-              {{ errorMessage }}
-            </div>
-
-            <!-- Loading State -->
-            <div
-              v-if="isLoading"
-              class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm"
-            >
-              Memuat data...
-            </div>
-
-            <!-- Toolbar -->
-            <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
-            >
-              <!-- Left Section -->
-              <div class="flex items-center gap-3">
-                <!-- Tambah pengguna Button -->
-                <button
-                  @click="opentambahUnitKendaraan"
-                  class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-white bg-[#6444C6] hover:bg-[#5c3db8] transition text-sm"
-                >
-                  <UserPlusIcon class="w-5 h-5" />
-                  <span>Tambah unit kendaraan</span>
-                </button>
-
-                <!-- Upload button -->
-                <button
-                  @click="openBulkUpload"
-                  class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
-                >
-                  <CloudArrowUpIcon class="w-4 h-4" />
-                  <span>Upload</span>
-                </button>
+            <div class="flex flex-col space-y-3 mb-4 shrink-0">
+              <!-- Error Message -->
+              <div
+                v-if="errorMessage"
+                class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
+              >
+                {{ errorMessage }}
               </div>
 
-              <!-- Right Section -->
-              <div class="flex items-center gap-3">
-                <!-- Search Input with Icon Inside -->
-                <div class="relative flex min-w-50">
-                  <MagnifyingGlassIcon
-                    class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
-                  />
-                  <input
-                    id="search-query"
-                    name="search"
-                    v-model="searchQuery"
-                    @input="currentPage = 1"
-                    type="text"
-                    placeholder="Cari..."
-                    aria-label="Cari kendaraan"
-                    class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+              <!-- Loading State -->
+              <div
+                v-if="isLoading"
+                class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm"
+              >
+                Memuat data...
+              </div>
+
+              <!-- Toolbar -->
+              <div
+                class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
+              >
+                <div
+                  class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
+                >
+                  <!-- Left Section -->
+                  <div class="flex items-center gap-3">
+                    <!-- Tambah pengguna Button -->
+                    <button
+                      @click="opentambahUnitKendaraan"
+                      class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-white bg-[#6444C6] hover:bg-[#5c3db8] transition text-sm"
+                    >
+                      <UserPlusIcon class="w-5 h-5" />
+                      <span>Tambah unit kendaraan</span>
+                    </button>
+
+                    <!-- Upload button -->
+                    <button
+                      @click="openBulkUpload"
+                      class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
+                    >
+                      <CloudArrowUpIcon class="w-4 h-4" />
+                      <span>Upload</span>
+                    </button>
+                  </div>
+
+                  <!-- Right Section -->
+                  <div class="flex items-center gap-3">
+                    <!-- Search Input with Icon Inside -->
+                    <div class="relative flex min-w-50">
+                      <MagnifyingGlassIcon
+                        class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                      />
+                      <input
+                        id="search-query"
+                        name="search"
+                        v-model="searchQuery"
+                        @input="currentPage = 1"
+                        type="text"
+                        placeholder="Cari..."
+                        aria-label="Cari kendaraan"
+                        class="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <!-- Filter Button -->
+                    <button
+                      @click="openFilter"
+                      class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
+                    >
+                      <Bars3BottomLeftIcon class="w-4 h-4" />
+                      <span>Filter</span>
+                    </button>
+
+                    <!-- Export Dropdown -->
+                    <ExportDropdown
+                      :export-endpoint="`${API_BASE_URL}/export/vehicles`"
+                      :filters="exportFilters"
+                    />
+
+                    <!-- Delete Button -->
+                    <button
+                      :disabled="selectedRowIds.length === 0"
+                      class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm"
+                      :class="
+                        selectedRowIds.length > 0
+                          ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
+                          : 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed'
+                      "
+                      :title="
+                        selectedRowIds.length > 0
+                          ? 'Hapus kendaraan terpilih'
+                          : 'Pilih kendaraan untuk dihapus'
+                      "
+                      :aria-label="
+                        selectedRowIds.length > 0
+                          ? `Hapus ${selectedRowIds.length} kendaraan terpilih`
+                          : 'Pilih kendaraan untuk dihapus'
+                      "
+                    >
+                      <TrashIcon class="w-4 h-4" />
+                      <span class="sr-only">{{
+                        selectedRowIds.length > 0
+                          ? `Hapus ${selectedRowIds.length} kendaraan`
+                          : "Hapus kendaraan"
+                      }}</span>
+                    </button>
+                  </div>
                 </div>
-
-                <!-- Filter Button -->
-                <button
-                  @click="openFilter"
-                  class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition text-sm"
-                >
-                  <Bars3BottomLeftIcon class="w-4 h-4" />
-                  <span>Filter</span>
-                </button>
-
-                <!-- Export Dropdown -->
-                <ExportDropdown
-                  :export-endpoint="`${API_BASE_URL}/export/vehicles`"
-                  :filters="exportFilters"
-                />
-
-                <!-- Delete Button -->
-                <button
-                  :disabled="selectedRowIds.length === 0"
-                  class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm"
-                  :class="
-                    selectedRowIds.length > 0
-                      ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
-                      : 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed'
-                  "
-                  :title="
-                    selectedRowIds.length > 0
-                      ? 'Hapus kendaraan terpilih'
-                      : 'Pilih kendaraan untuk dihapus'
-                  "
-                  :aria-label="
-                    selectedRowIds.length > 0
-                      ? `Hapus ${selectedRowIds.length} kendaraan terpilih`
-                      : 'Pilih kendaraan untuk dihapus'
-                  "
-                >
-                  <TrashIcon class="w-4 h-4" />
-                  <span class="sr-only">{{
-                    selectedRowIds.length > 0
-                      ? `Hapus ${selectedRowIds.length} kendaraan`
-                      : "Hapus kendaraan"
-                  }}</span>
-                </button>
               </div>
             </div>
 
