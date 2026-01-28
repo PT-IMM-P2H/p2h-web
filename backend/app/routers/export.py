@@ -64,7 +64,7 @@ async def export_users(
     """
     
     # Authorization: Only admin and superadmin can export
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERADMIN]:
+    if current_user.role not in [UserRole.admin, UserRole.superadmin]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Hanya Admin dan Superadmin yang dapat mengekspor data"
