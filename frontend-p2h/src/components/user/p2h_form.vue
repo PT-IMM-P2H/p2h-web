@@ -12,7 +12,6 @@ import {
   ChevronDownIcon,
 } from "@heroicons/vue/24/solid";
 import { api } from "../../services/api";
-import { api } from "../../services/api";
 import { useUserProfile } from "../../composables/useUserProfile";
 import { STORAGE_KEYS } from "../../constants";
 
