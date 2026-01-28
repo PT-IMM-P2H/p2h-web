@@ -246,6 +246,17 @@ async def submit_p2h(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """
+    Submit P2H report
+    [USER, ADMIN, SUPERADMIN ONLY - Viewer tidak boleh submit]
+    """
+    # Authorization: Viewer tidak boleh submit P2H
+    if current_user.role == UserRole.viewer:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Viewer tidak memiliki akses untuk mengisi P2H. Silakan login sebagai User."
+        )
+    
     try:
         report = await p2h_service.submit_p2h(db, current_user, submission)
         db.refresh(report)
