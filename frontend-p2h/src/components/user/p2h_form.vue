@@ -392,7 +392,7 @@ onMounted(() => {
 
         <div class="flex flex-col gap-4 font-bold">
           <!-- Kilometer Kendaraan -->
-          <!-- <div
+          <div
             class="p-6 bg-white rounded-2xl shadow-sm border border-zinc-200"
           >
             <label class="block text-base mb-3 text-zinc-900">
@@ -409,10 +409,10 @@ onMounted(() => {
                 class="w-full p-3.5 pr-10 bg-white border-2 border-zinc-300 rounded-xl outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-semibold text-zinc-900 transition-colors"
               />
               <PencilSquareIcon
-                class="h-5 w-5 absolute right-4 top-1/2 -translate-y-1/2 text-purple-600 pointer-events-none"
+                class="h-5 w-5 absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
               />
             </div>
-          </div> -->
+          </div>
 
           <!-- Info Waktu Real-Time -->
           <div

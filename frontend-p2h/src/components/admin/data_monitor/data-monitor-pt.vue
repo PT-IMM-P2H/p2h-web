@@ -636,11 +636,11 @@ onMounted(() => {
                       >
                         No. Lambung
                       </th>
-                      <!-- <th
+                      <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
                       >
                         Kilometer Kendaraan
-                      </th> -->
+                      </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
@@ -736,11 +736,11 @@ onMounted(() => {
                       >
                         {{ row.noLambung }}
                       </td>
-                      <!-- <td
+                      <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-24"
                       >
                         {{ row.kilometerKendaraan }}
-                      </td> -->
+                      </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
                       >
