@@ -158,35 +158,44 @@ router.beforeEach((to, from, next) => {
     
     // Jika sudah login
     if (token && userRole) {
+        console.log('✅ User authenticated with role:', userRole);
+        
         // Viewer hanya boleh akses monitor
         if (userRole === 'viewer') {
             if (!publicRoutes.includes(to.name)) {
+                console.log('🚫 Viewer blocked from:', to.name);
                 return next({ name: 'monitor-kendaraan' });
             }
-            return next(); // Important: allow navigation
+            console.log('✅ Viewer allowed to:', to.name);
+            return next();
         }
         
         // User biasa tidak boleh akses admin routes
         if (userRole === 'user') {
             if (adminRoutes.includes(to.name)) {
+                console.log('🚫 User blocked from admin route:', to.name);
                 return next({ name: 'form-p2h' });
             }
-            // Redirect dari login ke form-p2h
             if (to.name === 'login' || to.name === 'main') {
+                console.log('🔄 User redirected from', to.name, 'to form-p2h');
                 return next({ name: 'form-p2h' });
             }
-            return next(); // Important: allow navigation
+            console.log('✅ User allowed to:', to.name);
+            return next();
         }
         
         // Admin/Superadmin redirect dari login ke dashboard
         if (userRole === 'admin' || userRole === 'superadmin') {
             if (to.name === 'login' || to.name === 'main') {
+                console.log('🔄 Admin/Superadmin redirected from', to.name, 'to dashboard');
                 return next({ name: 'dashboard' });
             }
-            return next(); // Important: allow navigation to other routes
+            console.log('✅ Admin/Superadmin allowed to:', to.name);
+            return next();
         }
     }
     
+    console.log('➡️ Fallback next() called');
     next();
 });
 
