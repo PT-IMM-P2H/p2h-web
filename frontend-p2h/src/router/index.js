@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import Main from '../views/main.vue'
 import LoginPage from '../components/login-page.vue'
+import { STORAGE_KEYS } from '../constants'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -113,7 +114,7 @@ const router = createRouter({
 
 // Navigation Guard untuk Role-Based Authorization
 router.beforeEach((to, from, next) => {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     const userRole = localStorage.getItem('user_role');
     
     console.log('🔍 Navigation Guard:', {
