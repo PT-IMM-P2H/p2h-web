@@ -111,4 +111,73 @@ const router = createRouter({
     }
 })
 
+// Navigation Guard untuk Role-Based Authorization
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('access_token');
+    const userRole = localStorage.getItem('user_role');
+    
+    // Route yang tidak perlu autentikasi
+    const publicRoutes = ['login', 'main', 'monitor-kendaraan'];
+    
+    // Routes khusus admin/superadmin
+    const adminRoutes = [
+        'dashboard',
+        'data-monitor-pt',
+        'data-monitor-travel',
+        'data-pengguna-pt',
+        'data-pengguna-travel',
+        'kelola-pertanyaan',
+        'data-perusahaan',
+        'data-departemen',
+        'data-posisi',
+        'data-status',
+        'unit-kendaraan-pt',
+        'unit-kendaraan-travel',
+        'profil-admin'
+    ];
+    
+    // Routes untuk user biasa
+    const userRoutes = [
+        'form-p2h',
+        'profile-user',
+        'riwayat-user',
+        'hasil-form'
+    ];
+    
+    // Jika belum login dan mengakses route yang butuh auth
+    if (!token && !publicRoutes.includes(to.name)) {
+        return next({ name: 'login' });
+    }
+    
+    // Jika sudah login
+    if (token && userRole) {
+        // Viewer hanya boleh akses monitor
+        if (userRole === 'viewer') {
+            if (!publicRoutes.includes(to.name)) {
+                return next({ name: 'monitor-kendaraan' });
+            }
+        }
+        
+        // User biasa tidak boleh akses admin routes
+        if (userRole === 'user') {
+            if (adminRoutes.includes(to.name)) {
+                return next({ name: 'form-p2h' });
+            }
+            // Redirect dari login ke form-p2h
+            if (to.name === 'login' || to.name === 'main') {
+                return next({ name: 'form-p2h' });
+            }
+        }
+        
+        // Admin/Superadmin redirect dari login ke dashboard
+        if (userRole === 'admin' || userRole === 'superadmin') {
+            if (to.name === 'login' || to.name === 'main') {
+                return next({ name: 'dashboard' });
+            }
+        }
+    }
+    
+    next();
+});
+
 export default router;
