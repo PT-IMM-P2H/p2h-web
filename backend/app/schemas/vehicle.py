@@ -112,6 +112,7 @@ class VehicleResponse(BaseModel):
     no_lambung: str
     warna_no_lambung: Optional[str]
     plat_nomor: Optional[str]
+    lokasi_kendaraan: Optional[str]
     vehicle_type: VehicleType
     merk: Optional[str]
     user_id: Optional[UUID]
