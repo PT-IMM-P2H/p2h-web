@@ -5,13 +5,14 @@ import { useUserProfile } from "../../composables/useUserProfile";
 
 const router = useRouter();
 const isMenuOpen = ref(false);
-const { clearProfile } = useUserProfile();
+const { clearProfile, userProfile, fetchUserProfile } = useUserProfile();
 
 const handleLogout = () => {
   // Clear user profile cache
   clearProfile();
   // Clear localStorage token
   localStorage.removeItem("token");
+  localStorage.removeItem("access_token"); // Ensure both are cleared if used
   // Redirect to login
   router.push("/login");
   isMenuOpen.value = false;
@@ -81,6 +82,19 @@ const isMonitorPage = computed(
 const isAuthenticated = computed(() => {
   return !!localStorage.getItem("access_token");
 });
+
+// Check if user is admin or superadmin
+const isAdminAccess = computed(() => {
+  const role = userProfile.value?.role;
+  return role === "admin" || role === "superadmin";
+});
+
+// Fetch profile if authenticated and not loaded
+if (isAuthenticated.value && !userProfile.value) {
+  fetchUserProfile().catch(() => {
+    // Handle error silently or log
+  });
+}
 </script>
 
 <template>
@@ -118,6 +132,7 @@ const isAuthenticated = computed(() => {
 
       <!-- User -->
       <button
+        v-if="isAuthenticated"
         @click="hadleformp2h"
         :class="getButtonClass('form-p2h')"
         :style="{ color: getButtonColor('form-p2h') }"
@@ -126,7 +141,7 @@ const isAuthenticated = computed(() => {
         Form P2H
       </button>
       <button
-        v-if="isAuthenticated && !isMonitorPage"
+        v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
         @click="hadlehasilP2H"
         :class="getButtonClass('hasil-form')"
         :style="{ color: getButtonColor('hasil-form') }"
@@ -155,7 +170,7 @@ const isAuthenticated = computed(() => {
 
       <!-- admin -->
       <button
-        v-if="isAuthenticated && !isMonitorPage"
+        v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
         @click="hadledashboard"
         :class="getButtonClass('dashboard')"
         :style="{ color: getButtonColor('dashboard') }"
@@ -214,6 +229,7 @@ const isAuthenticated = computed(() => {
     >
       <div class="px-4 py-3 space-y-1">
         <button
+          v-if="isAuthenticated"
           @click="hadleformp2h"
           :class="getButtonClass('form-p2h')"
           :style="{ color: getButtonColor('form-p2h') }"
@@ -222,7 +238,7 @@ const isAuthenticated = computed(() => {
           Form P2H
         </button>
         <button
-          v-if="isAuthenticated && !isMonitorPage"
+          v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
           @click="hadlehasilP2H"
           :class="getButtonClass('hasil-form')"
           :style="{ color: getButtonColor('hasil-form') }"
@@ -257,7 +273,7 @@ const isAuthenticated = computed(() => {
           Log Kendaraan
         </button>
         <button
-          v-if="isAuthenticated && !isMonitorPage"
+          v-if="isAuthenticated && isAdminAccess && !isMonitorPage"
           @click="hadledashboard"
           :class="getButtonClass('dashboard')"
           :style="{ color: getButtonColor('dashboard') }"
