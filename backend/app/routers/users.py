@@ -1,132 +1,95 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-from typing import List
-from uuid import UUID
+from sqlalchemy import Column, String, Date, Boolean, Enum as SQLEnum, DateTime, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
+import enum
 
-from app.database import get_db
-from app.models.user import User, UserRole
-from app.schemas.user import UserCreate, UserUpdate, UserResponse
-from app.services.auth_service import auth_service
-from app.dependencies import get_current_user, require_role
-from app.utils.response import base_response 
+from app.database import Base
+from app.models.mixins import SoftDeleteMixin
 
-router = APIRouter()
+# --- 1. ENUMS ---
 
-@router.get("/me")
-async def get_current_user_profile(
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get current logged-in user profile.
-    Accessible by all authenticated users.
-    """
-    return base_response(
-        message="Data profil berhasil diambil",
-        payload=UserResponse.model_validate(current_user).model_dump(mode='json')
-    )
+class UserRole(enum.Enum):
+    """Role Utama Sistem P2H"""
+    superadmin = "superadmin"
+    admin = "admin"
+    user = "user"
+    viewer = "viewer"
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-async def create_user(
-    user_data: UserCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
-):
-    """
-    Menambah Karyawan/User Baru (Superadmin dan Admin).
-    Password akan otomatis dibuat: namadepan + DDMMYYYY jika dikosongkan.
-    """
-    try:
-        user = auth_service.create_user(db, user_data)
-        return base_response(
-            message="User berhasil didaftarkan ke sistem",
-            payload=UserResponse.model_validate(user).model_dump(mode='json'),
-            status_code=status.HTTP_201_CREATED
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+class UserKategori(enum.Enum):
+    """Pembeda entitas untuk filter laporan (IMM vs Travel)"""
+    IMM = "IMM"
+    TRAVEL = "TRAVEL"
 
-@router.get("")
-async def get_users(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
-):
-    """
-    Melihat Daftar Semua User (Superadmin dan Admin).
-    """
-    users = auth_service.get_all_users(db, skip=skip, limit=limit)
-    # Data dikonversi ke UserResponse agar password_hash tidak ikut terkirim
-    payload = [UserResponse.model_validate(u).model_dump(mode='json') for u in users]
+# --- 2. MASTER DATA MODELS ---
+
+class Company(SoftDeleteMixin, Base):
+    __tablename__ = "companies"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nama_perusahaan = Column(String(100), nullable=False)
+    status = Column(String(50)) # Contoh: User, Driver, Vendor
     
-    return base_response(
-        message="Daftar user berhasil diambil",
-        payload=payload
-    )
+    users = relationship("User", back_populates="company")
+    vehicles = relationship("Vehicle", back_populates="company")
 
-@router.get("/{user_id}")
-async def get_user(
-    user_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
-):
-    """
-    Melihat Detail User berdasarkan ID.
-    """
-    user = auth_service.get_user_by_id(db, user_id)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User tidak ditemukan"
-        )
+class Department(SoftDeleteMixin, Base):
+    __tablename__ = "departments"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nama_department = Column(String(100), nullable=False)
+    users = relationship("User", back_populates="department")
+
+class Position(SoftDeleteMixin, Base):
+    __tablename__ = "positions"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nama_posisi = Column(String(100), nullable=False)
+    users = relationship("User", back_populates="position")
+
+class WorkStatus(SoftDeleteMixin, Base):
+    __tablename__ = "work_statuses"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    nama_status = Column(String(50), nullable=False)
+    users = relationship("User", back_populates="work_status")
+
+# --- 3. FINALIZED USER MODEL ---
+
+class User(Base):
+    __tablename__ = "users"
     
-    return base_response(
-        message="Data user ditemukan",
-        payload=UserResponse.model_validate(user).model_dump(mode='json')
-    )
-
-@router.put("/{user_id}")
-async def update_user(
-    user_id: UUID,
-    user_data: UserUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
-):
-    """
-    Memperbarui Data User (Superadmin dan Admin).
-    """
-    try:
-        user = auth_service.update_user(db, user_id, user_data)
-        return base_response(
-            message="Data user berhasil diperbarui",
-            payload=UserResponse.model_validate(user).model_dump(mode='json')
-        )
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-
-@router.delete("/{user_id}")
-async def delete_user(
-    user_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
-):
-    """
-    Menonaktifkan User (Soft Delete, Superadmin dan Admin).
-    """
-    success = auth_service.delete_user(db, user_id)
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User tidak ditemukan"
-        )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    full_name = Column(String(100), nullable=False)
     
-    return base_response(
-        message="User berhasil dinonaktifkan",
-        payload={"user_id": str(user_id)}
-    )
+    # Kredensial Login Utama (Sesuai arahan: Tanpa Username & First Name)
+    email = Column(String(100), unique=True, index=True, nullable=True)
+    phone_number = Column(String(20), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
+    
+    # Metadata Profil
+    birth_date = Column(Date, nullable=True) # Digunakan untuk password default DDMMYYYY
+    
+    # Foreign Keys Master Data (Menghubungkan ke tabel Master)
+    department_id = Column(UUID(as_uuid=True), ForeignKey("departments.id"), nullable=True)
+    position_id = Column(UUID(as_uuid=True), ForeignKey("positions.id"), nullable=True)
+    work_status_id = Column(UUID(as_uuid=True), ForeignKey("work_statuses.id"), nullable=True)
+    company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=True)
+    
+    # Role & Status
+    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.user)
+    kategori_pengguna = Column(SQLEnum(UserKategori), nullable=False, default=UserKategori.IMM)
+    is_active = Column(Boolean, default=True, nullable=False)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    department = relationship("Department", back_populates="users")
+    position = relationship("Position", back_populates="users")
+    work_status = relationship("WorkStatus", back_populates="users")
+    company = relationship("Company", back_populates="users")
+    p2h_reports = relationship("P2HReport", back_populates="user")
+    vehicles_assigned = relationship("Vehicle", back_populates="user")
+
+    def __repr__(self):
+        # Menggunakan phone_number sebagai identitas unik di repr
+        return f"<User {self.phone_number} - {self.full_name}>"
