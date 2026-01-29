@@ -20,6 +20,7 @@ const router = createRouter({
             path: '/monitor-kendaraan',
             name: 'monitor-kendaraan',
             component: () => import('../components/viewer/monitor.vue')
+            meta: { requiresAuth: false, public: true }
         },
         {
             path: '/form-p2h',
@@ -112,10 +113,45 @@ const router = createRouter({
     }
 })
 
+// Helper function to check if token is expired
+function isTokenExpired(token) {
+    if (!token) return true;
+    
+    try {
+        // Decode JWT token (simple base64 decode of payload)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const exp = payload.exp;
+        
+        if (!exp) return false; // No expiration set
+        
+        // Check if token expired (exp is in seconds, Date.now() is in milliseconds)
+        const now = Math.floor(Date.now() / 1000);
+        return now >= exp;
+    } catch (e) {
+        console.error('Error checking token expiration:', e);
+        return true; // Treat invalid tokens as expired
+    }
+}
+
 // Navigation Guard untuk Role-Based Authorization
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
     const userRole = localStorage.getItem('user_role');
+
+    // Check if token is expired
+    if (token && isTokenExpired(token)) {
+        console.log('⚠️ Token expired, logging out...');
+        localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+        localStorage.removeItem('user_role');
+        localStorage.removeItem('user_data');
+        
+        // If trying to access protected route, redirect to login
+        const publicRoutes = ['login', 'main', 'monitoring-kendaraan'];
+        if (!publicRoutes.includes(to.name)) {
+            alert('Sesi Anda telah berakhir. Silakan login kembali.');
+            return next({ name: 'login' });
+        }
+    }
     
     console.log('🔍 Navigation Guard:', {
         from: from.name,
