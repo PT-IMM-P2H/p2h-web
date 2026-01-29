@@ -16,6 +16,6 @@ openpyxl
 pytz
 httpx
 uuid7
-bcrypt
+bcrypt==3.2.0
 xlsxwriter
 reportlab
