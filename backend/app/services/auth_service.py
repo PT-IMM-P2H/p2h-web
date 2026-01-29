@@ -14,7 +14,10 @@ class AuthService:
     @staticmethod
     def create_user(db: Session, user_data: UserCreate) -> User:
         """
-        Create a new user.
+        Create a new user with auto-generated password.
+        
+        Password format: namadepan + DDMMYYYY (contoh: yunnifa12062003)
+        Jika birth_date kosong dan password tidak disediakan, akan error.
         
         Args:
             db: Database session
@@ -24,31 +27,59 @@ class AuthService:
             Created user
             
         Raises:
-            ValueError: If username already exists
+            ValueError: If phone_number already exists or birth_date missing
         """
-        # Generate username
-        username = generate_username(user_data.first_name, user_data.birth_date)
-        
-        # Check if username already exists
-        existing_user = db.query(User).filter(User.username == username).first()
+        # Check if phone number already exists
+        existing_user = db.query(User).filter(
+            User.phone_number == user_data.phone_number
+        ).first()
         if existing_user:
             raise ValueError(
-                f"Username {username} sudah digunakan. "
-                f"User dengan nama depan dan tanggal lahir yang sama sudah ada."
+                f"Nomor telepon {user_data.phone_number} sudah terdaftar."
             )
         
-        # Generate password (default: same as username)
-        password = user_data.password if user_data.password else username
+        # Check if email already exists (if provided)
+        if user_data.email:
+            existing_email = db.query(User).filter(
+                User.email == user_data.email
+            ).first()
+            if existing_email:
+                raise ValueError(f"Email {user_data.email} sudah terdaftar.")
+        
+        # Generate password if not provided
+        if not user_data.password:
+            if not user_data.birth_date:
+                raise ValueError(
+                    "Tanggal lahir wajib diisi untuk membuat password otomatis. "
+                    "Format password: namadepan + DDMMYYYY (contoh: yunnifa12062003)"
+                )
+            
+            # Extract first name from full_name
+            first_name = user_data.full_name.split()[0].lower()
+            
+            # Generate password: namadepan + DDMMYYYY
+            date_str = user_data.birth_date.strftime("%d%m%Y")
+            password = f"{first_name}{date_str}"
+        else:
+            password = user_data.password
+        
+        # Hash password
         password_hash = hash_password(password)
         
         # Create user
         user = User(
-            username=username,
             password_hash=password_hash,
             full_name=user_data.full_name,
-            first_name=user_data.first_name,
+            email=user_data.email,
+            phone_number=user_data.phone_number,
             birth_date=user_data.birth_date,
-            role=user_data.role
+            role=user_data.role,
+            kategori_pengguna=user_data.kategori_pengguna,
+            is_active=user_data.is_active,
+            department_id=user_data.department_id,
+            position_id=user_data.position_id,
+            work_status_id=user_data.work_status_id,
+            company_id=user_data.company_id
         )
         
         db.add(user)
