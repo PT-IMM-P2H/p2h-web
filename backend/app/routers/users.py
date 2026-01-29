@@ -34,6 +34,10 @@ async def create_user(
     """
     Menambah Karyawan/User Baru (Superadmin dan Admin).
     Password akan otomatis dibuat: namadepan + DDMMYYYY jika dikosongkan.
+    
+    Business Rules:
+    - Admin dan Superadmin memiliki akses setara
+    - Keduanya dapat membuat user dengan role: user, admin, atau superadmin
     """
     try:
         user = auth_service.create_user(db, user_data)
@@ -46,6 +50,14 @@ async def create_user(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
+        )
+    except Exception as e:
+        # Log unexpected errors for debugging
+        import logging
+        logging.error(f"Error creating user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal membuat user: {str(e)}"
         )
 
 @router.get("")
