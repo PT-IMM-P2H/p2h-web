@@ -288,13 +288,19 @@ const handleDeleteUsers = async () => {
 
 // Submit tambah/edit pengguna
 const handleTambahPengguna = async () => {
-  // Validasi
-  if (
-    !formData.value.full_name ||
-    !formData.value.phone_number ||
-    !formData.value.email
-  ) {
-    alert("Nama lengkap, nomor telepon, dan email wajib diisi!");
+   // Validasi field wajib
+  if (!formData.value.full_name || !formData.value.phone_number) {
+    alert("Nama lengkap dan nomor telepon wajib diisi!");
+    return;
+  }
+
+  // Validasi birth_date jika password tidak diisi (untuk auto-generate)
+  if (!formData.value.password && !formData.value.birth_date) {
+    alert(
+      "Tanggal lahir wajib diisi untuk membuat password otomatis!\n\n" +
+      "Format password: namadepan + DDMMYYYY\n" +
+      "Contoh: Yunnifa Nur Lailli lahir 12/06/2003 → yunnifa12062003"
+    );
     return;
   }
 
