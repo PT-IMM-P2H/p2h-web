@@ -411,8 +411,11 @@ const downloadTemplate = () => {
   const templateType = props.uploadType === "users" ? "users" : "vehicles";
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   
-  // Get auth token from localStorage
-  const token = localStorage.getItem('STORAGE_KEYS.AUTH_TOKEN');
+  // Get auth token from localStorage - try multiple keys for compatibility
+  let token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) 
+    || localStorage.getItem('auth_token')
+    || localStorage.getItem('token')
+    || localStorage.getItem('access_token');
     
   // Debug: Check all localStorage keys
   console.log('🔍 Download Template Debug:', {
