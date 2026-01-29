@@ -413,6 +413,19 @@ const downloadTemplate = () => {
   
   // Get auth token from localStorage
   const token = localStorage.getItem('STORAGE_KEYS.AUTH_TOKEN');
+    
+  // Debug: Check all localStorage keys
+  console.log('🔍 Download Template Debug:', {
+    storageKey: STORAGE_KEYS.AUTH_TOKEN,
+    tokenExists: !!token,
+    tokenLength: token?.length,
+    allKeys: Object.keys(localStorage),
+    allTokens: {
+      auth_token: localStorage.getItem('auth_token'),
+      token: localStorage.getItem('token'),
+      access_token: localStorage.getItem('access_token')
+    }
+  });
   
   if (!token) {
     alert('Sesi login tidak ditemukan. Silahkan login kembali.');
