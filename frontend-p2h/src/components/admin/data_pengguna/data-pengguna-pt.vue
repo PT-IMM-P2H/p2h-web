@@ -68,8 +68,8 @@ const opentambahPengguna = () => {
     position_id: "",
     work_status_id: "",
     birth_date: "",
-    role: "",
-    kategori_pengguna: "",
+    role: "user",
+    kategori_pengguna: "IMM",
   };
   tambahPengguna.value = true;
 };
@@ -85,8 +85,8 @@ const closeTambahPengguna = () => {
     position_id: "",
     work_status_id: "",
     birth_date: "",
-    role: "=",
-    kategori_pengguna: "",
+    role: "user",
+    kategori_pengguna: "IMM",
   };
   tambahPengguna.value = false;
 };
@@ -149,8 +149,8 @@ const formData = ref({
   position_id: "",
   work_status_id: "",
   birth_date: "",
-  role: "",
-  kategori_pengguna: "",
+  role: "user",
+  kategori_pengguna: "IMM",
 });
 
 // Fetch master data
@@ -208,7 +208,6 @@ const fetchUsers = async () => {
         namaLengkap: user.full_name,
         noHandphone: user.phone_number,
         email: user.email,
-        birth_date: user.birth_date || "-",
         namaPerusahaan: user.company?.nama_perusahaan || "-",
         departemen: user.department?.nama_department || "-",
         posisi: user.position?.nama_posisi || "-",
@@ -288,7 +287,7 @@ const handleDeleteUsers = async () => {
 
 // Submit tambah/edit pengguna
 const handleTambahPengguna = async () => {
-   // Validasi field wajib
+  // Validasi field wajib
   if (!formData.value.full_name || !formData.value.phone_number) {
     alert("Nama lengkap dan nomor telepon wajib diisi!");
     return;
@@ -313,14 +312,14 @@ const handleTambahPengguna = async () => {
     // Prepare payload - convert empty strings to null for optional fields
     const payload = {
       ...formData.value,
-      kategori_pengguna: "IMM", 
+      kategori_pengguna: "IMM", // Force IMM for PT page
       birth_date: formData.value.birth_date || null,
       company_id: formData.value.company_id || null,
       department_id: formData.value.department_id || null,
       position_id: formData.value.position_id || null,
       work_status_id: formData.value.work_status_id || null,
     };
-
+    
     // Debug: Log payload before sending
     console.log('📤 Sending user payload:', JSON.stringify(payload, null, 2));
 
@@ -574,7 +573,7 @@ const editPengguna = async (rowId) => {
           <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
             <!-- Toolbar - Sticky -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
             >
               <!-- Left Section -->
               <div class="flex items-center gap-2 md:gap-3 order-1">
@@ -739,7 +738,7 @@ const editPengguna = async (rowId) => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
                       >
-                        Nomor Telepon
+                        No. Handphone
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
@@ -749,37 +748,22 @@ const editPengguna = async (rowId) => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
-                        Tanggal Lahir
-                      </th>
-                      <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
-                      >
                         Nama Perusahaan
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
-                        Kategori
-                      </th>
-                      <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
-                      >
-                        Department
+                        Departemen
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Position
+                        Posisi
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Status Kerja
-                      </th>
-                      <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-16"
-                      >
-                        Role
+                        Status
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-16"
@@ -837,17 +821,7 @@ const editPengguna = async (rowId) => {
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
                       >
-                        {{ row.birth_date }}
-                      </td>
-                      <td
-                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
-                      >
                         {{ row.namaPerusahaan }}
-                      </td>
-                      <td
-                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
-                      >
-                        IMM
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
@@ -863,11 +837,6 @@ const editPengguna = async (rowId) => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
                       >
                         {{ row.status }}
-                      </td>
-                      <td
-                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
-                      >
-                        {{ row.role }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-16"
@@ -1057,7 +1026,7 @@ const editPengguna = async (rowId) => {
                     <label
                       for="department_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Department</label
+                      >Departemen</label
                     >
                     <div class="relative">
                       <select
@@ -1084,7 +1053,7 @@ const editPengguna = async (rowId) => {
                     <label
                       for="position_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Position</label
+                      >Posisi</label
                     >
                     <div class="relative">
                       <select
@@ -1115,7 +1084,7 @@ const editPengguna = async (rowId) => {
                     <label
                       for="work_status_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Status Kerja</label
+                      >Status Pekerjaan</label
                     >
                     <div class="relative">
                       <select
