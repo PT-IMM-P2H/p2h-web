@@ -331,6 +331,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import apiService from "@/services/api";
+import { STORAGE_KEYS } from "@/constants";
 
 const props = defineProps({
   isOpen: Boolean,
@@ -411,7 +412,7 @@ const downloadTemplate = () => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL;
   
   // Get auth token from localStorage
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('STORAGE_KEYS.AUTH_TOKEN');
   
   if (!token) {
     alert('Sesi login tidak ditemukan. Silahkan login kembali.');
