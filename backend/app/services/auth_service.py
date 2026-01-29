@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from uuid import UUID
+from fastapi import HTTPException, status  # Import wajib untuk handle error API
 
 from app.models.user import User
 from app.models.vehicle import Vehicle
@@ -18,24 +19,17 @@ class AuthService:
         
         Password format: namadepan + DDMMYYYY (contoh: yunnifa12062003)
         Jika birth_date kosong dan password tidak disediakan, akan error.
-        
-        Args:
-            db: Database session
-            user_data: User creation data
-            
-        Returns:
-            Created user
-            
-        Raises:
-            ValueError: If phone_number already exists or birth_date missing
         """
         # Check if phone number already exists
         existing_user = db.query(User).filter(
             User.phone_number == user_data.phone_number
         ).first()
+        
         if existing_user:
-            raise ValueError(
-                f"Nomor telepon {user_data.phone_number} sudah terdaftar."
+            # GANTI ValueError -> HTTPException 400
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Nomor telepon {user_data.phone_number} sudah terdaftar."
             )
         
         # Check if email already exists (if provided)
@@ -44,14 +38,19 @@ class AuthService:
                 User.email == user_data.email
             ).first()
             if existing_email:
-                raise ValueError(f"Email {user_data.email} sudah terdaftar.")
+                # GANTI ValueError -> HTTPException 400
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Email {user_data.email} sudah terdaftar."
+                )
         
         # Generate password if not provided
         if not user_data.password:
             if not user_data.birth_date:
-                raise ValueError(
-                    "Tanggal lahir wajib diisi untuk membuat password otomatis. "
-                    "Format password: namadepan + DDMMYYYY (contoh: yunnifa12062003)"
+                # GANTI ValueError -> HTTPException 400
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Tanggal lahir wajib diisi untuk membuat password otomatis. Format password: namadepan + DDMMYYYY"
                 )
             
             # Extract first name from full_name
@@ -92,14 +91,6 @@ class AuthService:
     def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
         """
         Authenticate a user with username (email or phone_number) and password.
-        
-        Args:
-            db: Database session
-            username: Email or phone number
-            password: Password
-            
-        Returns:
-            User if authentication successful, None otherwise
         """
         import logging
         logger = logging.getLogger(__name__)
@@ -134,13 +125,6 @@ class AuthService:
     def get_user_by_id(db: Session, user_id: UUID) -> Optional[User]:
         """
         Get user by ID.
-        
-        Args:
-            db: Database session
-            user_id: User ID
-            
-        Returns:
-            User if found, None otherwise
         """
         return db.query(User).filter(User.id == user_id).first()
     
@@ -148,14 +132,6 @@ class AuthService:
     def get_all_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
         """
         Get all users with pagination.
-        
-        Args:
-            db: Database session
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            
-        Returns:
-            List of users
         """
         return db.query(User).offset(skip).limit(limit).all()
     
@@ -163,21 +139,14 @@ class AuthService:
     def update_user(db: Session, user_id: UUID, user_data: UserUpdate) -> User:
         """
         Update user information.
-        
-        Args:
-            db: Database session
-            user_id: User ID
-            user_data: User update data
-            
-        Returns:
-            Updated user
-            
-        Raises:
-            ValueError: If user not found
         """
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            raise ValueError("User tidak ditemukan")
+            # GANTI ValueError -> HTTPException 404 Not Found
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User tidak ditemukan"
+            )
         
         # Update fields if provided
         if user_data.full_name is not None:
@@ -190,7 +159,11 @@ class AuthService:
                 User.id != user_id
             ).first()
             if existing:
-                raise ValueError(f"Email {user_data.email} sudah digunakan")
+                # GANTI ValueError -> HTTPException 400
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Email {user_data.email} sudah digunakan"
+                )
             user.email = user_data.email
         
         if user_data.phone_number is not None:
@@ -200,7 +173,11 @@ class AuthService:
                 User.id != user_id
             ).first()
             if existing:
-                raise ValueError(f"Nomor HP {user_data.phone_number} sudah digunakan")
+                # GANTI ValueError -> HTTPException 400
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Nomor HP {user_data.phone_number} sudah digunakan"
+                )
             user.phone_number = user_data.phone_number
         
         if user_data.birth_date is not None:
@@ -239,13 +216,6 @@ class AuthService:
     def delete_user(db: Session, user_id: UUID) -> bool:
         """
         Delete a user (soft delete by setting is_active to False).
-        
-        Args:
-            db: Database session
-            user_id: User ID
-            
-        Returns:
-            True if deleted, False otherwise
         """
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
