@@ -205,7 +205,6 @@ const fetchUsers = async () => {
         namaLengkap: user.full_name,
         noHandphone: user.phone_number,
         email: user.email,
-        birth_date: user.birth_date || "-",
         namaPerusahaan: user.company?.nama_perusahaan || "-",
         departemen: user.department?.nama_department || "-",
         posisi: user.position?.nama_posisi || "-",
@@ -287,11 +286,24 @@ const handleTambahPengguna = async () => {
 
   try {
     let response;
+    
+    // Prepare payload - ensure kategori is TRAVEL for this page
+    const payload = {
+      ...formData.value,
+      kategori_pengguna: "TRAVEL", // Force TRAVEL for Travel page
+      birth_date: formData.value.birth_date || null,
+      company_id: formData.value.company_id || null,
+      department_id: formData.value.department_id || null,
+      position_id: formData.value.position_id || null,
+      work_status_id: formData.value.work_status_id || null,
+    };
+    
+    console.log('📤 Sending user payload (Travel):', JSON.stringify(payload, null, 2));
 
     if (editingId.value) {
-      response = await apiService.users.update(editingId.value, formData.value);
+      response = await apiService.users.update(editingId.value, payload);
     } else {
-      response = await apiService.users.create(formData.value);
+      response = await apiService.users.create(payload);
     }
 
     if (response.data.status === "success" || response.data.success) {
@@ -527,7 +539,7 @@ const sortByName = () => {
           <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
             <!-- Toolbar - Sticky -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
             >
               <!-- Left Section -->
               <div class="flex items-center gap-2 md:gap-3 order-1">
@@ -691,11 +703,8 @@ const sortByName = () => {
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
-                      ></th>
-                      <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-24"
                       >
-                        Nomor Telepon
+                        No. Handphone
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
@@ -705,37 +714,22 @@ const sortByName = () => {
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
-                        Tanggal Lahir
-                      </th>
-                      <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
-                      >
                         Nama Perusahaan
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
                       >
-                        Kategori
-                      </th>
-                      <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
-                      >
-                        Department
+                        Departemen
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Position
+                        Posisi
                       </th>
                       <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
                       >
-                        Status Kerja
-                      </th>
-                      <th
-                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-20"
-                      >
-                        Role
+                        Status
                       </th>
 
                       <th
@@ -796,19 +790,9 @@ const sortByName = () => {
                         {{ row.email }}
                       </td>
                       <td
-                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-24"
-                      >
-                        {{ row.birth_date }}
-                      </td>
-                      <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
                       >
                         {{ row.namaPerusahaan }}
-                      </td>
-                      <td
-                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
-                      >
-                        TRAVEl
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
@@ -824,11 +808,6 @@ const sortByName = () => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
                       >
                         {{ row.status }}
-                      </td>
-                      <td
-                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
-                      >
-                        {{ row.role }}
                       </td>
 
                       <td
@@ -1020,7 +999,7 @@ const sortByName = () => {
                     <label
                       for="department_id_travel"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Department</label
+                      >Departemen</label
                     >
                     <div class="relative">
                       <select
@@ -1047,7 +1026,7 @@ const sortByName = () => {
                     <label
                       for="position_id_travel"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Position</label
+                      >Posisi</label
                     >
                     <div class="relative">
                       <select
@@ -1078,7 +1057,7 @@ const sortByName = () => {
                     <label
                       for="work_status_id_travel"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Status Kerja</label
+                      >Status Pekerjaan</label
                     >
                     <div class="relative">
                       <select
