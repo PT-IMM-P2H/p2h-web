@@ -19,7 +19,7 @@ const router = createRouter({
         {
             path: '/monitor-kendaraan',
             name: 'monitor-kendaraan',
-            component: () => import('../components/viewer/monitor.vue')
+            component: () => import('../components/viewer/monitor.vue'),
             meta: { requiresAuth: false, public: true }
         },
         {
