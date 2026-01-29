@@ -307,12 +307,16 @@ const handleTambahPengguna = async () => {
     // Prepare payload - convert empty strings to null for optional fields
     const payload = {
       ...formData.value,
+      kategori_pengguna: "IMM", 
       birth_date: formData.value.birth_date || null,
       company_id: formData.value.company_id || null,
       department_id: formData.value.department_id || null,
       position_id: formData.value.position_id || null,
       work_status_id: formData.value.work_status_id || null,
     };
+
+    // Debug: Log payload before sending
+    console.log('📤 Sending user payload:', JSON.stringify(payload, null, 2));
 
     if (editingId.value) {
       // Mode edit
