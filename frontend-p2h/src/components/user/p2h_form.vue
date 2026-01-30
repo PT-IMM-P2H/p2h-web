@@ -40,8 +40,24 @@ const isLoadingUserName = ref(true); // Track loading state untuk nama user
 
 // Fetch user profile for welcome message
 const fetchUserProfile = async () => {
-  // Only fetch if user is authenticated
-  if (!isAuthenticated.value) {
+  // Check localStorage first for cached user data
+  const cachedUserData = localStorage.getItem("user_data");
+  if (cachedUserData) {
+    try {
+      const parsed = JSON.parse(cachedUserData);
+      if (parsed.full_name) {
+        userData.value.full_name = parsed.full_name;
+        isLoadingUserName.value = false;
+        return;
+      }
+    } catch (e) {
+      console.error("Error parsing cached user data:", e);
+    }
+  }
+
+  // Check if authenticated before making API call
+  const token = localStorage.getItem("access_token");
+  if (!token) {
     userData.value.full_name = "User";
     isLoadingUserName.value = false;
     return;
@@ -54,7 +70,7 @@ const fetchUserProfile = async () => {
     console.error("Gagal fetch user profile:", error);
     // Keep default name if fetch fails
     userData.value.full_name = "User";
-    } finally {
+  } finally {
     isLoadingUserName.value = false;
   }
 };
@@ -88,40 +104,40 @@ const validateShiftTime = () => {
   if (selected === "non-shift" || selected === "0") {
     // Non-Shift: 00:00 - 16:00
     if (hour >= 16) {
-      shiftWarning.value = `⚠️ Non-Shift hanya bisa diisi sebelum jam 16:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+      shiftWarning.value = `⚠️ Non-Shift hanya bisa diisi sebelum jam 16:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
       return false;
     }
   } else if (selected === "long-shift-1" || selected === "11") {
     // Long Shift 1: 06:00 - 19:00
     if (hour < 6 || hour >= 19) {
-      shiftWarning.value = `⚠️ Long Shift 1 hanya bisa diisi pada jam 06:00-19:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+      shiftWarning.value = `⚠️ Long Shift 1 hanya bisa diisi pada jam 06:00-19:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
       return false;
     }
   } else if (selected === "long-shift-2" || selected === "12") {
     // Long Shift 2: 18:00 - 07:00 (melewati midnight)
     if (hour < 18 && hour >= 7) {
-      shiftWarning.value = `⚠️ Long Shift 2 hanya bisa diisi pada jam 18:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+      shiftWarning.value = `⚠️ Long Shift 2 hanya bisa diisi pada jam 18:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
       return false;
     }
   } else {
     // Regular shift validation
     const selectedShiftNum = parseInt(selected);
-    
+
     // Shift 1: 06:00 - 15:00
     if (selectedShiftNum === 1 && (hour < 6 || hour >= 15)) {
-      shiftWarning.value = `⚠️ Shift 1 hanya bisa diisi pada jam 06:00-15:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+      shiftWarning.value = `⚠️ Shift 1 hanya bisa diisi pada jam 06:00-15:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
       return false;
     }
-    
+
     // Shift 2: 14:00 - 23:00
     if (selectedShiftNum === 2 && (hour < 14 || hour >= 23)) {
-      shiftWarning.value = `⚠️ Shift 2 hanya bisa diisi pada jam 14:00-23:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+      shiftWarning.value = `⚠️ Shift 2 hanya bisa diisi pada jam 14:00-23:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
       return false;
     }
-    
+
     // Shift 3: 22:00 - 07:00 (melewati midnight)
-    if (selectedShiftNum === 3 && (hour < 22 && hour >= 7)) {
-      shiftWarning.value = `⚠️ Shift 3 hanya bisa diisi pada jam 22:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString('id-ID', {hour: '2-digit', minute: '2-digit'})}`;
+    if (selectedShiftNum === 3 && hour < 22 && hour >= 7) {
+      shiftWarning.value = `⚠️ Shift 3 hanya bisa diisi pada jam 22:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
       return false;
     }
   }
@@ -342,10 +358,7 @@ onMounted(() => {
       <div class="w-full max-w-4xl space-y-4">
         <div class="p-8 bg-white rounded-2xl shadow-sm border border-zinc-200">
           <h1 class="text-2xl font-extrabold mb-2 text-zinc-900 leading-tight">
-            Selamat datang {{ userData.full_name }}
-            <template v-if="isLoadingUserName">
-              Selamat datang...
-            </template>
+            <template v-if="isLoadingUserName"> Selamat datang... </template>
             <template v-else>
               Selamat datang {{ userData.full_name }}
             </template>
