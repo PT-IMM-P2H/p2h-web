@@ -152,14 +152,20 @@
         <!-- Upload Progress -->
         <div v-if="uploading" class="mb-6">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-700">Mengupload...</span>
+            <span class="text-sm font-medium text-gray-700">
+              {{ uploadingStatus }}
+            </span>
             <span class="text-sm text-gray-500">{{ uploadProgress }}%</span>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
             <div
-              class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              class="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
               :style="{ width: uploadProgress + '%' }"
             ></div>
+          </div>
+          <div v-if="totalChunks > 1" class="mt-2 text-xs text-gray-600 text-center">
+            📦 Batch {{ currentChunk }} dari {{ totalChunks }} • 
+            {{ Math.min(currentChunk * chunkSize, totalRows) }}/{{ totalRows }} baris
           </div>
         </div>
 
@@ -329,7 +335,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
+import * as XLSX from 'xlsx';
 import apiService from "@/services/api";
 import { STORAGE_KEYS } from "@/constants";
 
@@ -348,12 +355,25 @@ const props = defineProps({
 const emit = defineEmits(["close", "success"]);
 
 const selectedFile = ref(null);
+const parsedData = ref([]);
+const totalRows = ref(0);
+const currentChunk = ref(0);
+const totalChunks = ref(0);
+const chunkSize = 75; // Upload 75 rows per batch for optimal performance
 const uploading = ref(false);
 const uploadProgress = ref(0);
 const uploadResult = ref(null);
 const dragOver = ref(false);
 const showErrors = ref(false);
 const fileInput = ref(null);
+
+const uploadingStatus = computed(() => {
+  if (!uploading.value) return '';
+  if (totalChunks.value > 1) {
+    return `Mengupload batch ${currentChunk.value}/${totalChunks.value}...`;
+  }
+  return 'Memproses data...';
+});
 
 watch(
   () => props.isOpen,
@@ -416,7 +436,7 @@ const downloadTemplate = () => {
     || localStorage.getItem('auth_token')
     || localStorage.getItem('token')
     || localStorage.getItem('access_token');
-    
+  
   // Debug: Check all localStorage keys
   console.log('🔍 Download Template Debug:', {
     storageKey: STORAGE_KEYS.AUTH_TOKEN,
@@ -426,7 +446,8 @@ const downloadTemplate = () => {
     allTokens: {
       auth_token: localStorage.getItem('auth_token'),
       token: localStorage.getItem('token'),
-      access_token: localStorage.getItem('access_token')
+      access_token: localStorage.getItem('access_token'),
+      STORAGE_KEYS_VALUE: STORAGE_KEYS.AUTH_TOKEN
     }
   });
   
@@ -475,31 +496,78 @@ const handleUpload = async () => {
   uploading.value = true;
   uploadProgress.value = 0;
   uploadResult.value = null;
+  currentChunk.value = 0;
 
   try {
-    const formData = new FormData();
-    formData.append("file", selectedFile.value);
-
-    // Determine upload method
-    let uploadMethod;
-    if (props.uploadType === "users") {
-      uploadMethod = apiService.bulkUpload.uploadUsers;
-    } else {
-      uploadMethod = apiService.bulkUpload.uploadVehicles;
+    // Parse Excel file first
+    await parseExcelFile();
+    
+    if (parsedData.value.length === 0) {
+      alert('File tidak berisi data yang valid');
+      return;
     }
 
-    const response = await uploadMethod(formData, (progressEvent) => {
-      uploadProgress.value = Math.round(
-        (progressEvent.loaded * 100) / progressEvent.total,
-      );
-    });
+    totalRows.value = parsedData.value.length;
+    
+    // Calculate chunks (75 rows per chunk for optimal performance)
+    const chunks = [];
+    for (let i = 0; i < parsedData.value.length; i += chunkSize) {
+      chunks.push(parsedData.value.slice(i, i + chunkSize));
+    }
+    totalChunks.value = chunks.length;
 
-    if (response.data.payload) {
-      uploadResult.value = response.data.payload;
-      if (uploadResult.value.success_count > 0) {
-        emit("success");
+    console.log(`📦 Splitting ${totalRows.value} rows into ${totalChunks.value} chunks`);
+
+    // Aggregate results from all chunks
+    let totalSuccess = 0;
+    const allErrors = [];
+
+    // Upload chunks sequentially
+    for (let i = 0; i < chunks.length; i++) {
+      currentChunk.value = i + 1;
+      
+      try {
+        const chunkData = chunks[i];
+        const result = await uploadChunk(chunkData, i);
+        
+        if (result) {
+          totalSuccess += result.success_count || 0;
+          if (result.errors && result.errors.length > 0) {
+            // Adjust row numbers to reflect original file position
+            const adjustedErrors = result.errors.map(err => ({
+              ...err,
+              row: err.row + (i * chunkSize)
+            }));
+            allErrors.push(...adjustedErrors);
+          }
+        }
+        
+        // Update progress
+        uploadProgress.value = Math.round(((i + 1) / chunks.length) * 100);
+        
+      } catch (error) {
+        console.error(`Chunk ${i + 1} failed:`, error);
+        // Continue with next chunk even if this one fails
+        allErrors.push({
+          row: i * chunkSize + 1,
+          field: null,
+          message: `Batch ${i + 1} gagal: ${error.message}`
+        });
       }
     }
+
+    // Show final results
+    uploadResult.value = {
+      success_count: totalSuccess,
+      error_count: allErrors.length,
+      total_rows: totalRows.value,
+      errors: allErrors
+    };
+
+    if (totalSuccess > 0) {
+      emit("success");
+    }
+
   } catch (error) {
     console.error("Upload error:", error);
     alert(
@@ -508,7 +576,58 @@ const handleUpload = async () => {
     );
   } finally {
     uploading.value = false;
+    uploadProgress.value = 100;
   }
+};
+
+// Parse Excel file to JSON
+const parseExcelFile = async () => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
+        
+        parsedData.value = jsonData;
+        console.log(`✅ Parsed ${jsonData.length} rows from Excel`);
+        resolve(jsonData);
+      } catch (error) {
+        console.error('Parse error:', error);
+        reject(error);
+      }
+    };
+    
+    reader.onerror = (error) => reject(error);
+    reader.readAsArrayBuffer(selectedFile.value);
+  });
+};
+
+// Upload single chunk
+const uploadChunk = async (chunkData, chunkIndex) => {
+  // Convert chunk back to Excel blob
+  const worksheet = XLSX.utils.json_to_sheet(chunkData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  
+  const formData = new FormData();
+  formData.append('file', blob, `chunk_${chunkIndex}.xlsx`);
+
+  // Determine upload method
+  let uploadMethod;
+  if (props.uploadType === "users") {
+    uploadMethod = apiService.bulkUpload.uploadUsers;
+  } else {
+    uploadMethod = apiService.bulkUpload.uploadVehicles;
+  }
+
+  const response = await uploadMethod(formData);
+  return response.data.payload;
 };
 
 const reset = () => {
@@ -517,6 +636,10 @@ const reset = () => {
   uploadProgress.value = 0;
   uploadResult.value = null;
   showErrors.value = false;
+  parsedData.value = [];
+  totalRows.value = 0;
+  currentChunk.value = 0;
+  totalChunks.value = 0;
   if (fileInput.value) {
     fileInput.value.value = "";
   }
