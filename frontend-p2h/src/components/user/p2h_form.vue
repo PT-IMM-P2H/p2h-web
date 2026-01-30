@@ -34,6 +34,7 @@ const shiftWarning = ref(""); // Peringatan jika pilih shift salah
 const userData = ref({
   full_name: "User",
 });
+const isLoadingUserName = ref(true); // Track loading state untuk nama user
 
 // --- LOGIKA BUSINESS ---
 
@@ -42,6 +43,7 @@ const fetchUserProfile = async () => {
   // Only fetch if user is authenticated
   if (!isAuthenticated.value) {
     userData.value.full_name = "User";
+    isLoadingUserName.value = false;
     return;
   }
 
@@ -49,9 +51,11 @@ const fetchUserProfile = async () => {
     const response = await api.get("/users/me");
     userData.value.full_name = response.data.payload.full_name || "User";
   } catch (error) {
-    console.error("❌ Gagal fetch user profile:", error);
+    console.error("Gagal fetch user profile:", error);
     // Keep default name if fetch fails
     userData.value.full_name = "User";
+    } finally {
+    isLoadingUserName.value = false;
   }
 };
 
@@ -339,6 +343,12 @@ onMounted(() => {
         <div class="p-8 bg-white rounded-2xl shadow-sm border border-zinc-200">
           <h1 class="text-2xl font-extrabold mb-2 text-zinc-900 leading-tight">
             Selamat datang {{ userData.full_name }}
+            <template v-if="isLoadingUserName">
+              Selamat datang...
+            </template>
+            <template v-else>
+              Selamat datang {{ userData.full_name }}
+            </template>
           </h1>
           <p class="text-zinc-600 text-sm leading-relaxed">
             Mohon mengisi informasi keadaan kendaraan hari ini sebelum anda
