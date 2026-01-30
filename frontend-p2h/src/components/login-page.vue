@@ -68,9 +68,6 @@ const handleSignIn = async (event) => {
       if (user.role === "superadmin" || user.role === "admin") {
         console.log("Redirecting to dashboard...");
         await router.push("/dashboard");
-      } else if (user.role === "viewer") {
-        console.log("Redirecting to monitor...");
-        await router.push("/monitor-kendaraan");
       } else {
         console.log("Redirecting to form-p2h...");
         await router.push("/form-p2h");
