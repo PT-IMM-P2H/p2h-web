@@ -1601,10 +1601,7 @@ const getDateStyle = (dateString) => {
                     <input
                       v-model="filterData.stnk_date"
                       type="date"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>
@@ -1619,10 +1616,7 @@ const getDateStyle = (dateString) => {
                     <input
                       v-model="filterData.pajak_date"
                       type="date"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>
@@ -1637,10 +1631,7 @@ const getDateStyle = (dateString) => {
                     <input
                       v-model="filterData.kir_date"
                       type="date"
-                      class="w-full p-2 pr-10 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
-                    />
-                    <CalendarIcon
-                      class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
+                      class="w-full p-2 pr-2 text-sm border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8]"
                     />
                   </div>
                 </div>
