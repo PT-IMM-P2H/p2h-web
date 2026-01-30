@@ -54,13 +54,18 @@ def format_hull_number(hull_number: str) -> str:
     normalized = normalize_hull_number(hull_number)
     
     # Extract letter prefix dan number part
-    # Asumsikan format: satu atau lebih huruf diikuti angka
-    match = re.match(r'^([A-Z]+)(\d+)$', normalized)
+    # Pattern: huruf opsional diikuti angka
+    match = re.match(r'^([A-Z]*)(\d+)$', normalized)
     
     if match:
         letter_part = match.group(1)
         number_part = match.group(2)
-        return f"{letter_part}.{number_part}"
+       # Jika ada huruf, gunakan format HURUF.ANGKA
+        if letter_part:
+            return f"{letter_part}.{number_part}"
+        # Jika angka saja, return angka
+        else:
+            return number_part
     
     # Jika tidak match pattern, return normalized value
     return normalized
@@ -105,8 +110,9 @@ def validate_hull_number_format(hull_number: str) -> tuple[bool, Optional[str]]:
     if not normalized:
         return False, "Nomor lambung tidak valid (hanya berisi karakter khusus)"
     
-    # Check format: harus ada huruf dan angka
-    if not re.match(r'^[A-Z]+\d+$', normalized):
-        return False, "Format nomor lambung harus: huruf + angka (contoh: P309, A21, B030)"
+    # Check format: bisa angka saja ATAU huruf + angka
+    # Pattern: harus minimal ada 1 angka, boleh ada huruf di depan
+    if not re.match(r'^[A-Z]*\d+$', normalized):
+        return False, "Format nomor lambung harus: angka (contoh: 309) atau huruf + angka (contoh: P309)"
     
     return True, None
