@@ -197,16 +197,6 @@ router.beforeEach((to, from, next) => {
     if (token && userRole) {
         console.log('✅ User authenticated with role:', userRole);
         
-        // Viewer hanya boleh akses monitor
-        if (userRole === 'viewer') {
-            if (!publicRoutes.includes(to.name)) {
-                console.log('🚫 Viewer blocked from:', to.name);
-                return next({ name: 'monitor-kendaraan' });
-            }
-            console.log('✅ Viewer allowed to:', to.name);
-            return next();
-        }
-        
         // User biasa tidak boleh akses admin routes
         if (userRole === 'user') {
             if (adminRoutes.includes(to.name)) {
