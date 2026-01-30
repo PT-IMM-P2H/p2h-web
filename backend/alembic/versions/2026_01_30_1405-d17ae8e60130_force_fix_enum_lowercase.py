@@ -1,16 +1,16 @@
 """force_fix_enum_lowercase
 
-Revision ID: (biarkan kode acak bawaan file ini)
-Revises: 9f7ccaf259eb
-Create Date: 2026-01-30 ...
+Revision ID: d17ae8e60130
+Revises: create_vehicle_types
+Create Date: 2026-01-30 14:05:00.000000+08:00
 
 """
 from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = '...' # JANGAN UBAH INI (Biarkan bawaan file)
-down_revision = '9f7ccaf259eb' # INI KUNCINYA! Kita sambung manual ke posisi Railway.
+revision = 'd17ae8e60130'
+down_revision = 'create_vehicle_types'
 branch_labels = None
 depends_on = None
 
