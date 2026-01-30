@@ -313,6 +313,7 @@ const handleTambahPengguna = async () => {
     const payload = {
       ...formData.value,
       kategori_pengguna: "IMM", // Force IMM for PT page
+      email: formData.value.email || null, // Convert empty string to null
       birth_date: formData.value.birth_date || null,
       company_id: formData.value.company_id || null,
       department_id: formData.value.department_id || null,
