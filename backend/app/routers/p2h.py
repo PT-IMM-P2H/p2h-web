@@ -249,12 +249,25 @@ async def submit_p2h(
     """
     Submit P2H report
     [USER, ADMIN, SUPERADMIN ONLY - Viewer tidak boleh submit]
+    
+    Validasi:
+    - Viewer tidak boleh submit
+    - Shift number harus sesuai dengan jam saat ini
     """
     # Authorization: Viewer tidak boleh submit P2H
     if current_user.role == UserRole.viewer:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Viewer tidak memiliki akses untuk mengisi P2H. Silakan login sebagai User."
+        )
+    
+    # Validasi waktu submit sesuai shift
+    from app.utils.datetime import validate_shift_time
+    is_valid, error_msg = validate_shift_time(submission.shift_number)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_msg
         )
     
     try:
@@ -273,8 +286,7 @@ async def submit_p2h(
 async def get_p2h_reports(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     from app.models.p2h import P2HReport, P2HDetail
     from sqlalchemy.orm import joinedload
@@ -296,8 +308,7 @@ async def get_p2h_reports(
 @router.get("/reports/{report_id}")
 async def get_p2h_report(
     report_id: UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     from app.models.p2h import P2HReport
     report = db.query(P2HReport).filter(P2HReport.id == report_id).first()
