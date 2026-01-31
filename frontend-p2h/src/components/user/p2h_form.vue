@@ -352,7 +352,7 @@ onMounted(() => {
     <NavBar />
 
     <main
-      class="flex-1 flex flex-col items-center bg-zinc-100 px-4 pt-24 pb-25 md:pb-30 bg-cover bg-fixed bg-center"
+      class="flex-1 flex flex-col items-center bg-zinc-100 px-4 pt-24 pb-45 md:pb-30 bg-cover bg-fixed bg-center"
       style="background-image: url(&quot;/image_asset/BG_2.png&quot;)"
     >
       <div class="w-full max-w-4xl space-y-4">

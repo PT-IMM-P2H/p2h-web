@@ -15,7 +15,7 @@ const handleLogout = () => {
   localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   localStorage.removeItem("token"); // Cleanup legacy key
-  localStorage.removeItem("access_token"); // Cleanup legacy key  
+  localStorage.removeItem("access_token"); // Cleanup legacy key
   localStorage.removeItem("user_role"); // For authorization guard
   // Redirect to login
   router.push("/login");
@@ -84,7 +84,16 @@ const isMonitorPage = computed(
 
 // Check if user is authenticated
 const isAuthenticated = computed(() => {
-  return !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) || !!localStorage.getItem("access_token");
+  return (
+    !!localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN) ||
+    !!localStorage.getItem("access_token")
+  );
+});
+
+// Check if user is admin or superadmin
+const isAdminOrSuperAdmin = computed(() => {
+  const userRole = localStorage.getItem("user_role");
+  return userRole === "admin" || userRole === "superadmin";
 });
 </script>
 
@@ -160,7 +169,7 @@ const isAuthenticated = computed(() => {
 
       <!-- admin -->
       <button
-        v-if="isAuthenticated && !isMonitorPage"
+        v-if="isAuthenticated && !isMonitorPage && isAdminOrSuperAdmin"
         @click="hadledashboard"
         :class="getButtonClass('dashboard')"
         :style="{ color: getButtonColor('dashboard') }"
@@ -262,7 +271,7 @@ const isAuthenticated = computed(() => {
           Log Kendaraan
         </button>
         <button
-          v-if="isAuthenticated && !isMonitorPage"
+          v-if="isAuthenticated && !isMonitorPage && isAdminOrSuperAdmin"
           @click="hadledashboard"
           :class="getButtonClass('dashboard')"
           :style="{ color: getButtonColor('dashboard') }"
