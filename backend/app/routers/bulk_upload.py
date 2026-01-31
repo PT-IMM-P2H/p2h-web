@@ -98,13 +98,13 @@ async def bulk_upload_users(
         df.rename(columns=column_mapping, inplace=True)
         
         success_count = 0
+        reactivated_count = 0
         errors: List[BulkUploadError] = []
         
         # Preload all lookup data to avoid per-row queries
         from app.models.user import Department, Position, WorkStatus
         
-        # Get all existing emails and phones for duplicate check
-        # Only check ACTIVE users - soft-deleted users can be re-imported
+        # Get all existing emails and phones for duplicate check (ACTIVE only)
         existing_emails = set(
             email[0].lower() for email in db.query(User.email).filter(
                 User.email != None,
@@ -116,6 +116,13 @@ async def bulk_upload_users(
                 User.is_active == True
             ).all()
         )
+        
+        # Get soft-deleted users by phone for potential reactivation
+        soft_deleted_by_phone = {
+            u.phone_number: u for u in db.query(User).filter(
+                User.is_active == False
+            ).all()
+        }
         
         # Preload departments, positions, work_statuses as lookup dicts
         dept_lookup = {
@@ -186,7 +193,7 @@ async def bulk_upload_users(
                     ))
                     continue
                 
-                # Check for duplicate email (only if email provided)
+                # Process email
                 email = None
                 if not pd.isna(row.get('email')) and row.get('email'):
                     email = str(row['email']).strip().lower()
@@ -194,21 +201,22 @@ async def bulk_upload_users(
                         errors.append(BulkUploadError(
                             row=row_num,
                             field='email',
-                            message=f'Email {email} sudah terdaftar',
+                            message=f'Email {email} sudah terdaftar pada user aktif',
                             data=row.to_dict()
                         ))
                         continue
                 
-                # Check for duplicate phone
+                # Process phone
                 phone = str(row['phone_number']).strip()
                 if phone.startswith("'"):
                     phone = phone[1:]
                 
+                # Check if phone already exists in active users
                 if phone in existing_phones or phone in batch_phones:
                     errors.append(BulkUploadError(
                         row=row_num,
                         field='phone_number',
-                        message=f'Nomor telepon {phone} sudah terdaftar',
+                        message=f'Nomor telepon {phone} sudah terdaftar pada user aktif',
                         data=row.to_dict()
                     ))
                     continue
@@ -258,15 +266,6 @@ async def bulk_upload_users(
                         ))
                         continue
                 
-                # Generate default password (P@ssw0rd123 or from birth_date)
-                if birth_date:
-                    # Format: DDMMYYYY
-                    default_password = birth_date.strftime('%d%m%Y')
-                else:
-                    default_password = 'P@ssw0rd123'
-                
-                password_hash = hash_password(default_password)
-                
                 # Lookup IDs using preloaded dicts (much faster)
                 department_id = None
                 position_id = None
@@ -284,27 +283,59 @@ async def bulk_upload_users(
                     ws_name = str(row['work_status']).strip().lower()
                     work_status_id = ws_lookup.get(ws_name)
                 
-                # Create user object
-                user = User(
-                    email=email,
-                    full_name=str(row['full_name']).strip(),
-                    phone_number=phone,
-                    password_hash=password_hash,
-                    birth_date=birth_date,
-                    role=role,
-                    kategori_pengguna=kategori,
-                    department_id=department_id,
-                    position_id=position_id,
-                    work_status_id=work_status_id,
-                    is_active=True
-                )
+                # Check if there's a soft-deleted user with same phone number
+                existing_deleted_user = soft_deleted_by_phone.get(phone)
+                
+                if existing_deleted_user:
+                    # Reactivate and update the existing soft-deleted user
+                    existing_deleted_user.is_active = True
+                    existing_deleted_user.full_name = str(row['full_name']).strip()
+                    existing_deleted_user.email = email
+                    existing_deleted_user.birth_date = birth_date
+                    existing_deleted_user.role = role
+                    existing_deleted_user.kategori_pengguna = kategori
+                    existing_deleted_user.department_id = department_id
+                    existing_deleted_user.position_id = position_id
+                    existing_deleted_user.work_status_id = work_status_id
+                    existing_deleted_user.updated_at = datetime.utcnow()
+                    # Don't reset password on reactivation
+                    
+                    reactivated_count += 1
+                    success_count += 1
+                    
+                    # Remove from soft_deleted dict to prevent duplicate reactivation
+                    del soft_deleted_by_phone[phone]
+                else:
+                    # Generate default password for new users
+                    if birth_date:
+                        default_password = birth_date.strftime('%d%m%Y')
+                    else:
+                        default_password = 'P@ssw0rd123'
+                    
+                    password_hash = hash_password(default_password)
+                    
+                    # Create new user object
+                    user = User(
+                        email=email,
+                        full_name=str(row['full_name']).strip(),
+                        phone_number=phone,
+                        password_hash=password_hash,
+                        birth_date=birth_date,
+                        role=role,
+                        kategori_pengguna=kategori,
+                        department_id=department_id,
+                        position_id=position_id,
+                        work_status_id=work_status_id,
+                        is_active=True
+                    )
+                    
+                    users_to_insert.append(user)
+                    success_count += 1
                 
                 # Track this batch
                 if email:
                     batch_emails.add(email)
                 batch_phones.add(phone)
-                users_to_insert.append(user)
-                success_count += 1
                 
             except Exception as e:
                 errors.append(BulkUploadError(
@@ -314,10 +345,12 @@ async def bulk_upload_users(
                     data=row.to_dict() if hasattr(row, 'to_dict') else None
                 ))
         
-        # Bulk insert all users at once
+        # Bulk insert new users
         if users_to_insert:
             db.bulk_save_objects(users_to_insert)
-            db.commit()
+        
+        # Commit all changes (reactivations + new inserts)
+        db.commit()
         
         # Prepare response
         response_data = BulkUploadResponse(
