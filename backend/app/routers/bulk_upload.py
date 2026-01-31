@@ -82,17 +82,20 @@ async def bulk_upload_users(
         # Normalize column names (remove spaces, lowercase)
         df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
         
-        # Map English column names to expected format
+        # Map Excel column names to expected format
+        # After normalization: "Nama Lengkap *" -> "nama_lengkap_*"
         column_mapping = {
             'email_*': 'email',
             'nama_lengkap_*': 'full_name',
             'nomor_telepon_*': 'phone_number',
-            'tanggal_lahir_(yyyy-mm-dd)': 'birth_date',
+            'tanggal_lahir_(dd-mm-yyyy)': 'birth_date',
+            'tanggal_lahir_(yyyy-mm-dd)': 'birth_date',  # Support both formats
             'role_*': 'role',
             'kategori_*': 'kategori',
-            'department': 'department',
-            'position': 'position',
-            'work_status': 'work_status'
+            'department_*': 'department',
+            'position_*': 'position',
+            'status_kerja_*': 'work_status',
+            'nama_perusahaan_*': 'company'
         }
         
         df.rename(columns=column_mapping, inplace=True)
@@ -124,7 +127,7 @@ async def bulk_upload_users(
             ).all()
         }
         
-        # Preload departments, positions, work_statuses as lookup dicts
+        # Preload departments, positions, work_statuses, companies as lookup dicts
         dept_lookup = {
             d.nama_department.lower(): d.id 
             for d in db.query(Department).filter(Department.deleted_at == None).all()
@@ -136,6 +139,13 @@ async def bulk_upload_users(
         ws_lookup = {
             w.nama_status.lower(): w.id 
             for w in db.query(WorkStatus).filter(WorkStatus.deleted_at == None).all()
+        }
+        
+        # Add Company lookup
+        from app.models.user import Company
+        company_lookup = {
+            c.nama_perusahaan.lower(): c.id 
+            for c in db.query(Company).filter(Company.deleted_at == None).all()
         }
         
         # Track new emails/phones added in this batch to prevent duplicates within file
@@ -249,19 +259,28 @@ async def bulk_upload_users(
                     ))
                     continue
                 
-                # Parse birth_date if provided
+                # Parse birth_date if provided (supports multiple formats)
                 birth_date = None
                 if not pd.isna(row.get('birth_date')):
                     try:
                         if isinstance(row['birth_date'], str):
-                            birth_date = datetime.strptime(row['birth_date'], '%Y-%m-%d').date()
+                            date_str = row['birth_date'].strip()
+                            # Try different date formats
+                            for fmt in ['%d-%m-%Y', '%d/%m/%Y', '%Y-%m-%d', '%d-%m-%y', '%d/%m/%y']:
+                                try:
+                                    birth_date = datetime.strptime(date_str, fmt).date()
+                                    break
+                                except ValueError:
+                                    continue
+                            if birth_date is None:
+                                raise ValueError(f"Cannot parse date: {date_str}")
                         else:
                             birth_date = pd.to_datetime(row['birth_date']).date()
                     except:
                         errors.append(BulkUploadError(
                             row=row_num,
                             field='birth_date',
-                            message='Format tanggal lahir tidak valid. Gunakan YYYY-MM-DD',
+                            message='Format tanggal lahir tidak valid. Gunakan DD-MM-YYYY',
                             data=row.to_dict()
                         ))
                         continue
@@ -270,6 +289,7 @@ async def bulk_upload_users(
                 department_id = None
                 position_id = None
                 work_status_id = None
+                company_id = None
                 
                 if not pd.isna(row.get('department')) and row.get('department'):
                     dept_name = str(row['department']).strip().lower()
@@ -282,6 +302,10 @@ async def bulk_upload_users(
                 if not pd.isna(row.get('work_status')) and row.get('work_status'):
                     ws_name = str(row['work_status']).strip().lower()
                     work_status_id = ws_lookup.get(ws_name)
+                
+                if not pd.isna(row.get('company')) and row.get('company'):
+                    company_name = str(row['company']).strip().lower()
+                    company_id = company_lookup.get(company_name)
                 
                 # Check if there's a soft-deleted user with same phone number
                 existing_deleted_user = soft_deleted_by_phone.get(phone)
@@ -297,6 +321,7 @@ async def bulk_upload_users(
                     existing_deleted_user.department_id = department_id
                     existing_deleted_user.position_id = position_id
                     existing_deleted_user.work_status_id = work_status_id
+                    existing_deleted_user.company_id = company_id
                     existing_deleted_user.updated_at = datetime.utcnow()
                     # Don't reset password on reactivation
                     
@@ -326,6 +351,7 @@ async def bulk_upload_users(
                         department_id=department_id,
                         position_id=position_id,
                         work_status_id=work_status_id,
+                        company_id=company_id,
                         is_active=True
                     )
                     
