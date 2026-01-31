@@ -64,7 +64,7 @@ async def create_user(
 @router.get("")
 async def get_users(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(2000, ge=1, le=2000),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
 ):

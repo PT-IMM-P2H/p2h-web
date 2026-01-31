@@ -190,7 +190,7 @@ const fetchUsers = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const response = await apiService.users.getAll();
+    const response = await apiService.users.getAll({ limit: 2000 });
 
     if (response.data.status === "success" || response.data.success) {
       // Filter hanya user dengan kategori TRAVEL dan is_active = true
@@ -916,6 +916,7 @@ const sortByName = () => {
                   <option :value="500">500</option>
                   <option :value="1000">1000</option>
                   <option :value="1500">1500</option>
+                  <option :value="2000">2000</option>
                 </select>
                 <span>baris</span>
               </div>

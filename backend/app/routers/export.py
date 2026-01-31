@@ -140,7 +140,7 @@ async def export_users(
     # Generate file based on format
     timestamp = get_current_datetime().strftime("%Y%m%d_%H%M%S")
     
-    if format.lower() == "excel":
+    if format.lower() in ["excel", "xlsx"]:
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name='Data Pengguna', index=False)
@@ -355,7 +355,7 @@ async def export_vehicles(
     df = pd.DataFrame(data)
     timestamp = get_current_datetime().strftime("%Y%m%d_%H%M%S")
     
-    if format.lower() == "excel":
+    if format.lower() in ["excel", "xlsx"]:
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name='Data Kendaraan', index=False)
@@ -576,7 +576,7 @@ async def export_p2h_reports(
     df = pd.DataFrame(data)
     timestamp = get_current_datetime().strftime("%Y%m%d_%H%M%S")
     
-    if format.lower() == "excel":
+    if format.lower() in ["excel", "xlsx"]:
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df.to_excel(writer, sheet_name='Laporan P2H', index=False)

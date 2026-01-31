@@ -64,7 +64,7 @@
     >
       <div class="py-1" role="menu">
         <button
-          @click="handleExport('xlsx')"
+          @click="handleExport('excel')"
           :disabled="exporting"
           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           role="menuitem"
@@ -210,7 +210,8 @@ const handleExport = async (format) => {
 
     // Extract filename from Content-Disposition header
     const contentDisposition = response.headers["content-disposition"];
-    let filename = `export_${Date.now()}.${format}`;
+    const extensionMap = { excel: "xlsx", pdf: "pdf", csv: "csv" };
+    let filename = `export_${Date.now()}.${extensionMap[format] || format}`;
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
       if (filenameMatch) {
