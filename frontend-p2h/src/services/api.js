@@ -135,7 +135,8 @@ const apiService = {
     getById: (id) => api.get(`/users/${id}`),
     create: (data) => api.post('/users', data),
     update: (id, data) => api.put(`/users/${id}`, data),
-    delete: (id) => api.delete(`/users/${id}`), // Soft delete
+    delete: (id) => api.delete(`/users/${id}`), // Soft delete single
+    bulkDelete: (ids) => api.post('/users/bulk-delete', { ids }), // Bulk delete
   },
 
   // E. KENDARAAN (VEHICLES) & MONITORING
@@ -152,6 +153,8 @@ const apiService = {
     update: (id, data) => api.put(`/vehicles/${id}`, data),
     // Delete vehicle (soft delete)
     delete: (id) => api.delete(`/vehicles/${id}`),
+    // Bulk delete
+    bulkDelete: (ids) => api.post('/vehicles/bulk-delete', { ids }),
   },
 
   // G. BULK UPLOAD
