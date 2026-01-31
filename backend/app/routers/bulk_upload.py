@@ -104,11 +104,17 @@ async def bulk_upload_users(
         from app.models.user import Department, Position, WorkStatus
         
         # Get all existing emails and phones for duplicate check
+        # Only check ACTIVE users - soft-deleted users can be re-imported
         existing_emails = set(
-            email[0].lower() for email in db.query(User.email).filter(User.email != None).all()
+            email[0].lower() for email in db.query(User.email).filter(
+                User.email != None,
+                User.is_active == True
+            ).all()
         )
         existing_phones = set(
-            phone[0] for phone in db.query(User.phone_number).all()
+            phone[0] for phone in db.query(User.phone_number).filter(
+                User.is_active == True
+            ).all()
         )
         
         # Preload departments, positions, work_statuses as lookup dicts
