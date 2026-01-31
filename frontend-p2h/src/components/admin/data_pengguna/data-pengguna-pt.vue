@@ -459,6 +459,7 @@ const isRowSelected = (rowId) => {
 
 // Helper function untuk normalize string (hapus whitespace dan karakter khusus)
 const normalizeString = (str) => {
+  if (!str) return "";
   return str.toLowerCase().replace(/[\s\-./]/g, "");
 };
 
@@ -471,13 +472,13 @@ const filteredTableData = computed(() => {
     const query = normalizeString(searchQuery.value);
     filtered = filtered.filter((row) => {
       return (
-        normalizeString(row.namaLengkap).includes(query) ||
-        normalizeString(row.email).includes(query) ||
-        normalizeString(row.noHandphone).includes(query) ||
-        normalizeString(row.namaPerusahaan).includes(query) ||
-        normalizeString(row.departemen).includes(query) ||
-        normalizeString(row.posisi).includes(query) ||
-        normalizeString(row.status).includes(query)
+        normalizeString(row.namaLengkap || "").includes(query) ||
+        normalizeString(row.email || "").includes(query) ||
+        normalizeString(row.noHandphone || "").includes(query) ||
+        normalizeString(row.namaPerusahaan || "").includes(query) ||
+        normalizeString(row.departemen || "").includes(query) ||
+        normalizeString(row.posisi || "").includes(query) ||
+        normalizeString(row.status || "").includes(query)
       );
     });
   }
