@@ -616,7 +616,7 @@ const editPengguna = async (rowId) => {
           <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
             <!-- Toolbar - Sticky -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white"
             >
               <!-- Left Section -->
               <div class="flex items-center gap-2 md:gap-3 order-1">
