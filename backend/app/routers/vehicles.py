@@ -223,3 +223,59 @@ async def delete_vehicle(
         message="Kendaraan berhasil dinonaktifkan",
         payload={"vehicle_id": str(vehicle_id)}
     )
+
+@router.post("/bulk-delete")
+async def bulk_delete_vehicles(
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+):
+    """
+    Bulk soft delete vehicles for better performance.
+    
+    Request body:
+    {
+        "ids": ["uuid1", "uuid2", "uuid3", ...]
+    }
+    """
+    from datetime import datetime
+    
+    ids = request.get('ids', [])
+    
+    if not ids or not isinstance(ids, list):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="IDs array required"
+        )
+    
+    # Convert string IDs to UUID
+    try:
+        vehicle_ids = [UUID(str(id)) for id in ids]
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid UUID format: {str(e)}"
+        )
+    
+    # Bulk update using SQL for better performance
+    deleted_count = db.query(Vehicle).filter(
+        Vehicle.id.in_(vehicle_ids),
+        Vehicle.is_deleted == False
+    ).update(
+        {
+            'is_deleted': True,
+            'is_active': False,
+            'updated_at': datetime.utcnow()
+        },
+        synchronize_session=False
+    )
+    
+    db.commit()
+    
+    return base_response(
+        message=f"{deleted_count} vehicles successfully deleted",
+        payload={
+            "deleted_count": deleted_count,
+            "requested_count": len(ids)
+        }
+    )
