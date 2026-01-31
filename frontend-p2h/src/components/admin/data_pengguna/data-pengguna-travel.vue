@@ -242,11 +242,44 @@ const handleDeleteUsers = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   let deletedCount = 0;
+  let failedCount = 0;
 
   try {
-    for (const id of selectedRowIds.value) {
-      await apiService.users.delete(id);
-      deletedCount++;
+    // Try bulk delete first (faster for many items)
+    if (selectedRowIds.value.length > 5) {
+      try {
+        await apiService.users.bulkDelete(selectedRowIds.value);
+        deletedCount = selectedRowIds.value.length;
+      } catch (bulkError) {
+        console.warn('Bulk delete not supported, falling back to parallel delete:', bulkError);
+        // Fallback to parallel delete
+        const deletePromises = selectedRowIds.value.map(async (id) => {
+          try {
+            await apiService.users.delete(id);
+            return { success: true, id };
+          } catch (err) {
+            return { success: false, id, error: err };
+          }
+        });
+        
+        const results = await Promise.all(deletePromises);
+        deletedCount = results.filter(r => r.success).length;
+        failedCount = results.filter(r => !r.success).length;
+      }
+    } else {
+      // For small batches (<= 5), use parallel delete
+      const deletePromises = selectedRowIds.value.map(async (id) => {
+        try {
+          await apiService.users.delete(id);
+          return { success: true, id };
+        } catch (err) {
+          return { success: false, id, error: err };
+        }
+      });
+      
+      const results = await Promise.all(deletePromises);
+      deletedCount = results.filter(r => r.success).length;
+      failedCount = results.filter(r => !r.success).length;
     }
 
     selectedRowIds.value = [];
@@ -254,7 +287,12 @@ const handleDeleteUsers = async () => {
     tableData.value = [];
 
     await fetchUsers();
-    alert(`${deletedCount} pengguna berhasil dihapus`);
+    
+    if (failedCount > 0) {
+      alert(`Berhasil: ${deletedCount} pengguna\nGagal: ${failedCount} pengguna`);
+    } else {
+      alert(`${deletedCount} pengguna berhasil dihapus`);
+    }
   } catch (error) {
     console.error("Error deleting users:", error);
     errorMessage.value =
