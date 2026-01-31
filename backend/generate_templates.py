@@ -113,7 +113,7 @@ def create_users_template(master_data):
         role_validation.error = 'Pilih dari daftar Role yang tersedia'
         role_validation.errorTitle = 'Invalid Role'
         ws.add_data_validation(role_validation)
-        role_validation.add('J2:J1000')
+        role_validation.add('J2:J10000')
     
     # Kategori validation (column F)
     if len_kategori > 0:
@@ -125,7 +125,7 @@ def create_users_template(master_data):
         kategori_validation.error = 'Pilih dari daftar Kategori yang tersedia'
         kategori_validation.errorTitle = 'Invalid Kategori'
         ws.add_data_validation(kategori_validation)
-        kategori_validation.add('F2:F1000')
+        kategori_validation.add('F2:F10000')
     
     # Department validation (column G)
     if len_dept > 0:
@@ -137,7 +137,7 @@ def create_users_template(master_data):
         dept_validation.error = 'Pilih dari daftar Department yang tersedia'
         dept_validation.errorTitle = 'Invalid Department'
         ws.add_data_validation(dept_validation)
-        dept_validation.add('G2:G1000')
+        dept_validation.add('G2:G10000')
     
     # Position validation (column H)
     if len_pos > 0:
@@ -149,7 +149,7 @@ def create_users_template(master_data):
         pos_validation.error = 'Pilih dari daftar Position yang tersedia'
         pos_validation.errorTitle = 'Invalid Position'
         ws.add_data_validation(pos_validation)
-        pos_validation.add('H2:H1000')
+        pos_validation.add('H2:H10000')
     
     # Status Kerja validation (column I)
     if len_status > 0:
@@ -161,7 +161,7 @@ def create_users_template(master_data):
         status_validation.error = 'Pilih dari daftar Status Kerja yang tersedia'
         status_validation.errorTitle = 'Invalid Status Kerja'
         ws.add_data_validation(status_validation)
-        status_validation.add('I2:I1000')
+        status_validation.add('I2:I10000')
     
     # Nama Perusahaan validation (column E)
     if len_comp > 0:
@@ -173,7 +173,7 @@ def create_users_template(master_data):
         company_validation.error = 'Pilih dari daftar Perusahaan yang tersedia'
         company_validation.errorTitle = 'Invalid Perusahaan'
         ws.add_data_validation(company_validation)
-        company_validation.add('E2:E1000')
+        company_validation.add('E2:E10000')
     
     # Add empty row with highlighting for mandatory fields
     for col_num in range(1, len(headers) + 1):
@@ -304,7 +304,7 @@ def create_vehicles_template(master_data):
         type_validation.error = 'Pilih dari daftar Tipe Kendaraan yang tersedia'
         type_validation.errorTitle = 'Invalid Tipe'
         ws.add_data_validation(type_validation)
-        type_validation.add('C2:C1000')
+        type_validation.add('C2:C10000')
     
     # Kategori validation (column D)
     if len_kat > 0:
@@ -316,7 +316,7 @@ def create_vehicles_template(master_data):
         kategori_validation.error = 'Pilih dari daftar Kategori yang tersedia'
         kategori_validation.errorTitle = 'Invalid Kategori'
         ws.add_data_validation(kategori_validation)
-        kategori_validation.add('D2:D1000')
+        kategori_validation.add('D2:D10000')
     
     # Shift Type validation (column H)
     if len_shift > 0:
@@ -328,7 +328,7 @@ def create_vehicles_template(master_data):
         shift_validation.error = 'Pilih dari daftar Shift yang tersedia'
         shift_validation.errorTitle = 'Invalid Shift'
         ws.add_data_validation(shift_validation)
-        shift_validation.add('H2:H1000')
+        shift_validation.add('H2:H10000')
     
     # Add empty row with highlighting
     for col_num in range(1, len(headers) + 1):

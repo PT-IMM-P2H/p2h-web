@@ -100,6 +100,38 @@ async def bulk_upload_users(
         success_count = 0
         errors: List[BulkUploadError] = []
         
+        # Preload all lookup data to avoid per-row queries
+        from app.models.user import Department, Position, WorkStatus
+        
+        # Get all existing emails and phones for duplicate check
+        existing_emails = set(
+            email[0].lower() for email in db.query(User.email).filter(User.email != None).all()
+        )
+        existing_phones = set(
+            phone[0] for phone in db.query(User.phone_number).all()
+        )
+        
+        # Preload departments, positions, work_statuses as lookup dicts
+        dept_lookup = {
+            d.nama_department.lower(): d.id 
+            for d in db.query(Department).filter(Department.is_deleted == False).all()
+        }
+        pos_lookup = {
+            p.nama_posisi.lower(): p.id 
+            for p in db.query(Position).filter(Position.is_deleted == False).all()
+        }
+        ws_lookup = {
+            w.nama_status.lower(): w.id 
+            for w in db.query(WorkStatus).filter(WorkStatus.is_deleted == False).all()
+        }
+        
+        # Track new emails/phones added in this batch to prevent duplicates within file
+        batch_emails = set()
+        batch_phones = set()
+        
+        # Collect users to insert
+        users_to_insert = []
+        
         # Process each row
         for idx, row in df.iterrows():
             row_num = idx + 2  # Excel row number (1-indexed + header)
@@ -152,8 +184,7 @@ async def bulk_upload_users(
                 email = None
                 if not pd.isna(row.get('email')) and row.get('email'):
                     email = str(row['email']).strip().lower()
-                    existing_user = db.query(User).filter(User.email == email).first()
-                    if existing_user:
+                    if email in existing_emails or email in batch_emails:
                         errors.append(BulkUploadError(
                             row=row_num,
                             field='email',
@@ -163,14 +194,11 @@ async def bulk_upload_users(
                         continue
                 
                 # Check for duplicate phone
-                # Phone already processed by converter, just clean up
                 phone = str(row['phone_number']).strip()
-                # Remove leading apostrophe if user manually typed '0
                 if phone.startswith("'"):
                     phone = phone[1:]
                 
-                existing_phone = db.query(User).filter(User.phone_number == phone).first()
-                if existing_phone:
+                if phone in existing_phones or phone in batch_phones:
                     errors.append(BulkUploadError(
                         row=row_num,
                         field='phone_number',
@@ -233,45 +261,24 @@ async def bulk_upload_users(
                 
                 password_hash = hash_password(default_password)
                 
-                # Lookup department_id, position_id, work_status_id from database
+                # Lookup IDs using preloaded dicts (much faster)
                 department_id = None
                 position_id = None
                 work_status_id = None
                 
-                # Lookup Department by name
                 if not pd.isna(row.get('department')) and row.get('department'):
-                    from app.models.user import Department
-                    dept_name = str(row['department']).strip()
-                    dept = db.query(Department).filter(
-                        Department.nama_department.ilike(dept_name),
-                        Department.is_deleted == False
-                    ).first()
-                    if dept:
-                        department_id = dept.id
+                    dept_name = str(row['department']).strip().lower()
+                    department_id = dept_lookup.get(dept_name)
                 
-                # Lookup Position by name
                 if not pd.isna(row.get('position')) and row.get('position'):
-                    from app.models.user import Position
-                    pos_name = str(row['position']).strip()
-                    pos = db.query(Position).filter(
-                        Position.nama_position.ilike(pos_name),
-                        Position.is_deleted == False
-                    ).first()
-                    if pos:
-                        position_id = pos.id
+                    pos_name = str(row['position']).strip().lower()
+                    position_id = pos_lookup.get(pos_name)
                 
-                # Lookup WorkStatus by name
                 if not pd.isna(row.get('work_status')) and row.get('work_status'):
-                    from app.models.user import WorkStatus
-                    ws_name = str(row['work_status']).strip()
-                    ws = db.query(WorkStatus).filter(
-                        WorkStatus.nama_work_status.ilike(ws_name),
-                        WorkStatus.is_deleted == False
-                    ).first()
-                    if ws:
-                        work_status_id = ws.id
+                    ws_name = str(row['work_status']).strip().lower()
+                    work_status_id = ws_lookup.get(ws_name)
                 
-                # Create user
+                # Create user object
                 user = User(
                     email=email,
                     full_name=str(row['full_name']).strip(),
@@ -286,7 +293,11 @@ async def bulk_upload_users(
                     is_active=True
                 )
                 
-                db.add(user)
+                # Track this batch
+                if email:
+                    batch_emails.add(email)
+                batch_phones.add(phone)
+                users_to_insert.append(user)
                 success_count += 1
                 
             except Exception as e:
@@ -297,8 +308,9 @@ async def bulk_upload_users(
                     data=row.to_dict() if hasattr(row, 'to_dict') else None
                 ))
         
-        # Commit all successful inserts
-        if success_count > 0:
+        # Bulk insert all users at once
+        if users_to_insert:
+            db.bulk_save_objects(users_to_insert)
             db.commit()
         
         # Prepare response
