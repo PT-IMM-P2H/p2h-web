@@ -67,8 +67,8 @@ const opentambahPengguna = () => {
     position_id: "",
     work_status_id: "",
     birth_date: "",
-    role: "user",
-    kategori_pengguna: "TRAVEL",
+    role: "",
+    kategori_pengguna: "",
   };
   tambahPengguna.value = true;
 };
@@ -84,8 +84,8 @@ const closeTambahPengguna = () => {
     position_id: "",
     work_status_id: "",
     birth_date: "",
-    role: "user",
-    kategori_pengguna: "TRAVEL",
+    role: "",
+    kategori_pengguna: "",
   };
   tambahPengguna.value = false;
 };
@@ -148,8 +148,8 @@ const formData = ref({
   position_id: "",
   work_status_id: "",
   birth_date: "",
-  role: "user",
-  kategori_pengguna: "TRAVEL",
+  role: "",
+  kategori_pengguna: "",
 });
 
 // Fetch master data
@@ -209,6 +209,7 @@ const fetchUsers = async () => {
         departemen: user.department?.nama_department || "-",
         posisi: user.position?.nama_posisi || "-",
         status: user.work_status?.nama_status || "-",
+        birth_date: user.birth_date,
         role: user.role,
       }));
     } else {
@@ -251,7 +252,10 @@ const handleDeleteUsers = async () => {
         await apiService.users.bulkDelete(selectedRowIds.value);
         deletedCount = selectedRowIds.value.length;
       } catch (bulkError) {
-        console.warn('Bulk delete not supported, falling back to parallel delete:', bulkError);
+        console.warn(
+          "Bulk delete not supported, falling back to parallel delete:",
+          bulkError,
+        );
         // Fallback to parallel delete
         const deletePromises = selectedRowIds.value.map(async (id) => {
           try {
@@ -261,10 +265,10 @@ const handleDeleteUsers = async () => {
             return { success: false, id, error: err };
           }
         });
-        
+
         const results = await Promise.all(deletePromises);
-        deletedCount = results.filter(r => r.success).length;
-        failedCount = results.filter(r => !r.success).length;
+        deletedCount = results.filter((r) => r.success).length;
+        failedCount = results.filter((r) => !r.success).length;
       }
     } else {
       // For small batches (<= 5), use parallel delete
@@ -276,10 +280,10 @@ const handleDeleteUsers = async () => {
           return { success: false, id, error: err };
         }
       });
-      
+
       const results = await Promise.all(deletePromises);
-      deletedCount = results.filter(r => r.success).length;
-      failedCount = results.filter(r => !r.success).length;
+      deletedCount = results.filter((r) => r.success).length;
+      failedCount = results.filter((r) => !r.success).length;
     }
 
     selectedRowIds.value = [];
@@ -287,9 +291,11 @@ const handleDeleteUsers = async () => {
     tableData.value = [];
 
     await fetchUsers();
-    
+
     if (failedCount > 0) {
-      alert(`Berhasil: ${deletedCount} pengguna\nGagal: ${failedCount} pengguna`);
+      alert(
+        `Berhasil: ${deletedCount} pengguna\nGagal: ${failedCount} pengguna`,
+      );
     } else {
       alert(`${deletedCount} pengguna berhasil dihapus`);
     }
@@ -320,8 +326,8 @@ const handleTambahPengguna = async () => {
   if (!formData.value.password && !formData.value.birth_date) {
     alert(
       "Tanggal lahir wajib diisi untuk membuat password otomatis!\n\n" +
-      "Format password: namadepan + DDMMYYYY\n" +
-      "Contoh: Yunnifa Nur Lailli lahir 12/06/2003 → yunnifa12062003"
+        "Format password: namadepan + DDMMYYYY\n" +
+        "Contoh: Yunnifa Nur Lailli lahir 12/06/2003 → yunnifa12062003",
     );
     return;
   }
@@ -331,7 +337,7 @@ const handleTambahPengguna = async () => {
 
   try {
     let response;
-    
+
     // Prepare payload - ensure kategori is TRAVEL for this page
     const payload = {
       ...formData.value,
@@ -343,8 +349,11 @@ const handleTambahPengguna = async () => {
       position_id: formData.value.position_id || null,
       work_status_id: formData.value.work_status_id || null,
     };
-    
-    console.log('📤 Sending user payload (Travel):', JSON.stringify(payload, null, 2));
+
+    console.log(
+      "📤 Sending user payload (Travel):",
+      JSON.stringify(payload, null, 2),
+    );
 
     if (editingId.value) {
       response = await apiService.users.update(editingId.value, payload);
@@ -585,7 +594,7 @@ const sortByName = () => {
           <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
             <!-- Toolbar - Sticky -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
             >
               <!-- Left Section -->
               <div class="flex items-center gap-2 md:gap-3 order-1">
@@ -669,7 +678,7 @@ const sortByName = () => {
 
             <!-- Table Container with Horizontal Scroll -->
             <div
-              class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4"
+              class="flex flex-col flex-1 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4 min-h-0"
             >
               <!-- Loading & Error Messages -->
               <div v-if="isLoading" class="text-center py-8 text-gray-600">
@@ -701,7 +710,7 @@ const sortByName = () => {
 
               <div
                 v-else
-                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
+                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white flex-1 min-h-0"
               >
                 <table class="w-full border-collapse">
                   <thead class="sticky top-0 z-10">
@@ -862,7 +871,13 @@ const sortByName = () => {
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
                       >
-                        {{ row.birth_date ? new Date(row.birth_date).toLocaleDateString('id-ID') : '-' }}
+                        {{
+                          row.birth_date
+                            ? new Date(row.birth_date).toLocaleDateString(
+                                "id-ID",
+                              )
+                            : "-"
+                        }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-16"
@@ -880,45 +895,45 @@ const sortByName = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
 
-              <!-- Pagination -->
-              <div
-                class="flex flex-wrap justify-between items-center gap-3 pt-4 border-t border-gray-200 bg-white px-2"
-              >
-                <div class="flex items-center gap-2 text-sm text-gray-700">
-                  <span>Tampilkan</span>
-                  <select
-                    v-model="itemsPerPage"
-                    @change="currentPage = 1"
-                    class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option :value="10">10</option>
-                    <option :value="20">20</option>
-                    <option :value="50">50</option>
-                    <option :value="100">100</option>
-                  </select>
-                  <span>baris</span>
-                </div>
-                <div class="flex items-center gap-3">
-                  <button
-                    @click="previousPage"
-                    :disabled="currentPage === 1"
-                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
-                  >
-                    &lt;
-                  </button>
-                  <span class="text-sm text-gray-700 font-medium"
-                    >{{ startIndex }} - {{ endIndex }} dari
-                    {{ filteredTableData.length }}</span
-                  >
-                  <button
-                    @click="nextPage"
-                    :disabled="currentPage === totalPages"
-                    class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
-                  >
-                    &gt;
-                  </button>
-                </div>
+            <!-- Pagination - Fixed at bottom -->
+            <div
+              class="flex flex-wrap justify-between items-center gap-3 py-3 px-4 border-t border-gray-200 bg-white rounded-b-lg mt-2 shrink-0"
+            >
+              <div class="flex items-center gap-2 text-sm text-gray-700">
+                <span>Tampilkan</span>
+                <select
+                  v-model="itemsPerPage"
+                  @change="currentPage = 1"
+                  class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option :value="10">10</option>
+                  <option :value="20">20</option>
+                  <option :value="50">50</option>
+                  <option :value="100">100</option>
+                </select>
+                <span>baris</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  @click="previousPage"
+                  :disabled="currentPage === 1"
+                  class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                >
+                  &lt;
+                </button>
+                <span class="text-sm text-gray-700 font-medium">
+                  {{ startIndex }} - {{ endIndex }} dari
+                  {{ filteredTableData.length }}
+                </span>
+                <button
+                  @click="nextPage"
+                  :disabled="currentPage === totalPages"
+                  class="px-3 py-1 border border-gray-300 rounded-md text-gray-700 font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition"
+                >
+                  &gt;
+                </button>
               </div>
             </div>
 
