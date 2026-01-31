@@ -114,15 +114,15 @@ async def bulk_upload_users(
         # Preload departments, positions, work_statuses as lookup dicts
         dept_lookup = {
             d.nama_department.lower(): d.id 
-            for d in db.query(Department).filter(Department.is_deleted == False).all()
+            for d in db.query(Department).filter(Department.deleted_at == None).all()
         }
         pos_lookup = {
             p.nama_posisi.lower(): p.id 
-            for p in db.query(Position).filter(Position.is_deleted == False).all()
+            for p in db.query(Position).filter(Position.deleted_at == None).all()
         }
         ws_lookup = {
             w.nama_status.lower(): w.id 
-            for w in db.query(WorkStatus).filter(WorkStatus.is_deleted == False).all()
+            for w in db.query(WorkStatus).filter(WorkStatus.deleted_at == None).all()
         }
         
         # Track new emails/phones added in this batch to prevent duplicates within file
