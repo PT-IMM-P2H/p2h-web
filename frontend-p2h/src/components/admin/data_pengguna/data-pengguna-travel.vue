@@ -119,9 +119,7 @@ const handleUploadSuccess = () => {
 const exportFilters = computed(() => ({
   kategori: "TRAVEL",
   role: appliedFilterData.value.role || undefined,
-  is_active: appliedFilterData.value.status
-    ? appliedFilterData.value.status === "Aktif"
-    : undefined,
+  is_active: true, // Selalu export hanya user aktif (sesuai yang ditampilkan di tabel)
   search: searchQuery.value || undefined,
 }));
 
