@@ -20,25 +20,25 @@ class AuthService:
         Password format: namadepan + DDMMYYYY (contoh: yunnifa12062003)
         Jika birth_date kosong dan password tidak disediakan, akan error.
         """
-        # Check if phone number already exists
+        # Check if phone number already exists (only active users)
         existing_user = db.query(User).filter(
-            User.phone_number == user_data.phone_number
+            User.phone_number == user_data.phone_number,
+            User.is_active == True
         ).first()
         
         if existing_user:
-            # GANTI ValueError -> HTTPException 400
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Nomor telepon {user_data.phone_number} sudah terdaftar."
             )
         
-        # Check if email already exists (if provided)
+        # Check if email already exists (if provided, only active users)
         if user_data.email:
             existing_email = db.query(User).filter(
-                User.email == user_data.email
+                User.email == user_data.email,
+                User.is_active == True
             ).first()
             if existing_email:
-                # GANTI ValueError -> HTTPException 400
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Email {user_data.email} sudah terdaftar."
@@ -131,9 +131,9 @@ class AuthService:
     @staticmethod
     def get_all_users(db: Session, skip: int = 0, limit: int = 100) -> List[User]:
         """
-        Get all users with pagination.
+        Get all active users with pagination.
         """
-        return db.query(User).offset(skip).limit(limit).all()
+        return db.query(User).filter(User.is_active == True).offset(skip).limit(limit).all()
     
     @staticmethod
     def update_user(db: Session, user_id: UUID, user_data: UserUpdate) -> User:
@@ -153,13 +153,13 @@ class AuthService:
             user.full_name = user_data.full_name
         
         if user_data.email is not None:
-            # Check if email already exists
+            # Check if email already exists (only active users)
             existing = db.query(User).filter(
                 User.email == user_data.email,
-                User.id != user_id
+                User.id != user_id,
+                User.is_active == True
             ).first()
             if existing:
-                # GANTI ValueError -> HTTPException 400
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Email {user_data.email} sudah digunakan"
@@ -167,13 +167,13 @@ class AuthService:
             user.email = user_data.email
         
         if user_data.phone_number is not None:
-            # Check if phone already exists
+            # Check if phone already exists (only active users)
             existing = db.query(User).filter(
                 User.phone_number == user_data.phone_number,
-                User.id != user_id
+                User.id != user_id,
+                User.is_active == True
             ).first()
             if existing:
-                # GANTI ValueError -> HTTPException 400
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Nomor HP {user_data.phone_number} sudah digunakan"
