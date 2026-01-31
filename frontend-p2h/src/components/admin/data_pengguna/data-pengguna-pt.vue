@@ -248,12 +248,44 @@ const handleDeleteUsers = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   let deletedCount = 0;
+  let failedCount = 0;
 
   try {
-    // Hapus satu per satu
-    for (const id of selectedRowIds.value) {
-      await apiService.users.delete(id);
-      deletedCount++;
+    // Try bulk delete first (faster for many items)
+    if (selectedRowIds.value.length > 5) {
+      try {
+        await apiService.users.bulkDelete(selectedRowIds.value);
+        deletedCount = selectedRowIds.value.length;
+      } catch (bulkError) {
+        console.warn('Bulk delete not supported, falling back to parallel delete:', bulkError);
+        // Fallback to parallel delete
+        const deletePromises = selectedRowIds.value.map(async (id) => {
+          try {
+            await apiService.users.delete(id);
+            return { success: true, id };
+          } catch (err) {
+            return { success: false, id, error: err };
+          }
+        });
+        
+        const results = await Promise.all(deletePromises);
+        deletedCount = results.filter(r => r.success).length;
+        failedCount = results.filter(r => !r.success).length;
+      }
+    } else {
+      // For small batches (<= 5), use parallel delete
+      const deletePromises = selectedRowIds.value.map(async (id) => {
+        try {
+          await apiService.users.delete(id);
+          return { success: true, id };
+        } catch (err) {
+          return { success: false, id, error: err };
+        }
+      });
+      
+      const results = await Promise.all(deletePromises);
+      deletedCount = results.filter(r => r.success).length;
+      failedCount = results.filter(r => !r.success).length;
     }
 
     // Reset selection
@@ -266,7 +298,11 @@ const handleDeleteUsers = async () => {
     // Refresh data from backend
     await fetchUsers();
 
-    alert(`${deletedCount} pengguna berhasil dihapus`);
+    if (failedCount > 0) {
+      alert(`Berhasil: ${deletedCount} pengguna\nGagal: ${failedCount} pengguna`);
+    } else {
+      alert(`${deletedCount} pengguna berhasil dihapus`);
+    }
   } catch (error) {
     console.error("Error deleting users:", error);
 
@@ -767,6 +803,11 @@ const editPengguna = async (rowId) => {
                         Status
                       </th>
                       <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
+                      >
+                        Tanggal Lahir
+                      </th>
+                      <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-16"
                       >
                         Edit
@@ -838,6 +879,11 @@ const editPengguna = async (rowId) => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
                       >
                         {{ row.status }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
+                      >
+                        {{ row.birth_date ? new Date(row.birth_date).toLocaleDateString('id-ID') : '-' }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-16"

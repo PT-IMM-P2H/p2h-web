@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
+from datetime import datetime
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -141,4 +142,61 @@ async def delete_user(
     return base_response(
         message="User berhasil dinonaktifkan",
         payload={"user_id": str(user_id)}
+    )
+
+@router.post("/bulk-delete")
+async def bulk_delete_users(
+    request: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+):
+    """
+    Bulk soft delete users for better performance.
+    
+    Request body:
+    {
+        "ids": ["uuid1", "uuid2", "uuid3", ...]
+    }
+    """
+    from pydantic import BaseModel, Field
+    from typing import List
+    
+    ids = request.get('ids', [])
+    
+    if not ids or not isinstance(ids, list):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="IDs array required"
+        )
+    
+    # Convert string IDs to UUID
+    try:
+        user_ids = [UUID(str(id)) for id in ids]
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid UUID format: {str(e)}"
+        )
+    
+    # Bulk update using SQL for better performance
+    deleted_count = db.query(User).filter(
+        User.id.in_(user_ids),
+        User.is_deleted == False
+    ).update(
+        {
+            'is_deleted': True,
+            'is_active': False,
+            'updated_at': datetime.utcnow()
+        },
+        synchronize_session=False
+    )
+    
+    db.commit()
+    
+    return base_response(
+        message=f"{deleted_count} users successfully deleted",
+        payload={
+            "deleted_count": deleted_count,
+            "requested_count": len(ids)
+        }
     )
