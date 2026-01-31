@@ -233,6 +233,44 @@ async def bulk_upload_users(
                 
                 password_hash = hash_password(default_password)
                 
+                # Lookup department_id, position_id, work_status_id from database
+                department_id = None
+                position_id = None
+                work_status_id = None
+                
+                # Lookup Department by name
+                if not pd.isna(row.get('department')) and row.get('department'):
+                    from app.models.user import Department
+                    dept_name = str(row['department']).strip()
+                    dept = db.query(Department).filter(
+                        Department.nama_department.ilike(dept_name),
+                        Department.is_deleted == False
+                    ).first()
+                    if dept:
+                        department_id = dept.id
+                
+                # Lookup Position by name
+                if not pd.isna(row.get('position')) and row.get('position'):
+                    from app.models.user import Position
+                    pos_name = str(row['position']).strip()
+                    pos = db.query(Position).filter(
+                        Position.nama_position.ilike(pos_name),
+                        Position.is_deleted == False
+                    ).first()
+                    if pos:
+                        position_id = pos.id
+                
+                # Lookup WorkStatus by name
+                if not pd.isna(row.get('work_status')) and row.get('work_status'):
+                    from app.models.user import WorkStatus
+                    ws_name = str(row['work_status']).strip()
+                    ws = db.query(WorkStatus).filter(
+                        WorkStatus.nama_work_status.ilike(ws_name),
+                        WorkStatus.is_deleted == False
+                    ).first()
+                    if ws:
+                        work_status_id = ws.id
+                
                 # Create user
                 user = User(
                     email=email,
@@ -242,6 +280,9 @@ async def bulk_upload_users(
                     birth_date=birth_date,
                     role=role,
                     kategori_pengguna=kategori,
+                    department_id=department_id,
+                    position_id=position_id,
+                    work_status_id=work_status_id,
                     is_active=True
                 )
                 
