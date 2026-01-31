@@ -158,9 +158,6 @@ async def bulk_delete_users(
         "ids": ["uuid1", "uuid2", "uuid3", ...]
     }
     """
-    from pydantic import BaseModel, Field
-    from typing import List
-    
     ids = request.get('ids', [])
     
     if not ids or not isinstance(ids, list):
@@ -179,12 +176,12 @@ async def bulk_delete_users(
         )
     
     # Bulk update using SQL for better performance
+    # User model uses is_active for soft delete (no is_deleted field)
     deleted_count = db.query(User).filter(
         User.id.in_(user_ids),
-        User.is_deleted == False
+        User.is_active == True
     ).update(
         {
-            'is_deleted': True,
             'is_active': False,
             'updated_at': datetime.utcnow()
         },

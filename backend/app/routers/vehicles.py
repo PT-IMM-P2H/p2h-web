@@ -258,12 +258,12 @@ async def bulk_delete_vehicles(
         )
     
     # Bulk update using SQL for better performance
+    # Vehicle model uses is_active for soft delete (no is_deleted field)
     deleted_count = db.query(Vehicle).filter(
         Vehicle.id.in_(vehicle_ids),
-        Vehicle.is_deleted == False
+        Vehicle.is_active == True
     ).update(
         {
-            'is_deleted': True,
             'is_active': False,
             'updated_at': datetime.utcnow()
         },
