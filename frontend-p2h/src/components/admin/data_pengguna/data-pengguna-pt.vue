@@ -803,6 +803,11 @@ const editPengguna = async (rowId) => {
                         Status
                       </th>
                       <th
+                        class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-28"
+                      >
+                        Tanggal Lahir
+                      </th>
+                      <th
                         class="px-4 py-3 text-left text-sm font-semibold text-gray-700 whitespace-nowrap min-w-16"
                       >
                         Edit
@@ -874,6 +879,11 @@ const editPengguna = async (rowId) => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-20"
                       >
                         {{ row.status }}
+                      </td>
+                      <td
+                        class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-28"
+                      >
+                        {{ row.birth_date ? new Date(row.birth_date).toLocaleDateString('id-ID') : '-' }}
                       </td>
                       <td
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-16"
