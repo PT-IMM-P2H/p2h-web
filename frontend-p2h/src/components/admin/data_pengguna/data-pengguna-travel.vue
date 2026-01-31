@@ -591,10 +591,10 @@ const sortByName = () => {
               </h1>
             </div>
           </div>
-          <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
+          <div class="bg-white rounded-lg shadow-md p-5 flex flex-col relative">
             <!-- Toolbar - Sticky -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 -mx-5 px-5 pt-5"
             >
               <!-- Left Section -->
               <div class="flex items-center gap-2 md:gap-3 order-1">
