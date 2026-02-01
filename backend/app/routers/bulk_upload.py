@@ -11,7 +11,7 @@ from datetime import datetime
 from app.database import get_db
 from app.dependencies import require_admin
 from app.models.user import User, UserRole, UserKategori
-from app.models.vehicle import Vehicle
+from app.models.vehicle import Vehicle, ShiftType, UnitKategori
 from app.schemas.bulk_upload import BulkUploadResponse, BulkUploadError
 from app.utils.password import hash_password
 from app.utils.response import base_response
@@ -1088,6 +1088,10 @@ async def bulk_upload_vehicles(
                         ))
                         continue
                 
+                # Convert string values to enum instances
+                kategori_enum = UnitKategori.IMM if kategori_str == 'IMM' else UnitKategori.TRAVEL
+                shift_enum = ShiftType.SHIFT if shift_type == 'shift' else (ShiftType.LONG_SHIFT if shift_type == 'long_shift' else ShiftType.NON_SHIFT)
+                
                 # Create vehicle with all new fields
                 vehicle = Vehicle(
                     plat_nomor=plat,
@@ -1098,8 +1102,8 @@ async def bulk_upload_vehicles(
                     merk=str(row['merk']).strip() if not pd.isna(row.get('merk')) else None,
                     no_rangka=str(row['no_rangka']).strip() if not pd.isna(row.get('no_rangka')) else None,
                     no_mesin=str(row['no_mesin']).strip() if not pd.isna(row.get('no_mesin')) else None,
-                    kategori_unit=kategori_str,
-                    shift_type=shift_type,
+                    kategori_unit=kategori_enum,
+                    shift_type=shift_enum,
                     stnk_expiry=stnk_expiry,
                     pajak_expiry=pajak_expiry,
                     kir_expiry=kir_expiry,
