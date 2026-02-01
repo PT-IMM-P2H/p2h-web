@@ -906,7 +906,9 @@ async def bulk_upload_vehicles(
         # Normalize column names
         df.columns = df.columns.str.strip().str.lower().str.replace(' ', '_')
         
+        # Extended column mapping to support both old template and new PT/Travel templates
         column_mapping = {
+            # Old template columns
             'nomor_polisi_*': 'nomor_polisi',
             'nomor_lambung': 'nomor_lambung',
             'tipe_kendaraan_*': 'tipe_kendaraan',
@@ -914,7 +916,20 @@ async def bulk_upload_vehicles(
             'tahun_pembuatan': 'tahun_pembuatan',
             'tanggal_expired_stnk_(yyyy-mm-dd)': 'expired_stnk',
             'tanggal_expired_kir_(yyyy-mm-dd)': 'expired_kir',
-            'shift_type_*': 'shift_type'
+            'shift_type_*': 'shift_type',
+            # New PT/Travel template columns
+            'nomor_lambung_*': 'nomor_lambung',
+            'warna_no._lambung': 'warna_no_lambung',
+            'lokasi_kendaraan': 'lokasi_kendaraan',
+            'tipe_*': 'tipe_kendaraan',
+            'merek': 'merk',
+            'user': 'user_name',
+            'perusahaan': 'perusahaan',
+            'tgl._stnk_(yyyy-mm-dd)': 'expired_stnk',
+            'tgl._pajak_(yyyy-mm-dd)': 'expired_pajak',
+            'kir_/_kuer_(yyyy-mm-dd)': 'expired_kir',
+            'no._rangka': 'no_rangka',
+            'no._mesin': 'no_mesin',
         }
         
         df.rename(columns=column_mapping, inplace=True)
@@ -955,23 +970,47 @@ async def bulk_upload_vehicles(
                     ))
                     continue
                 
+                # Handle kategori - if not provided, auto-detect based on nomor_lambung presence
+                # PT (IMM) templates have nomor_lambung, Travel templates don't
                 if pd.isna(row.get('kategori')) or not row.get('kategori'):
-                    errors.append(BulkUploadError(
-                        row=row_num,
-                        field='kategori',
-                        message='Kategori wajib diisi',
-                        data=row.to_dict()
-                    ))
-                    continue
+                    # Auto-detect: if nomor_lambung is provided, it's likely PT/IMM
+                    if not pd.isna(row.get('nomor_lambung')) and row.get('nomor_lambung'):
+                        kategori_str = 'IMM'
+                    else:
+                        kategori_str = 'TRAVEL'
+                else:
+                    kategori_str = str(row['kategori']).strip().upper()
+                    if kategori_str == 'PT':
+                        kategori_str = 'IMM'
+                    if kategori_str not in ['IMM', 'TRAVEL']:
+                        errors.append(BulkUploadError(
+                            row=row_num,
+                            field='kategori',
+                            message=f'Kategori tidak valid: {row["kategori"]}. Gunakan: PT atau Travel',
+                            data=row.to_dict()
+                        ))
+                        continue
                 
+                # Handle shift_type - if not provided, use default based on kategori
                 if pd.isna(row.get('shift_type')) or not row.get('shift_type'):
-                    errors.append(BulkUploadError(
-                        row=row_num,
-                        field='shift_type',
-                        message='Shift type wajib diisi',
-                        data=row.to_dict()
-                    ))
-                    continue
+                    # Default: PT (IMM) uses 'shift', Travel uses 'non_shift'
+                    shift_type = 'shift' if kategori_str == 'IMM' else 'non_shift'
+                else:
+                    shift_str = str(row['shift_type']).strip().lower()
+                    if 'shift 1' in shift_str or 'shift 2' in shift_str or 'shift 3' in shift_str or shift_str in ['1', '2', '3', 'shift']:
+                        shift_type = 'shift'
+                    elif 'long' in shift_str:
+                        shift_type = 'long_shift'
+                    elif 'non' in shift_str:
+                        shift_type = 'non_shift'
+                    else:
+                        errors.append(BulkUploadError(
+                            row=row_num,
+                            field='shift_type',
+                            message=f'Shift type tidak valid: {row["shift_type"]}. Gunakan: Shift/Non Shift/Long Shift',
+                            data=row.to_dict()
+                        ))
+                        continue
                 
                 # Check for duplicate plat_nomor
                 plat = str(row['nomor_polisi']).strip().upper()
@@ -999,38 +1038,9 @@ async def bulk_upload_vehicles(
                 # Use the vehicle type name directly (it's stored as string/enum in current schema)
                 vehicle_type_value = type_str
                 
-                # Validate kategori
-                kategori_str = str(row['kategori']).strip().upper()
-                if kategori_str == 'PT':
-                    kategori_str = 'IMM'
-                if kategori_str not in ['IMM', 'TRAVEL']:
-                    errors.append(BulkUploadError(
-                        row=row_num,
-                        field='kategori',
-                        message=f'Kategori tidak valid: {row["kategori"]}. Gunakan: PT atau Travel',
-                        data=row.to_dict()
-                    ))
-                    continue
-                
-                # Validate shift type
-                shift_str = str(row['shift_type']).strip().lower()
-                if 'shift 1' in shift_str or 'shift 2' in shift_str or 'shift 3' in shift_str or shift_str in ['1', '2', '3', 'shift']:
-                    shift_type = 'shift'
-                elif 'long' in shift_str:
-                    shift_type = 'long_shift'
-                elif 'non' in shift_str:
-                    shift_type = 'non_shift'
-                else:
-                    errors.append(BulkUploadError(
-                        row=row_num,
-                        field='shift_type',
-                        message=f'Shift type tidak valid: {row["shift_type"]}. Gunakan: Shift/Non Shift/Long Shift',
-                        data=row.to_dict()
-                    ))
-                    continue
-                
                 # Parse dates if provided
                 stnk_expiry = None
+                pajak_expiry = None
                 kir_expiry = None
                 
                 if not pd.isna(row.get('expired_stnk')):
@@ -1044,6 +1054,21 @@ async def bulk_upload_vehicles(
                             row=row_num,
                             field='expired_stnk',
                             message='Format tanggal STNK tidak valid. Gunakan YYYY-MM-DD',
+                            data=row.to_dict()
+                        ))
+                        continue
+                
+                if not pd.isna(row.get('expired_pajak')):
+                    try:
+                        if isinstance(row['expired_pajak'], str):
+                            pajak_expiry = datetime.strptime(row['expired_pajak'], '%Y-%m-%d').date()
+                        else:
+                            pajak_expiry = pd.to_datetime(row['expired_pajak']).date()
+                    except:
+                        errors.append(BulkUploadError(
+                            row=row_num,
+                            field='expired_pajak',
+                            message='Format tanggal Pajak tidak valid. Gunakan YYYY-MM-DD',
                             data=row.to_dict()
                         ))
                         continue
@@ -1063,14 +1088,20 @@ async def bulk_upload_vehicles(
                         ))
                         continue
                 
-                # Create vehicle
+                # Create vehicle with all new fields
                 vehicle = Vehicle(
                     plat_nomor=plat,
                     no_lambung=str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) else None,
+                    warna_no_lambung=str(row['warna_no_lambung']).strip() if not pd.isna(row.get('warna_no_lambung')) else None,
+                    lokasi_kendaraan=str(row['lokasi_kendaraan']).strip() if not pd.isna(row.get('lokasi_kendaraan')) else None,
                     vehicle_type=vehicle_type_value,
+                    merk=str(row['merk']).strip() if not pd.isna(row.get('merk')) else None,
+                    no_rangka=str(row['no_rangka']).strip() if not pd.isna(row.get('no_rangka')) else None,
+                    no_mesin=str(row['no_mesin']).strip() if not pd.isna(row.get('no_mesin')) else None,
                     kategori_unit=kategori_str,
                     shift_type=shift_type,
                     stnk_expiry=stnk_expiry,
+                    pajak_expiry=pajak_expiry,
                     kir_expiry=kir_expiry,
                     is_active=True
                 )
