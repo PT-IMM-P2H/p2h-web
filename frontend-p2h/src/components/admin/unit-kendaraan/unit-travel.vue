@@ -1183,8 +1183,7 @@ const getDateStyle = (dateString) => {
     <BulkUploadModal
       :is-open="showBulkUpload"
       title="Upload Data Kendaraan Travel"
-      :upload-endpoint="`${API_BASE_URL}/bulk-upload/vehicles`"
-      :template-endpoint="`${API_BASE_URL}/bulk-upload/templates/vehicles`"
+      upload-type="vehicles-travel"
       @close="closeBulkUpload"
       @success="handleUploadSuccess"
     />

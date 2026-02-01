@@ -339,8 +339,9 @@ const props = defineProps({
   templateEndpoint: String, // Kept for backward compat
   uploadType: {
     type: String,
-    default: "vehicles", // 'vehicles' or 'users'
-    validator: (value) => ["vehicles", "users"].includes(value),
+    default: "vehicles", // 'vehicles', 'vehicles-pt', 'vehicles-travel', or 'users'
+    validator: (value) =>
+      ["vehicles", "vehicles-pt", "vehicles-travel", "users"].includes(value),
   },
 });
 
@@ -407,12 +408,26 @@ const formatFileSize = (bytes) => {
 
 const downloadTemplate = async () => {
   try {
-    // Determine method based on uploadType or endpoint
+    // Determine method based on uploadType
     let downloadMethod;
-    if (props.uploadType === "users") {
-      downloadMethod = apiService.bulkUpload.downloadUsersTemplate;
-    } else {
-      downloadMethod = apiService.bulkUpload.downloadVehiclesTemplate;
+    let defaultFilename;
+
+    switch (props.uploadType) {
+      case "users":
+        downloadMethod = apiService.bulkUpload.downloadUsersTemplate;
+        defaultFilename = "template_data_pengguna.xlsx";
+        break;
+      case "vehicles-pt":
+        downloadMethod = apiService.bulkUpload.downloadVehiclesPtTemplate;
+        defaultFilename = "template_unit_kendaraan_pt.xlsx";
+        break;
+      case "vehicles-travel":
+        downloadMethod = apiService.bulkUpload.downloadVehiclesTravelTemplate;
+        defaultFilename = "template_unit_kendaraan_travel.xlsx";
+        break;
+      default:
+        downloadMethod = apiService.bulkUpload.downloadVehiclesTemplate;
+        defaultFilename = "template_data_kendaraan.xlsx";
     }
 
     const response = await downloadMethod();
@@ -424,10 +439,7 @@ const downloadTemplate = async () => {
 
     // Extract filename from Content-Disposition header or use default
     const contentDisposition = response.headers["content-disposition"];
-    let filename =
-      props.uploadType === "users"
-        ? "template_data_pengguna.xlsx"
-        : "template_data_kendaraan.xlsx";
+    let filename = defaultFilename;
 
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(

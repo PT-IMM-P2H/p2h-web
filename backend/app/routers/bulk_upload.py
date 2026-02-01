@@ -649,6 +649,224 @@ async def download_vehicles_template(db: Session = Depends(get_db)):
     )
 
 
+@router.get("/templates/vehicles-pt")
+async def download_vehicles_pt_template(db: Session = Depends(get_db)):
+    """Download Excel template for bulk PT (IMM) vehicle upload - auto-generated with latest master data"""
+    from fastapi.responses import StreamingResponse
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.worksheet.datavalidation import DataValidation
+    from app.models.vehicle import VehicleType, ShiftType, UnitKategori
+    from app.models.user import Company
+    
+    # Fetch fresh master data
+    vehicle_types = [e.value for e in VehicleType]
+    companies = [c.nama_perusahaan for c in db.query(Company).filter(Company.deleted_at == None).all()]
+    warna_lambung_options = ['Kuning', 'Hijau', 'Biru']
+    lokasi_options = ['Port', 'KM. 30']
+    
+    # Create workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Data Kendaraan PT"
+    
+    # Headers sesuai permintaan untuk PT (IMM)
+    headers = [
+        "Nomor Lambung *", 
+        "Warna No. Lambung", 
+        "Nomor Polisi *", 
+        "Lokasi Kendaraan",
+        "Tipe *", 
+        "Merek", 
+        "User", 
+        "Perusahaan",
+        "Tgl. STNK (YYYY-MM-DD)", 
+        "Tgl. Pajak (YYYY-MM-DD)", 
+        "KIR / KUER (YYYY-MM-DD)", 
+        "No. Rangka", 
+        "No. Mesin"
+    ]
+    
+    header_fill = PatternFill(start_color="70AD47", end_color="70AD47", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True, name="Arial", size=11)
+    border = Border(left=Side(style='thin'), right=Side(style='thin'), 
+                   top=Side(style='thin'), bottom=Side(style='thin'))
+    
+    # Set headers
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+        ws.column_dimensions[cell.column_letter].width = 22
+    
+    # Reference sheet
+    ws_ref = wb.create_sheet("Data Referensi")
+    
+    def populate_ref(col, title, values):
+        ws_ref[f'{col}1'] = title
+        ws_ref[f'{col}1'].font = Font(bold=True, color="70AD47", name="Arial")
+        for i, val in enumerate(values, 2):
+            ws_ref[f'{col}{i}'] = val
+        ws_ref.column_dimensions[col].width = 25
+        return len(values)
+    
+    len_types = populate_ref('A', 'Tipe Kendaraan', vehicle_types)
+    len_warna = populate_ref('B', 'Warna No. Lambung', warna_lambung_options)
+    len_lokasi = populate_ref('C', 'Lokasi Kendaraan', lokasi_options)
+    len_comp = populate_ref('D', 'Perusahaan', companies)
+    
+    # Add data validations
+    if len_types > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$A$2:$A${len_types+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Tipe Kendaraan yang tersedia'
+        dv.errorTitle = 'Invalid Tipe'
+        ws.add_data_validation(dv)
+        dv.add('E2:E1000')
+    
+    if len_warna > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$B$2:$B${len_warna+1}", allow_blank=True)
+        dv.error = 'Pilih dari daftar Warna yang tersedia'
+        dv.errorTitle = 'Invalid Warna'
+        ws.add_data_validation(dv)
+        dv.add('B2:B1000')
+    
+    if len_lokasi > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$C$2:$C${len_lokasi+1}", allow_blank=True)
+        dv.error = 'Pilih Port atau KM. 30'
+        dv.errorTitle = 'Invalid Lokasi'
+        ws.add_data_validation(dv)
+        dv.add('D2:D1000')
+    
+    if len_comp > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$D$2:$D${len_comp+1}", allow_blank=True)
+        dv.error = 'Pilih dari daftar Perusahaan yang tersedia'
+        dv.errorTitle = 'Invalid Perusahaan'
+        ws.add_data_validation(dv)
+        dv.add('H2:H1000')
+    
+    # Add empty row with highlighting for mandatory fields
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=2, column=col_num)
+        cell.value = ""
+        cell.border = border
+        if "*" in headers[col_num - 1]:
+            cell.fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+    
+    ws.freeze_panes = 'A2'
+    
+    # Save to stream
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename=template_unit_kendaraan_pt.xlsx'}
+    )
+
+
+@router.get("/templates/vehicles-travel")
+async def download_vehicles_travel_template(db: Session = Depends(get_db)):
+    """Download Excel template for bulk Travel vehicle upload - auto-generated with latest master data"""
+    from fastapi.responses import StreamingResponse
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.worksheet.datavalidation import DataValidation
+    from app.models.vehicle import VehicleType
+    from app.models.user import Company
+    
+    # Fetch fresh master data
+    vehicle_types = [e.value for e in VehicleType]
+    companies = [c.nama_perusahaan for c in db.query(Company).filter(Company.deleted_at == None).all()]
+    
+    # Create workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Data Kendaraan Travel"
+    
+    # Headers sesuai permintaan untuk Travel
+    headers = [
+        "Nomor Polisi *", 
+        "Tipe *", 
+        "Merek", 
+        "User", 
+        "Perusahaan",
+        "Tgl. STNK (YYYY-MM-DD)", 
+        "Tgl. Pajak (YYYY-MM-DD)", 
+        "No. Rangka", 
+        "No. Mesin"
+    ]
+    
+    header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True, name="Arial", size=11)
+    border = Border(left=Side(style='thin'), right=Side(style='thin'), 
+                   top=Side(style='thin'), bottom=Side(style='thin'))
+    
+    # Set headers
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.value = header
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = border
+        ws.column_dimensions[cell.column_letter].width = 22
+    
+    # Reference sheet
+    ws_ref = wb.create_sheet("Data Referensi")
+    
+    def populate_ref(col, title, values):
+        ws_ref[f'{col}1'] = title
+        ws_ref[f'{col}1'].font = Font(bold=True, color="4472C4", name="Arial")
+        for i, val in enumerate(values, 2):
+            ws_ref[f'{col}{i}'] = val
+        ws_ref.column_dimensions[col].width = 25
+        return len(values)
+    
+    len_types = populate_ref('A', 'Tipe Kendaraan', vehicle_types)
+    len_comp = populate_ref('B', 'Perusahaan', companies)
+    
+    # Add data validations
+    if len_types > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$A$2:$A${len_types+1}", allow_blank=False)
+        dv.error = 'Pilih dari daftar Tipe Kendaraan yang tersedia'
+        dv.errorTitle = 'Invalid Tipe'
+        ws.add_data_validation(dv)
+        dv.add('B2:B1000')
+    
+    if len_comp > 0:
+        dv = DataValidation(type="list", formula1=f"='Data Referensi'!$B$2:$B${len_comp+1}", allow_blank=True)
+        dv.error = 'Pilih dari daftar Perusahaan yang tersedia'
+        dv.errorTitle = 'Invalid Perusahaan'
+        ws.add_data_validation(dv)
+        dv.add('E2:E1000')
+    
+    # Add empty row with highlighting for mandatory fields
+    for col_num in range(1, len(headers) + 1):
+        cell = ws.cell(row=2, column=col_num)
+        cell.value = ""
+        cell.border = border
+        if "*" in headers[col_num - 1]:
+            cell.fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+    
+    ws.freeze_panes = 'A2'
+    
+    # Save to stream
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    return StreamingResponse(
+        output,
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': 'attachment; filename=template_unit_kendaraan_travel.xlsx'}
+    )
+
+
 @router.post("/vehicles", response_model=dict)
 async def bulk_upload_vehicles(
     file: UploadFile = File(...),

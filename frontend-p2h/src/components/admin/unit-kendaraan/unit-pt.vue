@@ -698,7 +698,7 @@ const getDateStyle = (dateString) => {
 
               <!-- Toolbar -->
               <div
-                class="flex flex-wrap items-center justify-between gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
+                class="flex flex-wrap items-center justify-between gap-3 border-b shrink-0 flex-none sticky top-14 bg-white z-20"
               >
                 <!-- LEFT SECTION -->
                 <div class="flex flex-wrap items-center gap-3">
@@ -1660,8 +1660,7 @@ const getDateStyle = (dateString) => {
     <BulkUploadModal
       :is-open="showBulkUpload"
       title="Upload Data Kendaraan PT"
-      :upload-endpoint="`${API_BASE_URL}/bulk-upload/vehicles`"
-      :template-endpoint="`${API_BASE_URL}/bulk-upload/templates/vehicles`"
+      upload-type="vehicles-pt"
       @close="closeBulkUpload"
       @success="handleUploadSuccess"
     />

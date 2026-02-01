@@ -161,6 +161,8 @@ const apiService = {
   bulkUpload: {
     downloadUsersTemplate: () => api.get('/bulk-upload/templates/users', { responseType: 'blob' }),
     downloadVehiclesTemplate: () => api.get('/bulk-upload/templates/vehicles', { responseType: 'blob' }),
+    downloadVehiclesPtTemplate: () => api.get('/bulk-upload/templates/vehicles-pt', { responseType: 'blob' }),
+    downloadVehiclesTravelTemplate: () => api.get('/bulk-upload/templates/vehicles-travel', { responseType: 'blob' }),
     uploadUsers: (formData, onUploadProgress) => api.post('/bulk-upload/users', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 120000, // 2 minutes timeout for bulk upload
