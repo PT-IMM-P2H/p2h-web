@@ -67,7 +67,7 @@ class P2HDetailResponse(BaseModel):
 class P2HReportSubmit(BaseModel):
     """Schema for submitting P2H report"""
     vehicle_id: UUID
-    shift_number: Optional[int] = Field(None, ge=1, le=3, description="Shift number yang dipilih user (1-3 untuk shift, 1-2 untuk long shift)")
+    shift_number: Optional[int] = Field(None, ge=0, le=12, description="Shift: 0=non-shift, 1-3=regular shift, 11-12=long shift")
     details: List[P2HDetailSubmit] = Field(..., min_length=1, description="At least one checklist item required")
     
     @field_validator('details')

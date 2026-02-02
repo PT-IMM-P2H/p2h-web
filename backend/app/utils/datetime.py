@@ -109,3 +109,49 @@ def days_until_expiry(expiry_date: date) -> int:
     today = get_current_date()
     delta = expiry_date - today
     return delta.days
+
+
+def validate_shift_time(shift_number: int = None) -> tuple[bool, str]:
+    """
+    Validasi apakah shift_number yang dikirim sesuai dengan waktu saat ini.
+    
+    Shift numbers:
+    - 0: Non-shift (hijau/biru) - bisa submit 06:00-16:00
+    - 1, 2, 3: Regular shift (kuning)
+    - 11, 12: Long shift
+    
+    Returns: (is_valid, error_message)
+    """
+    current_time = get_current_time()
+    now_hour = current_time.hour
+    
+    # Jika shift_number None, backend akan auto-detect
+    if shift_number is None:
+        return True, ""
+    
+    # Non-shift (0)
+    if shift_number == 0:
+        if is_within_non_shift_hours(current_time):
+            return True, ""
+        else:
+            return False, "Waktu submit untuk Non-Shift hanya 06:00-16:00"
+    
+    # Regular shift (1, 2, 3)
+    if shift_number in [1, 2, 3]:
+        expected_shift = get_shift_number(current_time)
+        if shift_number == expected_shift:
+            return True, ""
+        else:
+            return False, f"Shift {shift_number} tidak tersedia saat ini. Shift aktif: {expected_shift}"
+    
+    # Long shift (11, 12)
+    if shift_number in [11, 12]:
+        expected_long = get_long_shift_number(current_time)
+        submitted_long = shift_number - 10  # Convert 11->1, 12->2
+        if submitted_long == expected_long:
+            return True, ""
+        else:
+            return False, f"Long Shift {submitted_long} tidak tersedia saat ini. Long Shift aktif: {expected_long}"
+    
+    # Unknown shift number
+    return False, f"Shift number tidak valid: {shift_number}"
