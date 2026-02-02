@@ -1041,7 +1041,7 @@ async def bulk_upload_vehicles(
                         company_name = str(row['perusahaan']).strip()
                         company = db.query(Company).filter(
                             Company.nama_perusahaan.ilike(company_name),
-                            Company.is_deleted == False
+                            Company.is_active == True
                         ).first()
                         if company:
                             inactive_vehicle.company_id = company.id
@@ -1137,7 +1137,7 @@ async def bulk_upload_vehicles(
                     company_name = str(row['perusahaan']).strip()
                     company = db.query(Company).filter(
                         Company.nama_perusahaan.ilike(company_name),
-                        Company.is_deleted == False
+                        Company.is_active == True
                     ).first()
                     if company:
                         company_id = company.id
