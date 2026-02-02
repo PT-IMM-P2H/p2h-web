@@ -11,6 +11,7 @@ import {
   ChevronDownIcon,
 } from "@heroicons/vue/24/solid";
 import { api } from "../../services/api";
+import { STORAGE_KEYS } from "../../constants";
 
 const router = useRouter();
 
@@ -56,7 +57,7 @@ const fetchUserProfile = async () => {
   }
 
   // Check if authenticated before making API call
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   if (!token) {
     userData.value.full_name = "User";
     isLoadingUserName.value = false;
@@ -76,7 +77,7 @@ const fetchUserProfile = async () => {
 };
 
 const checkAuthentication = () => {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
   isAuthenticated.value = !!token;
   console.log(
     "🔐 [AUTH] Token ada:",
