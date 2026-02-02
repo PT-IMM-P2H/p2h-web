@@ -152,6 +152,50 @@ const fetchVehicles = async () => {
   }
 };
 
+// Hapus kendaraan (soft delete)
+const handleDeleteVehicles = async () => {
+  if (selectedRowIds.value.length === 0) {
+    alert("Pilih kendaraan yang ingin dihapus!");
+    return;
+  }
+
+  if (
+    !confirm(`Yakin ingin menghapus ${selectedRowIds.value.length} kendaraan?`)
+  ) {
+    return;
+  }
+
+  isLoading.value = true;
+  errorMessage.value = "";
+  let deletedCount = 0;
+
+  try {
+    for (const id of selectedRowIds.value) {
+      await apiService.vehicles.delete(id);
+      deletedCount++;
+    }
+
+    selectedRowIds.value = [];
+    selectAllChecked.value = false;
+    tableData.value = [];
+
+    await fetchVehicles();
+    alert(`${deletedCount} kendaraan berhasil dihapus`);
+  } catch (error) {
+    console.error("Error deleting vehicles:", error);
+    errorMessage.value =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menghapus kendaraan";
+    alert(
+      `Error: ${errorMessage.value}\n\nBerhasil dihapus: ${deletedCount} dari ${selectedRowIds.value.length}`,
+    );
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 // Extract unique values for dropdowns
 const uniqueCompanies = computed(() => {
   const companies = tableData.value
@@ -543,15 +587,19 @@ const getDateStyle = (dateString) => {
                   </button>
 
                   <button
-                    :disabled="selectedRowIds.length === 0"
+                    @click="handleDeleteVehicles"
+                    :disabled="selectedRowIds.length === 0 || isLoading"
                     class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm"
                     :class="
-                      selectedRowIds.length > 0
+                      selectedRowIds.length > 0 && !isLoading
                         ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
                         : 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed'
                     "
                   >
                     <TrashIcon class="w-4 h-4" />
+                    <span class="hidden sm:inline">{{
+                      isLoading ? "Loading..." : "Hapus"
+                    }}</span>
                   </button>
                 </div>
               </div>

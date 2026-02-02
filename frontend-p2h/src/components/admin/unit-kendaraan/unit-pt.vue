@@ -757,10 +757,11 @@ const getDateStyle = (dateString) => {
 
                   <!-- Delete Button -->
                   <button
-                    :disabled="selectedRowIds.length === 0"
+                    @click="handleDeleteVehicles"
+                    :disabled="selectedRowIds.length === 0 || isLoading"
                     class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm"
                     :class="
-                      selectedRowIds.length > 0
+                      selectedRowIds.length > 0 && !isLoading
                         ? 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200'
                         : 'bg-gray-100 text-gray-400 border border-gray-300 cursor-not-allowed'
                     "
@@ -776,13 +777,9 @@ const getDateStyle = (dateString) => {
                     "
                   >
                     <TrashIcon class="w-4 h-4" />
-                    <span class="sr-only">
-                      {{
-                        selectedRowIds.length > 0
-                          ? `Hapus ${selectedRowIds.length} kendaraan`
-                          : "Hapus kendaraan"
-                      }}
-                    </span>
+                    <span class="hidden sm:inline">{{
+                      isLoading ? "Loading..." : "Hapus"
+                    }}</span>
                   </button>
                 </div>
               </div>
