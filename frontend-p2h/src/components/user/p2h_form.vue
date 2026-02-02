@@ -203,9 +203,18 @@ const fetchChecklist = async (vehicleType) => {
     const response = await api.get("/p2h/checklist-items");
     const allQuestions = response.data.payload;
 
+    // DEBUG: Log untuk melihat data yang diterima
+    console.log("🔍 DEBUG - Vehicle Type yang dicari:", vehicleType);
+    console.log("🔍 DEBUG - Total pertanyaan dari API:", allQuestions.length);
+    console.log("🔍 DEBUG - Semua vehicle_tags yang ada:", [
+      ...new Set(allQuestions.flatMap((q) => q.vehicle_tags || [])),
+    ]);
+
     questions.value = allQuestions.filter(
       (q) => q.vehicle_tags && q.vehicle_tags.includes(vehicleType),
     );
+
+    console.log("🔍 DEBUG - Pertanyaan yang cocok:", questions.value.length);
 
     questions.value = questions.value.map((q) => ({
       ...q,
