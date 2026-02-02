@@ -445,7 +445,7 @@ onMounted(() => {
               </p>
             </div>
             <p class="text-xs text-blue-700 mt-1 font-semibold">
-              Toleransi pengisian: 30 menit sebelum shift (mulai
+              Toleransi pengisian: 1 Jam sebelum shift (mulai
               {{ currentShiftInfo.shift_info.tolerance_start }})
             </p>
           </div>
