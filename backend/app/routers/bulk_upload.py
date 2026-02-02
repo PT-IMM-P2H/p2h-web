@@ -10,7 +10,7 @@ from datetime import datetime
 
 from app.database import get_db
 from app.dependencies import require_admin
-from app.models.user import User, UserRole, UserKategori
+from app.models.user import User, UserRole, UserKategori, Company
 from app.models.vehicle import Vehicle, ShiftType, UnitKategori
 from app.schemas.bulk_upload import BulkUploadResponse, BulkUploadError
 from app.utils.password import hash_password
@@ -1035,6 +1035,17 @@ async def bulk_upload_vehicles(
                     inactive_vehicle.merk = str(row['merk']).strip() if not pd.isna(row.get('merk')) else inactive_vehicle.merk
                     inactive_vehicle.no_rangka = str(row['no_rangka']).strip() if not pd.isna(row.get('no_rangka')) else inactive_vehicle.no_rangka
                     inactive_vehicle.no_mesin = str(row['no_mesin']).strip() if not pd.isna(row.get('no_mesin')) else inactive_vehicle.no_mesin
+                    
+                    # Also update company if provided
+                    if not pd.isna(row.get('perusahaan')) and row.get('perusahaan'):
+                        company_name = str(row['perusahaan']).strip()
+                        company = db.query(Company).filter(
+                            Company.nama_perusahaan.ilike(company_name),
+                            Company.is_deleted == False
+                        ).first()
+                        if company:
+                            inactive_vehicle.company_id = company.id
+                    
                     success_count += 1
                     continue
                 
@@ -1120,6 +1131,17 @@ async def bulk_upload_vehicles(
                 kategori_enum = UnitKategori.IMM if kategori_str == 'IMM' else UnitKategori.TRAVEL
                 shift_enum = ShiftType.SHIFT if shift_type == 'shift' else (ShiftType.LONG_SHIFT if shift_type == 'long_shift' else ShiftType.NON_SHIFT)
                 
+                # Lookup company by name if provided
+                company_id = None
+                if not pd.isna(row.get('perusahaan')) and row.get('perusahaan'):
+                    company_name = str(row['perusahaan']).strip()
+                    company = db.query(Company).filter(
+                        Company.nama_perusahaan.ilike(company_name),
+                        Company.is_deleted == False
+                    ).first()
+                    if company:
+                        company_id = company.id
+                
                 # Create vehicle with all new fields
                 vehicle = Vehicle(
                     plat_nomor=plat,
@@ -1135,6 +1157,7 @@ async def bulk_upload_vehicles(
                     stnk_expiry=stnk_expiry,
                     pajak_expiry=pajak_expiry,
                     kir_expiry=kir_expiry,
+                    company_id=company_id,
                     is_active=True
                 )
                 
