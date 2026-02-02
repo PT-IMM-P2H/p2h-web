@@ -76,14 +76,20 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
+    """Run migrations in 'online' mode with retry logic for Railway."""
+    import time
     
     # Ambil section konfigurasi dari file .ini
     configuration = config.get_section(config.config_ini_section) or {}
     
     # PAKSA URL menggunakan yang sudah kita fix (Sync driver)
     # Ini memastikan engine_from_config tidak membaca ulang URL async yang salah
-    configuration["sqlalchemy.url"] = get_db_url()
+    db_url = get_db_url()
+    configuration["sqlalchemy.url"] = db_url
+    
+    # Log connection attempt
+    print(f"Attempting database connection...")
+    print(f"URL format check: {'postgresql://' in db_url if db_url else 'URL is empty'}")
 
     connectable = engine_from_config(
         configuration,
@@ -91,14 +97,30 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, 
-            target_metadata=target_metadata
-        )
+    # Retry logic for Railway internal networking
+    max_retries = 3
+    retry_delay = 5  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            with connectable.connect() as connection:
+                context.configure(
+                    connection=connection, 
+                    target_metadata=target_metadata
+                )
 
-        with context.begin_transaction():
-            context.run_migrations()
+                with context.begin_transaction():
+                    context.run_migrations()
+            print("Migration completed successfully!")
+            return  # Success, exit the function
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"Connection attempt {attempt + 1} failed: {e}")
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print(f"All {max_retries} connection attempts failed.")
+                raise
 
 
 if context.is_offline_mode():
