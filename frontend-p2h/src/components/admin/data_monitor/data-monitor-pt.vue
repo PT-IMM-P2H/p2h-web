@@ -19,8 +19,7 @@ import { useSidebarProvider } from "../../../composables/useSidebar";
 // Provide sidebar state untuk header dan aside
 const { isSidebarOpen } = useSidebarProvider();
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+// Export endpoint (relative path - api.js handles base URL)
 
 const selectedRowIds = ref([]);
 const selectAllChecked = ref(false);
@@ -544,7 +543,7 @@ onMounted(() => {
               <!-- Export Dropdown -->
               <div class="order-3">
                 <ExportDropdown
-                  :export-endpoint="`${API_BASE_URL}/export/p2h-reports`"
+                  export-endpoint="/export/p2h-reports"
                   :filters="exportFilters"
                 />
               </div>
