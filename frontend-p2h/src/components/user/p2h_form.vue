@@ -190,9 +190,7 @@ const handleSearchVehicle = async () => {
 
     // Jika shift saat ini sudah diisi, jangan tampilkan form
     if (currentShiftDone || !p2hStatus.value.canSubmit) {
-      console.log(
-        "❌ [P2H DEBUG] Tidak fetch checklist - shift done atau tidak bisa submit",
-      );
+      console.log("❌ [P2H DEBUG] Tidak fetch checklist - shift done atau tidak bisa submit");
       questions.value = [];
       return;
     }
@@ -225,12 +223,7 @@ const fetchChecklist = async (vehicleType) => {
     questions.value = allQuestions.filter(
       (q) => q.vehicle_tags && q.vehicle_tags.includes(vehicleType),
     );
-    console.log(
-      "✅ [FILTER] Questions untuk",
-      vehicleType,
-      ":",
-      questions.value.length,
-    );
+    console.log("✅ [FILTER] Questions untuk", vehicleType, ":", questions.value.length);
 
     questions.value = questions.value.map((q) => ({
       ...q,
@@ -286,10 +279,24 @@ const handleSubmitReport = async () => {
   try {
     isSubmitting.value = true;
 
-    // Backend auto-detect shift berdasarkan waktu submit
-    // shift_number dan duration hanya untuk informasi user, tidak dikirim
+    // Konversi selectedShift ke shift_number untuk backend
+    let shiftNum = null;
+    if (selectedShift.value) {
+      const shiftStr = selectedShift.value.toString();
+      if (shiftStr === "non-shift" || shiftStr === "0") {
+        shiftNum = 0; // Non-shift
+      } else if (shiftStr === "long-shift-1" || shiftStr === "11") {
+        shiftNum = 11; // Long shift 1
+      } else if (shiftStr === "long-shift-2" || shiftStr === "12") {
+        shiftNum = 12; // Long shift 2
+      } else {
+        shiftNum = parseInt(shiftStr); // Regular shift 1/2/3
+      }
+    }
+
     const payload = {
       vehicle_id: vehicleData.value.id,
+      shift_number: shiftNum,
       details: Object.keys(answers.value).map((id) => ({
         checklist_item_id: id,
         status: answers.value[id].status.toLowerCase(), // Convert ke lowercase untuk backend
