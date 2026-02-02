@@ -744,7 +744,7 @@ onMounted(() => {
             isAuthenticated &&
             questions.length > 0
           "
-          class="space-y-6 pb-10"
+          class="space-y-6 pb-5"
         >
           <div
             v-for="(items, section) in groupedQuestions"
@@ -758,11 +758,11 @@ onMounted(() => {
             </h3>
 
             <div v-for="q in items" :key="q.id" class="space-y-2">
-              <p class="font-bold text-zinc-800 text-base">
+              <p class="font-bold text-zinc-800 text-base mt-5 mb-3">
                 {{ q.pertanyaan }}
               </p>
 
-              <div class="grid grid-cols-1 gap-2.5">
+              <div class="grid grid-cols-1 gap-0">
                 <label
                   v-for="opt in q.parsedOptions"
                   :key="opt.status"

@@ -58,24 +58,30 @@ const handleKembali = () => {
 
     <!-- Content -->
     <main
-      class="flex-1 flex items-center justify-center bg-cover bg-center bg-no-repeat py-20 mb-10 overflow-y-auto"
+      class="flex-1 flex items-center justify-center bg-cover bg-center bg-no-repeat pt-20 pb-24 md:pb-16 px-2 md:px-4 overflow-y-auto"
       style="
         background-image: url(/image_asset/BG_2.png);
         background-attachment: fixed;
       "
     >
-      <div class="p-8 m-3 bg-white rounded-lg shadow-lg w-full max-w-4xl">
+      <div
+        class="p-4 md:p-8 m-2 md:m-3 bg-white rounded-lg shadow-lg w-full max-w-4xl"
+      >
         <div class="flex justify-between items-center mb-4">
           <img
             src="/image_asset/2_Ptimm.png"
             alt="Logo"
             class="h-7 md:h-8 w-auto shrink-0"
           />
-          <p class="text-sm text-black font-bold">{{ currentDate }}</p>
+          <p class="text-xs md:text-sm text-black font-bold">
+            {{ currentDate }}
+          </p>
         </div>
         <hr class="mt-1 mb-3 border-gray-300" />
 
-        <h1 class="text-lg md:text-xl font-bold mb-1 text-gray-800 text-start">
+        <h1
+          class="text-base md:text-xl font-bold mb-1 text-gray-800 text-start"
+        >
           Hasil Pelaksanaan Pemeriksaan Harian Kendaraan
         </h1>
         <p class="text-xs text-gray-600 text-left">
