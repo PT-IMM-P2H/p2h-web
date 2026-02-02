@@ -435,7 +435,7 @@ onMounted(() => {
           <div class="bg-white rounded-lg shadow-md p-5 flex flex-col">
             <!-- Toolbar - Sticky inside card -->
             <div
-              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none sticky top-14 bg-white z-20 pt-5 -mt-5"
+              class="flex flex-wrap items-center gap-2 md:gap-3 pb-4 border-b shrink-0 flex-none top-14 bg-white"
             >
               <!-- Search Input with Icon Inside -->
               <div class="relative flex w-full md:w-auto md:min-w-56 order-1">
