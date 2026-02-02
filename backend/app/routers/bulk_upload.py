@@ -332,14 +332,14 @@ async def bulk_upload_users(
                     del soft_deleted_by_phone[phone]
                 else:
                    # Generate default password: namadepan + DDMMYYYY
-                if birth_date and full_name:
-                    # Extract first name
-                    first_name = full_name.split()[0].lower()
-                    # Format: namadepan + DDMMYYYY (contoh: nurdayani25072004)
-                    default_password = f"{first_name}{birth_date.strftime('%d%m%Y')}"
-                else:
+                    if birth_date and full_name:
+                        # Extract first name
+                        first_name = full_name.split()[0].lower()
+                        # Format: namadepan + DDMMYYYY (contoh: nurdayani25072004)
+                        default_password = f"{first_name}{birth_date.strftime('%d%m%Y')}"
+                    else:
                     # Fallback password jika birth_date kosong
-                    default_password = 'P@ssw0rd123'
+                        default_password = 'P@ssw0rd123'
                     
                     password_hash = hash_password(default_password)
                     
