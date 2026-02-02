@@ -278,7 +278,7 @@ async def export_vehicles(
     """
     
     # Authorization: Only admin and superadmin can export
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERADMIN]:
+    if current_user.role not in [UserRole.admin, UserRole.superadmin]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Hanya Admin dan Superadmin yang dapat mengekspor data"
@@ -483,7 +483,7 @@ async def export_p2h_reports(
     """
     
     # Authorization: Only admin and superadmin can export
-    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERADMIN]:
+    if current_user.role not in [UserRole.admin, UserRole.superadmin]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Hanya Admin dan Superadmin yang dapat mengekspor data"
