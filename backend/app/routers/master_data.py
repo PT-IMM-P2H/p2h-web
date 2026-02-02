@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.database import get_db
 from app.models.user import User, UserRole, Company, Department, Position, WorkStatus
-from app.dependencies import require_role
+from app.dependencies import require_role, get_current_user
 from app.utils.response import base_response
 from pydantic import BaseModel
 
@@ -50,9 +50,9 @@ class WorkStatusResponse(WorkStatusBase):
 @router.get("/companies")
 async def get_companies(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+    current_user: User = Depends(get_current_user)  # All authenticated users can read
 ):
-    """Get all active companies (soft delete aware)"""
+    """Get all active companies (soft delete aware) - accessible by all authenticated users"""
     companies = db.query(Company).filter(Company.is_active == True).all()
     payload = [CompanyResponse.model_validate(c).model_dump(mode='json') for c in companies]
     return base_response(message="Data perusahaan berhasil diambil", payload=payload)
@@ -119,9 +119,9 @@ async def delete_company(
 @router.get("/departments")
 async def get_departments(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+    current_user: User = Depends(get_current_user)  # All authenticated users can read
 ):
-    """Get all active departments (soft delete aware)"""
+    """Get all active departments (soft delete aware) - accessible by all authenticated users"""
     departments = db.query(Department).filter(Department.is_active == True).all()
     payload = [DepartmentResponse.model_validate(d).model_dump(mode='json') for d in departments]
     return base_response(message="Data departemen berhasil diambil", payload=payload)
@@ -186,9 +186,9 @@ async def delete_department(
 @router.get("/positions")
 async def get_positions(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+    current_user: User = Depends(get_current_user)  # All authenticated users can read
 ):
-    """Get all active positions (soft delete aware)"""
+    """Get all active positions (soft delete aware) - accessible by all authenticated users"""
     positions = db.query(Position).filter(Position.is_active == True).all()
     payload = [PositionResponse.model_validate(p).model_dump(mode='json') for p in positions]
     return base_response(message="Data posisi berhasil diambil", payload=payload)
@@ -253,9 +253,9 @@ async def delete_position(
 @router.get("/work-statuses")
 async def get_work_statuses(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+    current_user: User = Depends(get_current_user)  # All authenticated users can read
 ):
-    """Get all active work statuses (soft delete aware)"""
+    """Get all active work statuses (soft delete aware) - accessible by all authenticated users"""
     statuses = db.query(WorkStatus).filter(WorkStatus.is_active == True).all()
     payload = [WorkStatusResponse.model_validate(s).model_dump(mode='json') for s in statuses]
     return base_response(message="Data status kerja berhasil diambil", payload=payload)

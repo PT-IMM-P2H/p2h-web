@@ -58,14 +58,14 @@ const handleKembali = () => {
 
     <!-- Content -->
     <main
-      class="flex-1 flex items-center justify-center bg-cover bg-center bg-no-repeat pt-20 pb-24 md:pb-16 px-2 md:px-4 overflow-y-auto"
+      class="flex-1 flex items-center justify-center bg-cover bg-center bg-no-repeat mb-5 pt-20 pb-24 md:pb-16 px-2 md:px-4 overflow-y-auto"
       style="
         background-image: url(/image_asset/BG_2.png);
         background-attachment: fixed;
       "
     >
       <div
-        class="p-4 md:p-8 m-2 md:m-3 bg-white rounded-lg shadow-lg w-full max-w-4xl"
+        class="p-4 md:p-8 m-2 md:m-3 bg-white rounded-xl shadow-lg w-full max-w-4xl"
       >
         <div class="flex justify-between items-center mb-4">
           <img
