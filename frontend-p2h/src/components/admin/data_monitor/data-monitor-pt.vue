@@ -432,7 +432,7 @@ const handleDeleteSelected = async () => {
   }
 
   const confirmDelete = confirm(
-    `Apakah Anda yakin ingin menghapus ${selectedRowIds.value.length} data P2H yang dipilih?\n\nData akan di-soft delete dan dapat dipulihkan oleh administrator.`,
+    `Apakah Anda yakin ingin menghapus ${selectedRowIds.value.length} data P2H yang dipilih? Tindakan ini tidak dapat dibatalkan.`,
   );
 
   if (!confirmDelete) {
@@ -441,10 +441,7 @@ const handleDeleteSelected = async () => {
 
   try {
     isLoading.value = true;
-    console.log(
-      "🗑️ [PT] Menghapus data P2H (soft delete):",
-      selectedRowIds.value,
-    );
+    console.log("🗑️ Menghapus data P2H:", selectedRowIds.value);
 
     // Delete each selected report
     const deletePromises = selectedRowIds.value.map(async (reportId) => {
