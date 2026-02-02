@@ -78,6 +78,11 @@ const fetchUserProfile = async () => {
 const checkAuthentication = () => {
   const token = localStorage.getItem("access_token");
   isAuthenticated.value = !!token;
+  console.log(
+    "🔐 [AUTH] Token ada:",
+    !!token,
+    token ? `(${token.substring(0, 20)}...)` : "(null)",
+  );
 };
 
 const fetchCurrentShift = async () => {
@@ -184,7 +189,9 @@ const handleSearchVehicle = async () => {
 
     // Jika shift saat ini sudah diisi, jangan tampilkan form
     if (currentShiftDone || !p2hStatus.value.canSubmit) {
-      console.log("❌ [P2H DEBUG] Tidak fetch checklist - shift done atau tidak bisa submit");
+      console.log(
+        "❌ [P2H DEBUG] Tidak fetch checklist - shift done atau tidak bisa submit",
+      );
       questions.value = [];
       return;
     }
@@ -217,7 +224,12 @@ const fetchChecklist = async (vehicleType) => {
     questions.value = allQuestions.filter(
       (q) => q.vehicle_tags && q.vehicle_tags.includes(vehicleType),
     );
-    console.log("✅ [FILTER] Questions untuk", vehicleType, ":", questions.value.length);
+    console.log(
+      "✅ [FILTER] Questions untuk",
+      vehicleType,
+      ":",
+      questions.value.length,
+    );
 
     questions.value = questions.value.map((q) => ({
       ...q,
