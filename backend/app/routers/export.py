@@ -490,7 +490,10 @@ async def export_p2h_reports(
         )
     
     # Build query with joins
-    query = db.query(P2HReport).join(Vehicle).join(User)
+    # Filter is_deleted == False untuk tidak meng-export data yang sudah dihapus (soft delete)
+    query = db.query(P2HReport).filter(
+        P2HReport.is_deleted == False
+    ).join(Vehicle).join(User)
     
     # Apply filters
     filters = []

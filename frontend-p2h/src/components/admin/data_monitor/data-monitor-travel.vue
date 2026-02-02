@@ -404,6 +404,69 @@ const isAllSelected = () => {
   );
 };
 
+// Function untuk menghapus data yang dipilih (soft delete)
+const handleDeleteSelected = async () => {
+  if (selectedRowIds.value.length === 0) {
+    alert("Tidak ada data yang dipilih untuk dihapus");
+    return;
+  }
+
+  const confirmDelete = confirm(
+    `Apakah Anda yakin ingin menghapus ${selectedRowIds.value.length} data P2H yang dipilih?\n\nData akan di-soft delete dan dapat dipulihkan oleh administrator.`,
+  );
+
+  if (!confirmDelete) {
+    return;
+  }
+
+  try {
+    isLoading.value = true;
+    console.log(
+      "🗑️ [Travel] Menghapus data P2H (soft delete):",
+      selectedRowIds.value,
+    );
+
+    // Delete each selected report
+    const deletePromises = selectedRowIds.value.map(async (reportId) => {
+      try {
+        await api.delete(`/p2h/reports/${reportId}`);
+        console.log(`✅ [Travel] Berhasil menghapus report ${reportId}`);
+        return { success: true, id: reportId };
+      } catch (error) {
+        console.error(`❌ [Travel] Gagal menghapus report ${reportId}:`, error);
+        return { success: false, id: reportId, error };
+      }
+    });
+
+    const results = await Promise.all(deletePromises);
+    const successCount = results.filter((r) => r.success).length;
+    const failCount = results.filter((r) => !r.success).length;
+
+    if (successCount > 0) {
+      alert(
+        `Berhasil menghapus ${successCount} data P2H${failCount > 0 ? `. ${failCount} data gagal dihapus.` : ""}`,
+      );
+
+      // Refresh data
+      await fetchP2HReports();
+
+      // Clear selection
+      selectedRowIds.value = [];
+      selectAllChecked.value = false;
+    } else {
+      alert("Gagal menghapus data P2H. Silakan coba lagi.");
+    }
+  } catch (error) {
+    console.error("❌ [Travel] Error saat menghapus data:", error);
+    alert(
+      "Terjadi kesalahan saat menghapus data: " +
+        (error.message || "Unknown error"),
+    );
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 // Load data saat component mounted
 onMounted(() => {
   fetchP2HReports();
@@ -470,6 +533,7 @@ onMounted(() => {
 
               <!-- Delete Button -->
               <button
+                @click="handleDeleteSelected"
                 :disabled="selectedRowIds.length === 0"
                 class="flex items-center gap-2 px-3 py-2 rounded-md transition text-sm order-4"
                 :class="

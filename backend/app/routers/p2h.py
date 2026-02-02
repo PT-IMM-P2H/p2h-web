@@ -292,7 +292,10 @@ async def get_p2h_reports(
     from sqlalchemy.orm import joinedload
     
     # Load with details untuk menampilkan keterangan
-    reports = db.query(P2HReport).options(
+    # Filter is_deleted == False untuk tidak menampilkan data yang sudah dihapus (soft delete)
+    reports = db.query(P2HReport).filter(
+        P2HReport.is_deleted == False
+    ).options(
         joinedload(P2HReport.vehicle),
         joinedload(P2HReport.user),
         joinedload(P2HReport.details).joinedload(P2HDetail.checklist_item)
@@ -317,3 +320,47 @@ async def get_p2h_report(
     
     payload = P2HReportResponse.model_validate(report).model_dump(mode='json')
     return base_response(message="Detail laporan P2H berhasil ditemukan", payload=payload)
+
+
+@router.delete("/reports/{report_id}")
+async def delete_p2h_report(
+    report_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+):
+    """
+    Endpoint untuk menghapus (soft delete) P2H report.
+    Hanya Admin dan SuperAdmin yang bisa menghapus.
+    
+    Soft delete: set is_deleted = True dan deleted_at = timestamp
+    Data tidak benar-benar dihapus dari database untuk menjaga integritas data.
+    """
+    from app.models.p2h import P2HReport
+    from datetime import datetime
+    
+    # Cari P2H report berdasarkan ID
+    report = db.query(P2HReport).filter(
+        P2HReport.id == report_id,
+        P2HReport.is_deleted == False  # Hanya yang belum dihapus
+    ).first()
+    
+    if not report:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Laporan P2H dengan ID {report_id} tidak ditemukan atau sudah dihapus"
+        )
+    
+    # Soft delete: set is_deleted = True dan deleted_at = sekarang
+    report.is_deleted = True
+    report.deleted_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return base_response(
+        message="Laporan P2H berhasil dihapus",
+        payload={
+            "id": str(report.id),
+            "deleted": True,
+            "deleted_at": report.deleted_at.isoformat() if report.deleted_at else None
+        }
+    )
