@@ -96,7 +96,7 @@ async def create_vehicle(
 @router.get("")
 async def get_vehicles(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=100),
+    limit: int = Query(100, ge=1, le=2000),
     search: Optional[str] = Query(None, description="Cari berdasarkan nomor lambung, plat, atau merk"),
     vehicle_type: Optional[str] = Query(None, description="Filter tipe kendaraan"),
     is_active: Optional[bool] = Query(None, description="Filter status aktif"),

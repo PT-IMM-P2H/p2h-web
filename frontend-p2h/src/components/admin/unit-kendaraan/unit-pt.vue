@@ -203,10 +203,17 @@ const fetchVehicles = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const response = await apiService.vehicles.getAll();
+    // Fetch all vehicles with high limit for frontend pagination
+    const response = await apiService.vehicles.getAll({ limit: 2000 });
 
     if (response.data.status === "success" || response.data.success) {
-      tableData.value = response.data.payload.map((vehicle) => ({
+      // Filter hanya kategori IMM dan is_active = true
+      const allVehicles = response.data.payload;
+      const immVehicles = allVehicles.filter(
+        (v) => v.kategori_unit === "IMM" || !v.kategori_unit,
+      );
+
+      tableData.value = immVehicles.map((vehicle) => ({
         id: vehicle.id,
         nomorLambung: vehicle.no_lambung,
         warnaNomorLambung: vehicle.warna_no_lambung || "-",
@@ -1074,6 +1081,10 @@ const getDateStyle = (dateString) => {
                     <option :value="20">20</option>
                     <option :value="50">50</option>
                     <option :value="100">100</option>
+                    <option :value="500">500</option>
+                    <option :value="1000">1000</option>
+                    <option :value="1500">1500</option>
+                    <option :value="2000">2000</option>
                   </select>
                   <span>baris</span>
                 </div>

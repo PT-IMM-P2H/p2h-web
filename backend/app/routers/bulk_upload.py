@@ -1019,7 +1019,30 @@ async def bulk_upload_vehicles(
                 
                 # Check for duplicate plat_nomor
                 plat = str(row['nomor_polisi']).strip().upper()
-                existing_vehicle = db.query(Vehicle).filter(Vehicle.plat_nomor == plat).first()
+                
+                # First check if there's an inactive (soft-deleted) vehicle with this plat_nomor
+                inactive_vehicle = db.query(Vehicle).filter(
+                    Vehicle.plat_nomor == plat,
+                    Vehicle.is_active == False
+                ).first()
+                
+                if inactive_vehicle:
+                    # Reactivate the soft-deleted vehicle and update its data
+                    inactive_vehicle.is_active = True
+                    inactive_vehicle.no_lambung = str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) else inactive_vehicle.no_lambung
+                    inactive_vehicle.warna_no_lambung = str(row['warna_no_lambung']).strip() if not pd.isna(row.get('warna_no_lambung')) else inactive_vehicle.warna_no_lambung
+                    inactive_vehicle.lokasi_kendaraan = str(row['lokasi_kendaraan']).strip() if not pd.isna(row.get('lokasi_kendaraan')) else inactive_vehicle.lokasi_kendaraan
+                    inactive_vehicle.merk = str(row['merk']).strip() if not pd.isna(row.get('merk')) else inactive_vehicle.merk
+                    inactive_vehicle.no_rangka = str(row['no_rangka']).strip() if not pd.isna(row.get('no_rangka')) else inactive_vehicle.no_rangka
+                    inactive_vehicle.no_mesin = str(row['no_mesin']).strip() if not pd.isna(row.get('no_mesin')) else inactive_vehicle.no_mesin
+                    success_count += 1
+                    continue
+                
+                # Check for duplicate among active vehicles
+                existing_vehicle = db.query(Vehicle).filter(
+                    Vehicle.plat_nomor == plat,
+                    Vehicle.is_active == True
+                ).first()
                 if existing_vehicle:
                     errors.append(BulkUploadError(
                         row=row_num,

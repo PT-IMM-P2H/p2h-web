@@ -110,7 +110,8 @@ const fetchVehicles = async () => {
   errorMessage.value = "";
   try {
     console.log("🔄 [Travel] Fetching vehicles...");
-    const response = await apiService.vehicles.getAll();
+    // Fetch all vehicles with high limit for frontend pagination
+    const response = await apiService.vehicles.getAll({ limit: 2000 });
 
     if (response.data.status === "success" || response.data.success) {
       // Filter hanya kategori Travel
@@ -812,6 +813,10 @@ const getDateStyle = (dateString) => {
                     <option :value="20">20</option>
                     <option :value="50">50</option>
                     <option :value="100">100</option>
+                    <option :value="500">500</option>
+                    <option :value="1000">1000</option>
+                    <option :value="1500">1500</option>
+                    <option :value="2000">2000</option>
                   </select>
                   <span>baris</span>
                 </div>
