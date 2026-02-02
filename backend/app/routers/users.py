@@ -26,6 +26,58 @@ async def get_current_user_profile(
         payload=UserResponse.model_validate(current_user).model_dump(mode='json')
     )
 
+@router.put("/me")
+async def update_current_user_profile(
+    user_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Update current logged-in user's own profile.
+    Users can update: full_name, email, phone_number, department_id, position_id, work_status_id, company_id.
+    Users CANNOT update: role, is_active, kategori_pengguna (these are admin-controlled).
+    """
+    try:
+        # Create a filtered update dict - users cannot change their own role/status
+        allowed_fields = ['full_name', 'email', 'phone_number', 'birth_date',
+                         'department_id', 'position_id', 'work_status_id', 'company_id']
+        
+        update_dict = user_data.model_dump(exclude_unset=True)
+        filtered_update = {k: v for k, v in update_dict.items() if k in allowed_fields}
+        
+        # Check if phone_number is being changed and if it's already taken
+        if 'phone_number' in filtered_update and filtered_update['phone_number'] != current_user.phone_number:
+            existing = db.query(User).filter(
+                User.phone_number == filtered_update['phone_number'],
+                User.id != current_user.id
+            ).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Nomor telepon sudah digunakan user lain"
+                )
+        
+        # Apply updates
+        for key, value in filtered_update.items():
+            setattr(current_user, key, value)
+        
+        current_user.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(current_user)
+        
+        return base_response(
+            message="Profil berhasil diperbarui",
+            payload=UserResponse.model_validate(current_user).model_dump(mode='json')
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal memperbarui profil: {str(e)}"
+        )
+
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,

@@ -64,22 +64,22 @@ const handleKembali = () => {
         background-attachment: fixed;
       "
     >
-      <div class="p-8 m-3 bg-white rounded-lg shadow-lg w-full max-w-6xl">
+      <div class="p-8 m-3 bg-white rounded-lg shadow-lg w-full max-w-4xl">
         <div class="flex justify-between items-center mb-4">
           <img
             src="/image_asset/2_Ptimm.png"
             alt="Logo"
             class="h-7 md:h-8 w-auto shrink-0"
           />
-          <p class="text-base text-black font-bold">{{ currentDate }}</p>
+          <p class="text-sm text-black font-bold">{{ currentDate }}</p>
         </div>
         <hr class="mt-1 mb-3 border-gray-300" />
 
-        <h1 class="text-2xl font-bold mb-1 text-gray-800 text-start">
+        <h1 class="text-lg md:text-xl font-bold mb-1 text-gray-800 text-start">
           Hasil Pelaksanaan Pemeriksaan Harian Kendaraan
         </h1>
-        <p class="text-sm text-gray-600 text-left">
-          <InformationCircleIcon class="w-4 h-4 inline-block text-gray-500" />
+        <p class="text-xs text-gray-600 text-left">
+          <InformationCircleIcon class="w-3 h-3 inline-block text-gray-500" />
           Form telah disubmit pada {{ submissionData?.submissionTime || "-" }}
         </p>
 
@@ -88,7 +88,9 @@ const handleKembali = () => {
           v-if="isNormal"
           class="flex items-start gap-3 mb-2 mt-2 p-2 bg-green-100 border-l-4 border-green-500 rounded"
         >
-          <p class="text-black font-medium text-lg leading-relaxed">
+          <p
+            class="text-black font-medium text-sm md:text-base leading-relaxed"
+          >
             Kondisi kendaraan : <span class="font-bold">Normal</span>
           </p>
         </div>
@@ -96,14 +98,14 @@ const handleKembali = () => {
         <!-- Pengumuman Box Normal -->
         <div
           v-if="isNormal"
-          class="flex items-start gap-3 mb-4 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded"
+          class="flex items-start gap-3 mb-4 mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded"
         >
-          <div class="text-black font-semibold text-sm leading-relaxed italic">
-            <ul class="list-disc list-inside -space-y-1">
+          <div class="text-black font-semibold text-xs leading-relaxed italic">
+            <ul class="list-disc list-inside -space-y-0.5">
               <li>Gunakan APD lengkap dan sabuk pengaman</li>
               <li>
                 Batas kecepatan:
-                <ul class="list-circle list-inside ml-4 -space-y-1">
+                <ul class="list-circle list-inside ml-3 -space-y-0.5">
                   <li>Light Vehicle (LV): maksimal 60 km/jam</li>
                   <li>Bus: maksimal 50 km/jam</li>
                 </ul>
@@ -129,16 +131,18 @@ const handleKembali = () => {
           v-if="isAbnormal"
           class="flex items-start gap-3 mb-2 mt-2 p-2 bg-yellow-100 border-l-4 border-yellow-500 rounded"
         >
-          <p class="text-black font-medium text-lg leading-relaxed">
+          <p
+            class="text-black font-medium text-sm md:text-base leading-relaxed"
+          >
             Kondisi kendaraan : <span class="font-bold">Abnormal</span>
           </p>
         </div>
 
         <div
           v-if="isAbnormal"
-          class="flex items-start gap-3 mb-4 mt-4 p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded"
+          class="flex items-start gap-3 mb-4 mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-500 rounded"
         >
-          <p class="text-black font-semibold text-sm leading-relaxed italic">
+          <p class="text-black font-semibold text-xs leading-relaxed italic">
             Bagian kendaraan terdapat kerusakan ringan, namun masih dapat
             digunakan dan perlu dilakukan pemeriksaan atau perbaikan di bengkel.
           </p>
@@ -147,14 +151,14 @@ const handleKembali = () => {
         <!-- Pengumuman Box Abnormal -->
         <div
           v-if="isAbnormal"
-          class="flex items-start gap-3 mb-4 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded"
+          class="flex items-start gap-3 mb-4 mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded"
         >
-          <div class="text-black font-semibold text-sm leading-relaxed italic">
-            <ul class="list-disc list-inside -space-y-1">
+          <div class="text-black font-semibold text-xs leading-relaxed italic">
+            <ul class="list-disc list-inside -space-y-0.5">
               <li>Gunakan APD lengkap dan sabuk pengaman</li>
               <li>
                 Batas kecepatan:
-                <ul class="list-circle list-inside ml-4 -space-y-1">
+                <ul class="list-circle list-inside ml-3 -space-y-0.5">
                   <li>Light Vehicle (LV): maksimal 60 km/jam</li>
                   <li>Bus: maksimal 50 km/jam</li>
                 </ul>
@@ -180,7 +184,9 @@ const handleKembali = () => {
           v-if="isWarning"
           class="flex items-start gap-3 mb-2 mt-2 p-2 bg-red-100 border-l-4 border-red-500 rounded"
         >
-          <p class="text-black font-medium text-lg leading-relaxed">
+          <p
+            class="text-black font-medium text-sm md:text-base leading-relaxed"
+          >
             Kondisi kendaraan : <span class="font-bold">Warning</span>
           </p>
         </div>
@@ -188,26 +194,26 @@ const handleKembali = () => {
         <!-- Pengumuman Box Warning -->
         <div
           v-if="isWarning"
-          class="flex items-start gap-3 mb-4 mt-4 p-4 bg-red-50 border-l-4 border-red-500 rounded"
+          class="flex items-start gap-3 mb-4 mt-4 p-3 bg-red-50 border-l-4 border-red-500 rounded"
         >
-          <div class="text-black font-semibold text-sm leading-relaxed italic">
-            <p class="mb-3 font-bold text-base">
+          <div class="text-black font-semibold text-xs leading-relaxed italic">
+            <p class="mb-2 font-bold text-sm">
               Bagian kendaraan mengalami kerusakan serius sehingga tidak dapat
               digunakan dan harus segera dibawa ke bengkel untuk penanganan
               lebih lanjut.
             </p>
-            <p class="text-red-600 font-bold text-base mb-3 italic underline">
+            <p class="text-red-600 font-bold text-sm mb-2 italic underline">
               <InformationCircleIcon
-                class="w-5 h-5 inline-block text-red-600 mr-2"
+                class="w-4 h-4 inline-block text-red-600 mr-1"
               />
               Kendaraan dinyatakan tidak dapat dioperasikan
             </p>
-            <p class="font-bold text-base">
+            <p class="font-bold text-sm">
               Hubungi Rizal Rahmadani
               <a
                 href="https://wa.me/6282254442400"
                 target="_blank"
-                class="text-xs md:text-lg text-[#646cff] font-medium hover:underline m-0"
+                class="text-xs md:text-sm text-[#646cff] font-medium hover:underline m-0"
                 style="
                   text-decoration: underline;
                   text-decoration-thickness: 1px;

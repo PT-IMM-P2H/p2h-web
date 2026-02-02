@@ -190,7 +190,9 @@ const handleSearchVehicle = async () => {
 
     // Jika shift saat ini sudah diisi, jangan tampilkan form
     if (currentShiftDone || !p2hStatus.value.canSubmit) {
-      console.log("❌ [P2H DEBUG] Tidak fetch checklist - shift done atau tidak bisa submit");
+      console.log(
+        "❌ [P2H DEBUG] Tidak fetch checklist - shift done atau tidak bisa submit",
+      );
       questions.value = [];
       return;
     }
@@ -223,7 +225,12 @@ const fetchChecklist = async (vehicleType) => {
     questions.value = allQuestions.filter(
       (q) => q.vehicle_tags && q.vehicle_tags.includes(vehicleType),
     );
-    console.log("✅ [FILTER] Questions untuk", vehicleType, ":", questions.value.length);
+    console.log(
+      "✅ [FILTER] Questions untuk",
+      vehicleType,
+      ":",
+      questions.value.length,
+    );
 
     questions.value = questions.value.map((q) => ({
       ...q,
@@ -558,7 +565,7 @@ onMounted(() => {
         </div>
 
         <div
-          class="p-8 bg-white rounded-2xl shadow-sm border border-zinc-200 space-y-4"
+          class="p-6 bg-white rounded-2xl shadow-sm border border-zinc-200 space-y-4"
         >
           <h2
             class="text-lg font-extrabold border-b-3 border-purple-600 inline-block pb-1 text-zinc-900"
