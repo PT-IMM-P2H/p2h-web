@@ -1020,16 +1020,27 @@ async def bulk_upload_vehicles(
                 # Check for duplicate plat_nomor
                 plat = str(row['nomor_polisi']).strip().upper()
                 
-                # First check if there's an inactive (soft-deleted) vehicle with this plat_nomor
+                # Get no_lambung value if provided
+                no_lambung_raw = str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) and row.get('nomor_lambung') else None
+                
+                # First check if there's an inactive (soft-deleted) vehicle with this plat_nomor or no_lambung
                 inactive_vehicle = db.query(Vehicle).filter(
                     Vehicle.plat_nomor == plat,
                     Vehicle.is_active == False
                 ).first()
                 
+                # Also check for inactive vehicle by no_lambung if provided
+                if not inactive_vehicle and no_lambung_raw:
+                    inactive_vehicle = db.query(Vehicle).filter(
+                        Vehicle.no_lambung == no_lambung_raw,
+                        Vehicle.is_active == False
+                    ).first()
+                
                 if inactive_vehicle:
                     # Reactivate the soft-deleted vehicle and update its data
                     inactive_vehicle.is_active = True
-                    inactive_vehicle.no_lambung = str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) else inactive_vehicle.no_lambung
+                    inactive_vehicle.plat_nomor = plat  # Update plat_nomor in case it changed
+                    inactive_vehicle.no_lambung = no_lambung_raw if no_lambung_raw else inactive_vehicle.no_lambung
                     inactive_vehicle.warna_no_lambung = str(row['warna_no_lambung']).strip() if not pd.isna(row.get('warna_no_lambung')) else inactive_vehicle.warna_no_lambung
                     inactive_vehicle.lokasi_kendaraan = str(row['lokasi_kendaraan']).strip() if not pd.isna(row.get('lokasi_kendaraan')) else inactive_vehicle.lokasi_kendaraan
                     inactive_vehicle.merk = str(row['merk']).strip() if not pd.isna(row.get('merk')) else inactive_vehicle.merk
@@ -1064,7 +1075,7 @@ async def bulk_upload_vehicles(
                     success_count += 1
                     continue
                 
-                # Check for duplicate among active vehicles
+                # Check for duplicate plat_nomor among active vehicles
                 existing_vehicle = db.query(Vehicle).filter(
                     Vehicle.plat_nomor == plat,
                     Vehicle.is_active == True
@@ -1077,6 +1088,22 @@ async def bulk_upload_vehicles(
                         data=row.to_dict()
                     ))
                     continue
+                
+                # Check for duplicate no_lambung among active vehicles (if provided)
+                no_lambung_value = str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) and row.get('nomor_lambung') else None
+                if no_lambung_value:
+                    existing_lambung = db.query(Vehicle).filter(
+                        Vehicle.no_lambung == no_lambung_value,
+                        Vehicle.is_active == True
+                    ).first()
+                    if existing_lambung:
+                        errors.append(BulkUploadError(
+                            row=row_num,
+                            field='nomor_lambung',
+                            message=f'Nomor lambung {no_lambung_value} sudah terdaftar',
+                            data=row.to_dict()
+                        ))
+                        continue
                 
                 # Validate vehicle type against database
                 type_str = str(row['tipe_kendaraan']).strip()
@@ -1176,7 +1203,7 @@ async def bulk_upload_vehicles(
                 # Create vehicle with all new fields
                 vehicle = Vehicle(
                     plat_nomor=plat,
-                    no_lambung=str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) else None,
+                    no_lambung=no_lambung_value,  # Use the already validated value
                     warna_no_lambung=str(row['warna_no_lambung']).strip() if not pd.isna(row.get('warna_no_lambung')) else None,
                     lokasi_kendaraan=str(row['lokasi_kendaraan']).strip() if not pd.isna(row.get('lokasi_kendaraan')) else None,
                     vehicle_type=vehicle_type_value,
