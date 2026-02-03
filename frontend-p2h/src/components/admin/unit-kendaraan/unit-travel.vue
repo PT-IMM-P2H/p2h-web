@@ -37,6 +37,7 @@ const sortOrder = ref("asc");
 const isLoading = ref(false);
 const errorMessage = ref("");
 const showBulkUpload = ref(false);
+const editingId = ref(null);
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const filterData = ref({
@@ -163,13 +164,17 @@ const formData = ref({
 const allUsers = ref([]);
 const allCompanies = ref([]);
 
-// Fetch users untuk dropdown
+// Fetch users untuk dropdown (hanya kategori TRAVEL)
 const fetchUsers = async () => {
   try {
     const response = await apiService.users.getAll();
     if (response.data.status === "success") {
-      allUsers.value = response.data.payload;
-      console.log("✅ [Travel] Users fetched:", allUsers.value.length, "users");
+      // Filter hanya users dengan kategori_pengguna = TRAVEL
+      const allTravelUsers = response.data.payload.filter(
+        (user) => user.kategori_pengguna === "TRAVEL"
+      );
+      allUsers.value = allTravelUsers;
+      console.log("✅ [Travel] Users fetched:", allUsers.value.length, "users (TRAVEL only)");
     }
   } catch (error) {
     console.error("Error fetching users:", error);

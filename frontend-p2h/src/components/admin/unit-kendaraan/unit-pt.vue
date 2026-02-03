@@ -168,13 +168,17 @@ const formData = ref({
 const allUsers = ref([]);
 const allCompanies = ref([]);
 
-// Fetch users untuk dropdown
+// Fetch users untuk dropdown (hanya kategori IMM)
 const fetchUsers = async () => {
   try {
     const response = await apiService.users.getAll();
     if (response.data.status === "success") {
-      allUsers.value = response.data.payload;
-      console.log("✅ Users fetched:", allUsers.value.length, "users");
+      // Filter hanya users dengan kategori_pengguna = IMM
+      const allIMMUsers = response.data.payload.filter(
+        (user) => user.kategori_pengguna === "IMM" || !user.kategori_pengguna
+      );
+      allUsers.value = allIMMUsers;
+      console.log("✅ Users fetched:", allUsers.value.length, "users (IMM only)");
     }
   } catch (error) {
     console.error("Error fetching users:", error);
