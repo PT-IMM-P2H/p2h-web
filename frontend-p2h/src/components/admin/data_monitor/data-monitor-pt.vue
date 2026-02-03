@@ -19,9 +19,6 @@ import { useSidebarProvider } from "../../../composables/useSidebar";
 // Provide sidebar state untuk header dan aside
 const { isSidebarOpen } = useSidebarProvider();
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-
 const selectedRowIds = ref([]);
 const selectAllChecked = ref(false);
 const searchQuery = ref("");
@@ -62,6 +59,8 @@ const appliedFilterData = ref({
   posisi: "",
   status: "",
 });
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
@@ -403,27 +402,17 @@ const applyFilter = () => {
 };
 
 // Export filters computed property
-const exportFilters = computed(() => {
-  const filters = {
-    kategori: "IMM",
-  };
-
-  if (searchQuery.value) {
-    filters.search = searchQuery.value;
-  }
-
-  // Add status filter - backend expects single report_status value
-  // If multiple selected, use the first one
-  if (appliedFilterHasil.value.normal) {
-    filters.report_status = "normal";
-  } else if (appliedFilterHasil.value.abnormal) {
-    filters.report_status = "abnormal";
-  } else if (appliedFilterHasil.value.warning) {
-    filters.report_status = "warning";
-  }
-
-  return filters;
-});
+const exportFilters = computed(() => ({
+  kategori: "IMM",
+  report_status: appliedFilterHasil.value.normal
+    ? "normal"
+    : appliedFilterHasil.value.abnormal
+      ? "abnormal"
+      : appliedFilterHasil.value.warning
+        ? "warning"
+        : undefined,
+  search: searchQuery.value || undefined,
+}));
 
 // Function untuk menghapus data yang dipilih
 const handleDeleteSelected = async () => {
