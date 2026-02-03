@@ -62,8 +62,6 @@ const appliedFilterData = ref({
 const opentambahUnitKendaraan = () => {
   editingId.value = null;
   formData.value = {
-    no_lambung: "",
-    warna_no_lambung: "",
     plat_nomor: "",
     vehicle_type: "Light Vehicle",
     merk: "",
@@ -88,8 +86,6 @@ const opentambahUnitKendaraan = () => {
 const closeTambahUnitKendaraan = () => {
   editingId.value = null;
   formData.value = {
-    no_lambung: "",
-    warna_no_lambung: "",
     plat_nomor: "",
     vehicle_type: "Light Vehicle",
     merk: "",
@@ -143,10 +139,8 @@ const exportFilters = computed(() => ({
 
 const tableData = ref([]);
 
-// Form data untuk tambah/edit kendaraan
+// Form data untuk tambah/edit kendaraan (Travel - tanpa nomor lambung & warna)
 const formData = ref({
-  no_lambung: "",
-  warna_no_lambung: "",
   plat_nomor: "",
   vehicle_type: "Light Vehicle",
   merk: "",
@@ -243,10 +237,10 @@ const fetchVehicles = async () => {
   }
 };
 
-// Handler untuk tambah/edit kendaraan
+// Handler untuk tambah/edit kendaraan (Travel - tanpa nomor lambung)
 const handleTambahUnitKendaraan = async () => {
-  if (!formData.value.no_lambung || !formData.value.vehicle_type) {
-    alert("Nomor lambung dan tipe kendaraan wajib diisi!");
+  if (!formData.value.plat_nomor || !formData.value.vehicle_type) {
+    alert("Nomor polisi dan tipe kendaraan wajib diisi!");
     return;
   }
 
@@ -256,10 +250,12 @@ const handleTambahUnitKendaraan = async () => {
   try {
     let response;
 
-    // Add default shift_type and kategori for backend
+    // Add kategori TRAVEL (tanpa nomor lambung & warna)
     const payload = {
       ...formData.value,
       kategori_unit: "TRAVEL",
+      no_lambung: null, // Travel tidak pakai nomor lambung
+      warna_no_lambung: null,
     };
 
     if (editingId.value) {
@@ -277,13 +273,18 @@ const handleTambahUnitKendaraan = async () => {
 
       editingId.value = null;
       formData.value = {
-        no_lambung: "",
-        warna_no_lambung: "",
         plat_nomor: "",
         vehicle_type: "Light Vehicle",
         merk: "",
         user_id: null,
         company_id: null,
+        no_rangka: "",
+        no_mesin: "",
+        stnk_expiry: "",
+        pajak_expiry: "",
+        kir_expiry: "",
+        shift_type: "non_shift",
+      };
         no_rangka: "",
         no_mesin: "",
         stnk_expiry: "",
@@ -312,7 +313,7 @@ const handleTambahUnitKendaraan = async () => {
   }
 };
 
-// Edit kendaraan
+// Edit kendaraan (Travel - tanpa nomor lambung)
 const editKendaraan = async (rowId) => {
   try {
     const response = await apiService.vehicles.getById(rowId);
@@ -322,11 +323,18 @@ const editKendaraan = async (rowId) => {
 
       editingId.value = rowId;
       formData.value = {
-        no_lambung: vehicle.no_lambung || "",
-        warna_no_lambung: vehicle.warna_no_lambung || "",
         plat_nomor: vehicle.plat_nomor || "",
         vehicle_type: vehicle.vehicle_type || "Light Vehicle",
         merk: vehicle.merk || "",
+        user_id: vehicle.user_id || null,
+        company_id: vehicle.company_id || null,
+        no_rangka: vehicle.no_rangka || "",
+        no_mesin: vehicle.no_mesin || "",
+        stnk_expiry: vehicle.stnk_expiry || "",
+        pajak_expiry: vehicle.pajak_expiry || "",
+        kir_expiry: vehicle.kir_expiry || "",
+        shift_type: vehicle.shift_type || "non_shift",
+      };
         user_id: vehicle.user_id || null,
         company_id: vehicle.company_id || null,
         no_rangka: vehicle.no_rangka || "",
@@ -1076,57 +1084,6 @@ const getDateStyle = (dateString) => {
 
                 <!-- Row -->
                 <div class="grid grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      for="no_lambung"
-                      class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Nomor Lambung</label
-                    >
-                    <div class="relative">
-                      <input
-                        id="no_lambung"
-                        name="no_lambung"
-                        v-model="formData.no_lambung"
-                        @blur="handleHullNumberBlur"
-                        type="text"
-                        placeholder="Masukkan nomor lambung (contoh: P309)"
-                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
-                      />
-                      <PencilIcon
-                        class="absolute right-3 top-2.5 w-4 h-4 text-[#b2b2b2]"
-                      />
-                    </div>
-                    <p class="text-xs text-gray-500 mt-1">
-                      Format akan otomatis menjadi P.309 saat menyimpan
-                    </p>
-                  </div>
-
-                  <div>
-                    <label
-                      for="warna_no_lambung"
-                      class="block text-base font-medium text-gray-800 mb-1 mt-1"
-                      >Warna nomor lambung</label
-                    >
-                    <div class="relative">
-                      <select
-                        id="warna_no_lambung"
-                        name="warna_no_lambung"
-                        v-model="formData.warna_no_lambung"
-                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
-                      >
-                        <option value="">Pilih warna nomor lambung</option>
-                        <option value="Kuning">Kuning</option>
-                        <option value="Biru">Biru</option>
-                        <option value="Hijau">Hijau</option>
-                      </select>
-                      <ChevronDownIcon
-                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
                       for="plat_nomor"
