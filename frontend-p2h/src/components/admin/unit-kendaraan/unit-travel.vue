@@ -59,10 +59,48 @@ const appliedFilterData = ref({
 });
 
 const opentambahUnitKendaraan = () => {
+  editingId.value = null;
+  formData.value = {
+    no_lambung: "",
+    warna_no_lambung: "",
+    plat_nomor: "",
+    vehicle_type: "Light Vehicle",
+    merk: "",
+    user_id: null,
+    company_id: null,
+    no_rangka: "",
+    no_mesin: "",
+    stnk_expiry: "",
+    pajak_expiry: "",
+    kir_expiry: "",
+    shift_type: "non_shift",
+  };
+  console.log(
+    "📋 [Travel] Modal opened - Users available:",
+    allUsers.value.length,
+    "Companies available:",
+    allCompanies.value.length,
+  );
   tambahUnitKendaraan.value = true;
 };
 
 const closeTambahUnitKendaraan = () => {
+  editingId.value = null;
+  formData.value = {
+    no_lambung: "",
+    warna_no_lambung: "",
+    plat_nomor: "",
+    vehicle_type: "Light Vehicle",
+    merk: "",
+    user_id: null,
+    company_id: null,
+    no_rangka: "",
+    no_mesin: "",
+    stnk_expiry: "",
+    pajak_expiry: "",
+    kir_expiry: "",
+    shift_type: "non_shift",
+  };
   tambahUnitKendaraan.value = false;
 };
 
@@ -103,6 +141,53 @@ const exportFilters = computed(() => ({
 }));
 
 const tableData = ref([]);
+
+// Form data untuk tambah/edit kendaraan
+const formData = ref({
+  no_lambung: "",
+  warna_no_lambung: "",
+  plat_nomor: "",
+  vehicle_type: "Light Vehicle",
+  merk: "",
+  user_id: null,
+  company_id: null,
+  no_rangka: "",
+  no_mesin: "",
+  stnk_expiry: "",
+  pajak_expiry: "",
+  kir_expiry: "",
+  shift_type: "non_shift",
+});
+
+// Users and Companies data
+const allUsers = ref([]);
+const allCompanies = ref([]);
+
+// Fetch users untuk dropdown
+const fetchUsers = async () => {
+  try {
+    const response = await apiService.users.getAll();
+    if (response.data.status === "success") {
+      allUsers.value = response.data.payload;
+      console.log("✅ [Travel] Users fetched:", allUsers.value.length, "users");
+    }
+  } catch (error) {
+    console.error("Error fetching users:", error);
+  }
+};
+
+// Fetch companies untuk dropdown
+const fetchCompanies = async () => {
+  try {
+    const response = await apiService.master.getCompanies();
+    if (response.data.status === "success") {
+      allCompanies.value = response.data.payload;
+      console.log("✅ [Travel] Companies fetched:", allCompanies.value.length, "companies");
+    }
+  } catch (error) {
+    console.error("Error fetching companies:", error);
+  }
+};
 
 // Fetch vehicles dari backend (kategori Travel)
 const fetchVehicles = async () => {
@@ -150,6 +235,119 @@ const fetchVehicles = async () => {
       "Gagal mengambil data kendaraan";
   } finally {
     isLoading.value = false;
+  }
+};
+
+// Handler untuk tambah/edit kendaraan
+const handleTambahUnitKendaraan = async () => {
+  if (!formData.value.no_lambung || !formData.value.vehicle_type) {
+    alert("Nomor lambung dan tipe kendaraan wajib diisi!");
+    return;
+  }
+
+  isLoading.value = true;
+  errorMessage.value = "";
+
+  try {
+    let response;
+
+    // Add default shift_type and kategori for backend
+    const payload = {
+      ...formData.value,
+      kategori_unit: "TRAVEL",
+    };
+
+    if (editingId.value) {
+      response = await apiService.vehicles.update(editingId.value, payload);
+    } else {
+      response = await apiService.vehicles.create(payload);
+    }
+
+    if (response.data.status === "success" || response.data.success) {
+      alert(
+        editingId.value
+          ? "Kendaraan berhasil diupdate"
+          : "Kendaraan berhasil ditambahkan",
+      );
+
+      editingId.value = null;
+      formData.value = {
+        no_lambung: "",
+        warna_no_lambung: "",
+        plat_nomor: "",
+        vehicle_type: "Light Vehicle",
+        merk: "",
+        user_id: null,
+        company_id: null,
+        no_rangka: "",
+        no_mesin: "",
+        stnk_expiry: "",
+        pajak_expiry: "",
+        kir_expiry: "",
+        shift_type: "non_shift",
+      };
+
+      closeTambahUnitKendaraan();
+      await fetchVehicles();
+    } else {
+      errorMessage.value =
+        response.data.message || "Gagal menyimpan data kendaraan";
+      alert(errorMessage.value);
+    }
+  } catch (error) {
+    console.error("Error saving vehicle:", error);
+    errorMessage.value =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      "Gagal menyimpan data kendaraan";
+    alert(`Error: ${errorMessage.value}`);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// Edit kendaraan
+const editKendaraan = async (rowId) => {
+  try {
+    const response = await apiService.vehicles.getById(rowId);
+
+    if (response.data.status === "success" || response.data.success) {
+      const vehicle = response.data.payload;
+
+      editingId.value = rowId;
+      formData.value = {
+        no_lambung: vehicle.no_lambung || "",
+        warna_no_lambung: vehicle.warna_no_lambung || "",
+        plat_nomor: vehicle.plat_nomor || "",
+        vehicle_type: vehicle.vehicle_type || "Light Vehicle",
+        merk: vehicle.merk || "",
+        user_id: vehicle.user_id || null,
+        company_id: vehicle.company_id || null,
+        no_rangka: vehicle.no_rangka || "",
+        no_mesin: vehicle.no_mesin || "",
+        stnk_expiry: vehicle.stnk_expiry || "",
+        pajak_expiry: vehicle.pajak_expiry || "",
+        kir_expiry: vehicle.kir_expiry || "",
+        shift_type: vehicle.shift_type || "non_shift",
+      };
+
+      tambahUnitKendaraan.value = true;
+    }
+  } catch (error) {
+    console.error("Error fetching vehicle detail:", error);
+    alert("Gagal mengambil data kendaraan");
+  }
+};
+
+// Handler untuk format nomor lambung saat blur
+const handleHullNumberBlur = () => {
+  if (formData.value.no_lambung) {
+    // Simple format: add dot after first char if not already there
+    const cleaned = formData.value.no_lambung.replace(/\./g, "").trim();
+    if (cleaned.length > 1 && !formData.value.no_lambung.includes(".")) {
+      formData.value.no_lambung = cleaned.charAt(0) + "." + cleaned.slice(1);
+    }
   }
 };
 
@@ -218,6 +416,8 @@ const uniqueMerks = computed(() => {
 // Load data saat component mounted
 onMounted(() => {
   fetchVehicles();
+  fetchUsers();
+  fetchCompanies();
 });
 
 // Watch untuk auto-fetch ketika filter diterapkan
@@ -855,11 +1055,13 @@ const getDateStyle = (dateString) => {
                   class="flex justify-between items-center mb-2 pb-3 border-b border-gray-200"
                 >
                   <h2 class="text-lg md:text-xl font-semibold text-gray-900">
-                    Tambah unit kendaraan
+                    {{ editingId ? "Edit Unit Kendaraan" : "Tambah Unit Kendaraan" }}
                   </h2>
                   <button
                     @click="closeTambahUnitKendaraan"
                     class="shrink-0 p-1 hover:bg-gray-100 rounded-md transition"
+                    title="Tutup"
+                    aria-label="Tutup modal"
                   >
                     <XMarkIcon
                       class="w-6 h-6 text-gray-600 hover:text-gray-900"
@@ -868,14 +1070,69 @@ const getDateStyle = (dateString) => {
                 </div>
 
                 <!-- Row -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      for="no_lambung"
+                      class="block text-base font-medium text-gray-800 mb-1 mt-1"
+                      >Nomor Lambung</label
+                    >
+                    <div class="relative">
+                      <input
+                        id="no_lambung"
+                        name="no_lambung"
+                        v-model="formData.no_lambung"
+                        @blur="handleHullNumberBlur"
+                        type="text"
+                        placeholder="Masukkan nomor lambung (contoh: P309)"
+                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
+                      />
+                      <PencilIcon
+                        class="absolute right-3 top-2.5 w-4 h-4 text-[#b2b2b2]"
+                      />
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">
+                      Format akan otomatis menjadi P.309 saat menyimpan
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      for="warna_no_lambung"
+                      class="block text-base font-medium text-gray-800 mb-1 mt-1"
+                      >Warna nomor lambung</label
+                    >
+                    <div class="relative">
+                      <select
+                        id="warna_no_lambung"
+                        name="warna_no_lambung"
+                        v-model="formData.warna_no_lambung"
+                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
+                      >
+                        <option value="">Pilih warna nomor lambung</option>
+                        <option value="Kuning">Kuning</option>
+                        <option value="Biru">Biru</option>
+                        <option value="Hijau">Hijau</option>
+                      </select>
+                      <ChevronDownIcon
+                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
+                      for="plat_nomor"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Nomor Polisi</label
                     >
                     <div class="relative">
                       <input
+                        id="plat_nomor"
+                        name="plat_nomor"
+                        v-model="formData.plat_nomor"
                         type="text"
                         placeholder="Masukkan nomor polisi"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
@@ -888,11 +1145,15 @@ const getDateStyle = (dateString) => {
 
                   <div>
                     <label
+                      for="merk"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Merek</label
                     >
                     <div class="relative">
                       <input
+                        id="merk"
+                        name="merk"
+                        v-model="formData.merk"
                         type="text"
                         placeholder="Masukkan merek kendaraan"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
@@ -907,14 +1168,27 @@ const getDateStyle = (dateString) => {
                 <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
+                      for="vehicle_type"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Tipe</label
                     >
                     <div class="relative">
                       <select
+                        id="vehicle_type"
+                        name="vehicle_type"
+                        v-model="formData.vehicle_type"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
                         <option value="">Pilih tipe kendaraan</option>
+                        <option value="Light Vehicle">Light Vehicle</option>
+                        <option value="Electric Vehicle">Electric Vehicle</option>
+                        <option value="Double Cabin">Double Cabin</option>
+                        <option value="Single Cabin">Single Cabin</option>
+                        <option value="Bus">Bus</option>
+                        <option value="Ambulance">Ambulance</option>
+                        <option value="Fire Truck">Fire Truck</option>
+                        <option value="Komando">Komando</option>
+                        <option value="Truk Sampah">Truk Sampah</option>
                       </select>
                       <ChevronDownIcon
                         class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
@@ -924,17 +1198,30 @@ const getDateStyle = (dateString) => {
 
                   <div>
                     <label
+                      for="user_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >User</label
                     >
                     <div class="relative">
-                      <input
-                        type="text"
-                        placeholder="Masukkan nama user"
-                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
-                      />
-                      <PencilIcon
-                        class="absolute right-3 top-2.5 w-4 h-4 text-[#b2b2b2]"
+                      <select
+                        id="user_id"
+                        name="user_id"
+                        v-model="formData.user_id"
+                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
+                      >
+                        <option :value="null">
+                          {{ allUsers.length === 0 ? "Loading users..." : "Pilih user" }}
+                        </option>
+                        <option
+                          v-for="user in allUsers"
+                          :key="user.id"
+                          :value="user.id"
+                        >
+                          {{ user.full_name }}
+                        </option>
+                      </select>
+                      <ChevronDownIcon
+                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
                       />
                     </div>
                   </div>
@@ -943,14 +1230,27 @@ const getDateStyle = (dateString) => {
                 <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
+                      for="company_id"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Perusahaan</label
                     >
                     <div class="relative">
                       <select
+                        id="company_id"
+                        name="company_id"
+                        v-model="formData.company_id"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
                       >
-                        <option value="">Pilih nama perusahaan</option>
+                        <option :value="null">
+                          {{ allCompanies.length === 0 ? "Loading companies..." : "Pilih nama perusahaan" }}
+                        </option>
+                        <option
+                          v-for="company in allCompanies"
+                          :key="company.id"
+                          :value="company.id"
+                        >
+                          {{ company.nama_perusahaan }}
+                        </option>
                       </select>
                       <ChevronDownIcon
                         class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
@@ -960,66 +1260,64 @@ const getDateStyle = (dateString) => {
 
                   <div>
                     <label
+                      for="stnk_expiry"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Tanggal STNK</label
                     >
-                    <div class="relative">
-                      <input
-                        type="text"
-                        placeholder="hh/bb/tttt"
-                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
-                      />
-                      <CalendarIcon
-                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
-                      />
-                    </div>
+                    <input
+                      id="stnk_expiry"
+                      name="stnk_expiry"
+                      v-model="formData.stnk_expiry"
+                      type="date"
+                      class="w-full p-2 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
+                    />
                   </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
+                      for="pajak_expiry"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Tanggal Pajak</label
                     >
-                    <div class="relative">
-                      <input
-                        type="text"
-                        placeholder="hh/bb/tttt"
-                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
-                      />
-                      <CalendarIcon
-                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
-                      />
-                    </div>
+                    <input
+                      id="pajak_expiry"
+                      name="pajak_expiry"
+                      v-model="formData.pajak_expiry"
+                      type="date"
+                      class="w-full p-2 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
+                    />
                   </div>
 
                   <div>
                     <label
+                      for="kir_expiry"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >KIR / KUER</label
                     >
-                    <div class="relative">
-                      <input
-                        type="text"
-                        placeholder="hh/bb/tttt"
-                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
-                      />
-                      <CalendarIcon
-                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494]"
-                      />
-                    </div>
+                    <input
+                      id="kir_expiry"
+                      name="kir_expiry"
+                      v-model="formData.kir_expiry"
+                      type="date"
+                      class="w-full p-2 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
+                    />
                   </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mt-4">
                   <div>
                     <label
+                      for="no_rangka"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Nomor Rangka</label
                     >
                     <div class="relative">
                       <input
+                        id="no_rangka"
+                        name="no_rangka"
+                        v-model="formData.no_rangka"
                         type="text"
                         placeholder="Masukkan nomor rangka"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
@@ -1032,11 +1330,15 @@ const getDateStyle = (dateString) => {
 
                   <div>
                     <label
+                      for="no_mesin"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >Nomor Mesin</label
                     >
                     <div class="relative">
                       <input
+                        id="no_mesin"
+                        name="no_mesin"
+                        v-model="formData.no_mesin"
                         type="text"
                         placeholder="Masukkan nomor mesin"
                         class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
@@ -1050,9 +1352,11 @@ const getDateStyle = (dateString) => {
 
                 <div class="flex justify-end gap-3 mt-6">
                   <button
-                    class="px-6 md:px-6 py-2 text-sm md:text-base bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular"
+                    @click="handleTambahUnitKendaraan"
+                    :disabled="isLoading"
+                    class="px-6 md:px-6 py-2 text-sm md:text-base bg-linear-to-r from-[#A90CF8] to-[#9600E1] text-white rounded-xl hover:opacity-90 transition font-regular disabled:opacity-50"
                   >
-                    Tambah Pengguna
+                    {{ editingId ? "Update Unit Kendaraan" : "Tambah Unit Kendaraan" }}
                   </button>
                   <button
                     @click="closeTambahUnitKendaraan"
