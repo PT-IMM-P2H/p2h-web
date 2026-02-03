@@ -364,6 +364,7 @@ const handleTambahUnitKendaraan = async () => {
         merk: "",
         user_id: null,
         company_id: null,
+        custom_user_name: "",
         no_rangka: "",
         no_mesin: "",
         stnk_expiry: "",
@@ -371,6 +372,11 @@ const handleTambahUnitKendaraan = async () => {
         kir_expiry: "",
         shift_type: "non_shift",
       };
+      
+      // Reset user combobox state
+      userSearchQuery.value = "";
+      isCustomUser.value = false;
+      showUserDropdown.value = false;
 
       closeTambahUnitKendaraan();
       await fetchVehicles();
