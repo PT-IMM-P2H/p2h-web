@@ -1023,31 +1023,72 @@ async def bulk_upload_vehicles(
                 # Get no_lambung value if provided
                 no_lambung_raw = str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) and row.get('nomor_lambung') else None
                 
-                # First check if there's an inactive (soft-deleted) vehicle with this plat_nomor or no_lambung
-                inactive_vehicle = db.query(Vehicle).filter(
-                    Vehicle.plat_nomor == plat,
-                    Vehicle.is_active == False
+                # UPSERT Logic: Find existing vehicle by plat_nomor or no_lambung (regardless of is_active status)
+                # This allows reactivating soft-deleted vehicles OR updating existing active vehicles
+                existing_vehicle = None
+                
+                # First try to find by plat_nomor
+                existing_vehicle = db.query(Vehicle).filter(
+                    Vehicle.plat_nomor == plat
                 ).first()
                 
-                # Also check for inactive vehicle by no_lambung if provided
-                if not inactive_vehicle and no_lambung_raw:
-                    inactive_vehicle = db.query(Vehicle).filter(
-                        Vehicle.no_lambung == no_lambung_raw,
-                        Vehicle.is_active == False
+                # If not found by plat_nomor, try by no_lambung
+                if not existing_vehicle and no_lambung_raw:
+                    existing_vehicle = db.query(Vehicle).filter(
+                        Vehicle.no_lambung == no_lambung_raw
                     ).first()
                 
-                if inactive_vehicle:
-                    # Reactivate the soft-deleted vehicle and update its data
-                    inactive_vehicle.is_active = True
-                    inactive_vehicle.plat_nomor = plat  # Update plat_nomor in case it changed
-                    inactive_vehicle.no_lambung = no_lambung_raw if no_lambung_raw else inactive_vehicle.no_lambung
-                    inactive_vehicle.warna_no_lambung = str(row['warna_no_lambung']).strip() if not pd.isna(row.get('warna_no_lambung')) else inactive_vehicle.warna_no_lambung
-                    inactive_vehicle.lokasi_kendaraan = str(row['lokasi_kendaraan']).strip() if not pd.isna(row.get('lokasi_kendaraan')) else inactive_vehicle.lokasi_kendaraan
-                    inactive_vehicle.merk = str(row['merk']).strip() if not pd.isna(row.get('merk')) else inactive_vehicle.merk
-                    inactive_vehicle.no_rangka = str(row['no_rangka']).strip() if not pd.isna(row.get('no_rangka')) else inactive_vehicle.no_rangka
-                    inactive_vehicle.no_mesin = str(row['no_mesin']).strip() if not pd.isna(row.get('no_mesin')) else inactive_vehicle.no_mesin
+                if existing_vehicle:
+                    # Update existing vehicle (reactivate if soft-deleted, or just update if active)
+                    existing_vehicle.is_active = True
+                    existing_vehicle.plat_nomor = plat
+                    existing_vehicle.no_lambung = no_lambung_raw if no_lambung_raw else existing_vehicle.no_lambung
+                    existing_vehicle.warna_no_lambung = str(row['warna_no_lambung']).strip() if not pd.isna(row.get('warna_no_lambung')) else existing_vehicle.warna_no_lambung
+                    existing_vehicle.lokasi_kendaraan = str(row['lokasi_kendaraan']).strip() if not pd.isna(row.get('lokasi_kendaraan')) else existing_vehicle.lokasi_kendaraan
+                    existing_vehicle.merk = str(row['merk']).strip() if not pd.isna(row.get('merk')) else existing_vehicle.merk
+                    existing_vehicle.no_rangka = str(row['no_rangka']).strip() if not pd.isna(row.get('no_rangka')) else existing_vehicle.no_rangka
+                    existing_vehicle.no_mesin = str(row['no_mesin']).strip() if not pd.isna(row.get('no_mesin')) else existing_vehicle.no_mesin
                     
-                    # Also update company if provided
+                    # Update vehicle_type if valid
+                    type_str = str(row['tipe_kendaraan']).strip()
+                    if type_str in valid_type_names:
+                        existing_vehicle.vehicle_type = type_str
+                    
+                    # Update kategori and shift_type
+                    kategori_enum = UnitKategori.IMM if kategori_str == 'IMM' else UnitKategori.TRAVEL
+                    shift_enum = ShiftType.SHIFT if shift_type == 'shift' else (ShiftType.LONG_SHIFT if shift_type == 'long_shift' else ShiftType.NON_SHIFT)
+                    existing_vehicle.kategori_unit = kategori_enum
+                    existing_vehicle.shift_type = shift_enum
+                    
+                    # Update dates if provided
+                    if not pd.isna(row.get('expired_stnk')):
+                        try:
+                            if isinstance(row['expired_stnk'], str):
+                                existing_vehicle.stnk_expiry = datetime.strptime(row['expired_stnk'], '%Y-%m-%d').date()
+                            else:
+                                existing_vehicle.stnk_expiry = pd.to_datetime(row['expired_stnk']).date()
+                        except:
+                            pass
+                    
+                    if not pd.isna(row.get('expired_pajak')):
+                        try:
+                            if isinstance(row['expired_pajak'], str):
+                                existing_vehicle.pajak_expiry = datetime.strptime(row['expired_pajak'], '%Y-%m-%d').date()
+                            else:
+                                existing_vehicle.pajak_expiry = pd.to_datetime(row['expired_pajak']).date()
+                        except:
+                            pass
+                    
+                    if not pd.isna(row.get('expired_kir')):
+                        try:
+                            if isinstance(row['expired_kir'], str):
+                                existing_vehicle.kir_expiry = datetime.strptime(row['expired_kir'], '%Y-%m-%d').date()
+                            else:
+                                existing_vehicle.kir_expiry = pd.to_datetime(row['expired_kir']).date()
+                        except:
+                            pass
+                    
+                    # Update company if provided
                     if not pd.isna(row.get('perusahaan')) and row.get('perusahaan'):
                         company_name = str(row['perusahaan']).strip()
                         company = db.query(Company).filter(
@@ -1055,9 +1096,9 @@ async def bulk_upload_vehicles(
                             Company.is_active == True
                         ).first()
                         if company:
-                            inactive_vehicle.company_id = company.id
+                            existing_vehicle.company_id = company.id
                     
-                    # Also update user if provided
+                    # Update user if provided
                     if not pd.isna(row.get('user_name')) and row.get('user_name'):
                         user_name = str(row['user_name']).strip()
                         user = db.query(User).filter(
@@ -1065,46 +1106,17 @@ async def bulk_upload_vehicles(
                             User.is_active == True
                         ).first()
                         if user:
-                            inactive_vehicle.user_id = user.id
-                            inactive_vehicle.custom_user_name = None
+                            existing_vehicle.user_id = user.id
+                            existing_vehicle.custom_user_name = None
                         else:
                             # User not found, save as custom_user_name
-                            inactive_vehicle.user_id = None
-                            inactive_vehicle.custom_user_name = user_name
+                            existing_vehicle.user_id = None
+                            existing_vehicle.custom_user_name = user_name
                     
                     success_count += 1
                     continue
                 
-                # Check for duplicate plat_nomor among active vehicles
-                existing_vehicle = db.query(Vehicle).filter(
-                    Vehicle.plat_nomor == plat,
-                    Vehicle.is_active == True
-                ).first()
-                if existing_vehicle:
-                    errors.append(BulkUploadError(
-                        row=row_num,
-                        field='nomor_polisi',
-                        message=f'Nomor polisi {plat} sudah terdaftar',
-                        data=row.to_dict()
-                    ))
-                    continue
-                
-                # Check for duplicate no_lambung among active vehicles (if provided)
-                no_lambung_value = str(row['nomor_lambung']).strip() if not pd.isna(row.get('nomor_lambung')) and row.get('nomor_lambung') else None
-                if no_lambung_value:
-                    existing_lambung = db.query(Vehicle).filter(
-                        Vehicle.no_lambung == no_lambung_value,
-                        Vehicle.is_active == True
-                    ).first()
-                    if existing_lambung:
-                        errors.append(BulkUploadError(
-                            row=row_num,
-                            field='nomor_lambung',
-                            message=f'Nomor lambung {no_lambung_value} sudah terdaftar',
-                            data=row.to_dict()
-                        ))
-                        continue
-                
+                # No existing vehicle found - create new one
                 # Validate vehicle type against database
                 type_str = str(row['tipe_kendaraan']).strip()
                 if type_str not in valid_type_names:
@@ -1203,7 +1215,7 @@ async def bulk_upload_vehicles(
                 # Create vehicle with all new fields
                 vehicle = Vehicle(
                     plat_nomor=plat,
-                    no_lambung=no_lambung_value,  # Use the already validated value
+                    no_lambung=no_lambung_raw,  # Use the value from the beginning of the loop
                     warna_no_lambung=str(row['warna_no_lambung']).strip() if not pd.isna(row.get('warna_no_lambung')) else None,
                     lokasi_kendaraan=str(row['lokasi_kendaraan']).strip() if not pd.isna(row.get('lokasi_kendaraan')) else None,
                     vehicle_type=vehicle_type_value,
