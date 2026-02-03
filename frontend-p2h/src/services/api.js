@@ -180,6 +180,7 @@ const apiService = {
     submit: (data) => api.post('/p2h/reports', data),
     getList: (params) => api.get('/p2h/reports', { params }),
     getDetail: (id) => api.get(`/p2h/reports/${id}`),
+    deleteReport: (id) => api.delete(`/p2h/reports/${id}`),
   }
 };
 

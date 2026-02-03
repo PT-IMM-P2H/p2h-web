@@ -13,7 +13,7 @@ import {
   CalendarIcon,
   CheckIcon,
 } from "@heroicons/vue/24/outline";
-import { api } from "../../../services/api";
+import apiService from "@/services/api";
 import { useSidebarProvider } from "../../../composables/useSidebar";
 
 // Provide sidebar state untuk header dan aside
@@ -71,7 +71,7 @@ const fetchP2HReports = async () => {
   try {
     isLoading.value = true;
     console.log("🔄 [Admin] Fetching P2H reports...");
-    const response = await api.get("/p2h/reports?limit=100");
+    const response = await apiService.p2h.getList({ limit: 100 });
     console.log("✅ [Admin] P2H reports fetched:", response.data);
     p2hReports.value = response.data.payload;
     console.log("📊 [Admin] Total reports:", p2hReports.value.length);
@@ -447,7 +447,7 @@ const handleDeleteSelected = async () => {
     // Delete each selected report
     const deletePromises = selectedRowIds.value.map(async (reportId) => {
       try {
-        await api.delete(`/p2h/reports/${reportId}`);
+        await apiService.p2h.deleteReport(reportId);
         console.log(`✅ Berhasil menghapus report ${reportId}`);
         return { success: true, id: reportId };
       } catch (error) {

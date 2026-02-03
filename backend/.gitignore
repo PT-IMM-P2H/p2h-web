@@ -48,6 +48,15 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Documentation (temporary/guide files)
+PANDUAN_*.md
+QUICK_*.md
+RAILWAY_*.md
+RINGKASAN_*.md
+TELEGRAM_*.md
+*_GUIDE.md
+*_FIX*.md
+
 # Test Coverage
 htmlcov/
 .coverage

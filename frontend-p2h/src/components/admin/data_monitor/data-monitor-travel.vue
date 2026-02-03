@@ -13,7 +13,7 @@ import {
   CalendarIcon,
   CheckIcon,
 } from "@heroicons/vue/24/outline";
-import { api } from "../../../services/api";
+import apiService from "@/services/api";
 import { useSidebarProvider } from "../../../composables/useSidebar";
 
 // Provide sidebar state untuk header dan aside
@@ -85,7 +85,7 @@ const fetchP2HReports = async () => {
   try {
     isLoading.value = true;
     console.log("🔄 [Travel] Fetching P2H reports...");
-    const response = await api.get("/p2h/reports?limit=100");
+    const response = await apiService.p2h.getList({ limit: 100 });
     console.log("✅ [Travel] P2H reports fetched:", response.data);
     p2hReports.value = response.data.payload;
     console.log("📊 [Travel] Total reports:", p2hReports.value.length);
