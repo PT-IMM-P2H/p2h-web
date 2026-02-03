@@ -1,6 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
+import { ref, watch, computed } from 'vue';
+import { XMarkIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
@@ -30,6 +30,60 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
+// Pagination state
+const currentPage = ref(1);
+const itemsPerPage = 20;
+
+// Reset page when modal opens or items change
+watch(() => props.isOpen, (newValue) => {
+  if (newValue) {
+    currentPage.value = 1;
+    document.addEventListener('keydown', handleKeydown);
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.removeEventListener('keydown', handleKeydown);
+    document.body.style.overflow = '';
+  }
+});
+
+watch(() => props.items, () => {
+  currentPage.value = 1;
+});
+
+// Computed properties for pagination
+const totalPages = computed(() => {
+  return Math.ceil((props.items?.length || 0) / itemsPerPage);
+});
+
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return props.items?.slice(start, end) || [];
+});
+
+const startIndex = computed(() => {
+  if (!props.items || props.items.length === 0) return 0;
+  return (currentPage.value - 1) * itemsPerPage + 1;
+});
+
+const endIndex = computed(() => {
+  if (!props.items || props.items.length === 0) return 0;
+  return Math.min(currentPage.value * itemsPerPage, props.items.length);
+});
+
+// Pagination methods
+const previousPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
 const closeModal = () => {
   emit('close');
 };
@@ -51,17 +105,14 @@ const handleKeydown = (e) => {
   if (e.key === 'Escape' && props.isOpen) {
     closeModal();
   }
-};
-
-watch(() => props.isOpen, (newValue) => {
-  if (newValue) {
-    document.addEventListener('keydown', handleKeydown);
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.removeEventListener('keydown', handleKeydown);
-    document.body.style.overflow = '';
+  // Arrow keys for pagination
+  if (e.key === 'ArrowLeft' && props.isOpen) {
+    previousPage();
   }
-});
+  if (e.key === 'ArrowRight' && props.isOpen) {
+    nextPage();
+  }
+};
 </script>
 
 <template>
@@ -135,7 +186,7 @@ watch(() => props.isOpen, (newValue) => {
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <tr v-for="(item, index) in items" :key="index" class="hover:bg-gray-50 transition-colors">
+                  <tr v-for="(item, index) in paginatedItems" :key="index" class="hover:bg-gray-50 transition-colors">
                     <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                       {{ item.no_lambung || '-' }}
                     </td>
@@ -171,11 +222,44 @@ watch(() => props.isOpen, (newValue) => {
             </div>
           </div>
 
-          <!-- Footer -->
-          <div class="border-t border-gray-200 px-6 py-4 flex justify-between items-center">
+          <!-- Footer with Pagination -->
+          <div class="border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p class="text-sm text-gray-600">
-              Menampilkan {{ items?.length || 0 }} data
+              Menampilkan {{ startIndex }} - {{ endIndex }} dari {{ items?.length || 0 }} data
             </p>
+            
+            <!-- Pagination Controls -->
+            <div class="flex items-center gap-2">
+              <!-- Previous Button -->
+              <button
+                @click="previousPage"
+                :disabled="currentPage === 1"
+                class="flex items-center justify-center w-9 h-9 rounded-lg border transition-colors"
+                :class="currentPage === 1 
+                  ? 'border-gray-200 text-gray-300 cursor-not-allowed' 
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-100'"
+              >
+                <ChevronLeftIcon class="w-5 h-5" />
+              </button>
+              
+              <!-- Page Info -->
+              <span class="text-sm text-gray-700 font-medium px-3">
+                {{ currentPage }} / {{ totalPages || 1 }}
+              </span>
+              
+              <!-- Next Button -->
+              <button
+                @click="nextPage"
+                :disabled="currentPage >= totalPages"
+                class="flex items-center justify-center w-9 h-9 rounded-lg border transition-colors"
+                :class="currentPage >= totalPages 
+                  ? 'border-gray-200 text-gray-300 cursor-not-allowed' 
+                  : 'border-gray-300 text-gray-700 hover:bg-gray-100'"
+              >
+                <ChevronRightIcon class="w-5 h-5" />
+              </button>
+            </div>
+
             <button
               @click="closeModal"
               class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"

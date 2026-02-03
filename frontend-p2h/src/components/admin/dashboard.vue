@@ -68,7 +68,7 @@ const openCardDetail = async (cardType, cardTitle) => {
       params.end_date = u.value;
     }
 
-    params.limit = 20; // Get more items for modal
+    params.limit = 500; // Get more items for modal pagination
 
     const response = await api.get(`/dashboard/card-details/${cardType}`, {
       params,
