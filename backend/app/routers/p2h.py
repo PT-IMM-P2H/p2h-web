@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query, Background
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from uuid import UUID
+from datetime import time, datetime
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -18,7 +19,6 @@ from app.services.p2h_service import p2h_service
 from app.dependencies import get_current_user, require_role
 from app.utils.response import base_response
 from app.utils.datetime import get_current_time, get_shift_number
-from datetime import time
 
 router = APIRouter()
 
@@ -292,7 +292,10 @@ async def get_p2h_reports(
     from sqlalchemy.orm import joinedload
     
     # Load with details untuk menampilkan keterangan
-    reports = db.query(P2HReport).options(
+    # Filter soft delete: hanya tampilkan data yang tidak dihapus
+    reports = db.query(P2HReport).filter(
+        P2HReport.is_deleted == False
+    ).options(
         joinedload(P2HReport.vehicle),
         joinedload(P2HReport.user),
         joinedload(P2HReport.details).joinedload(P2HDetail.checklist_item)
@@ -311,9 +314,52 @@ async def get_p2h_report(
     db: Session = Depends(get_db)
 ):
     from app.models.p2h import P2HReport
-    report = db.query(P2HReport).filter(P2HReport.id == report_id).first()
+    # Filter soft delete: hanya tampilkan data yang tidak dihapus
+    report = db.query(P2HReport).filter(
+        P2HReport.id == report_id,
+        P2HReport.is_deleted == False
+    ).first()
     if not report:
         raise HTTPException(status_code=404, detail="Laporan P2H tidak ditemukan")
     
     payload = P2HReportResponse.model_validate(report).model_dump(mode='json')
     return base_response(message="Detail laporan P2H berhasil ditemukan", payload=payload)
+
+@router.delete("/reports/{report_id}")
+async def delete_p2h_report(
+    report_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+):
+    """
+    Soft delete P2H report (hanya admin/superadmin)
+    Data tidak benar-benar dihapus, hanya ditandai sebagai deleted
+    """
+    from app.models.p2h import P2HReport
+    
+    # Cari report yang belum dihapus
+    report = db.query(P2HReport).filter(
+        P2HReport.id == report_id,
+        P2HReport.is_deleted == False
+    ).first()
+    
+    if not report:
+        raise HTTPException(
+            status_code=404,
+            detail="Laporan P2H tidak ditemukan atau sudah dihapus"
+        )
+    
+    # Soft delete: set flag is_deleted dan timestamp
+    report.is_deleted = True
+    report.deleted_at = datetime.utcnow()
+    
+    db.commit()
+    
+    return base_response(
+        message="Laporan P2H berhasil dihapus",
+        payload={
+            "id": str(report.id),
+            "deleted": True,
+            "deleted_at": report.deleted_at.isoformat()
+        }
+    )
