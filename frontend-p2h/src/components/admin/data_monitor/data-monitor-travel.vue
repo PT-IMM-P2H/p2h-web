@@ -58,9 +58,6 @@ const appliedFilterData = ref({
   status: "",
 });
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
-
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
 
@@ -454,7 +451,7 @@ onMounted(() => {
               <!-- Export Dropdown -->
               <div class="order-3">
                 <ExportDropdown
-                  :export-endpoint="`${API_BASE_URL}/export/p2h-reports`"
+                  export-endpoint="/export/p2h-reports"
                   :filters="exportFilters"
                 />
               </div>
