@@ -462,8 +462,8 @@ async def export_vehicles(
 @router.get("/p2h-reports")
 async def export_p2h_reports(
     format: str = Query(..., description="Format: excel, pdf, or csv"),
-    kategori: Optional[str] = Query(None, description="Filter by kategori"),
-    report_status: Optional[str] = Query(None, description="Filter by status"),
+    kategori: Optional[str] = Query(None, description="Filter by kategori pengguna (IMM/TRAVEL)"),
+    report_status: Optional[str] = Query(None, description="Filter by status (normal/abnormal/warning)"),
     start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
     end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)"),
     search: Optional[str] = Query(None, description="Search by vehicle plat or user name"),
@@ -475,8 +475,8 @@ async def export_p2h_reports(
     [ADMIN & SUPERADMIN ONLY]
     
     Filters:
-    - kategori: IMM/TRAVEL
-    - report_status: pending/approved/rejected
+    - kategori: IMM/TRAVEL (filters by User.kategori_pengguna)
+    - report_status: normal/abnormal/warning
     - start_date: Filter from date
     - end_date: Filter to date
     - search: Search in vehicle plat or user name
@@ -495,12 +495,13 @@ async def export_p2h_reports(
     # Apply filters
     filters = []
     
+    # Filter by User.kategori_pengguna (to match frontend filtering logic)
     if kategori:
         kategori_upper = kategori.upper()
         if kategori_upper == 'PT':
             kategori_upper = 'IMM'
         try:
-            filters.append(Vehicle.kategori_unit == UnitKategori(kategori_upper))
+            filters.append(User.kategori_pengguna == UserKategori(kategori_upper))
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -549,12 +550,6 @@ async def export_p2h_reports(
     # Get reports
     reports = query.order_by(P2HReport.created_at.desc()).all()
     
-    if not reports:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tidak ada data untuk diekspor"
-        )
-    
     # Prepare data
     data = []
     for report in reports:
@@ -568,12 +563,21 @@ async def export_p2h_reports(
             'Nomor Polisi': report.vehicle.plat_nomor if report.vehicle else '',
             'No Lambung': report.vehicle.no_lambung if report.vehicle else '',
             'Tipe Kendaraan': report.vehicle.vehicle_type if report.vehicle else '',
-            'Kategori': report.vehicle.kategori_unit.value if report.vehicle and report.vehicle.kategori_unit else '',
+            'Kategori Pengguna': report.user.kategori_pengguna.value if report.user and report.user.kategori_pengguna else '',
             'Nama Pemeriksa': report.user.full_name if report.user else '',
             'Status Pemeriksaan': report.overall_status.value if report.overall_status else '',
         })
     
-    df = pd.DataFrame(data)
+    # Define columns for consistent export even when empty
+    columns = ['Tanggal Pemeriksaan', 'Waktu', 'Shift', 'Nomor Polisi', 'No Lambung', 
+               'Tipe Kendaraan', 'Kategori Pengguna', 'Nama Pemeriksa', 'Status Pemeriksaan']
+    
+    if data:
+        df = pd.DataFrame(data)
+    else:
+        # Create empty DataFrame with proper column headers
+        df = pd.DataFrame(columns=columns)
+    
     timestamp = get_current_datetime().strftime("%Y%m%d_%H%M%S")
     
     if format.lower() in ["excel", "xlsx"]:
@@ -640,8 +644,8 @@ async def export_p2h_reports(
         elements.append(Spacer(1, 0.2*inch))
         
         table_data = [df.columns.tolist()] + df.values.tolist()
-        # Adjust column widths based on new columns (11 columns now)
-        col_widths = [0.9*inch, 0.6*inch, 0.6*inch, 1*inch, 0.8*inch, 1*inch, 0.8*inch, 1.2*inch, 1*inch, 0.7*inch, 1.2*inch]
+        # Adjust column widths based on columns (9 columns)
+        col_widths = [1.1*inch, 0.7*inch, 0.7*inch, 1*inch, 0.9*inch, 1*inch, 1*inch, 1.2*inch, 1*inch]
         
         table = Table(table_data, colWidths=col_widths, repeatRows=1)
         table.setStyle(TableStyle([
