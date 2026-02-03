@@ -74,15 +74,17 @@ async def create_vehicle(
     """
     Menambah kendaraan baru (Superadmin dan Admin).
     """
-    existing = db.query(Vehicle).filter(
-        Vehicle.no_lambung == vehicle_data.no_lambung,
-        Vehicle.is_active == True
-    ).first()
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Nomor lambung {vehicle_data.no_lambung} sudah terdaftar"
-        )
+    # Check duplicate no_lambung only if provided (not for TRAVEL category)
+    if vehicle_data.no_lambung:
+        existing = db.query(Vehicle).filter(
+            Vehicle.no_lambung == vehicle_data.no_lambung,
+            Vehicle.is_active == True
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Nomor lambung {vehicle_data.no_lambung} sudah terdaftar"
+            )
     
     vehicle = Vehicle(**vehicle_data.model_dump())
     db.add(vehicle)

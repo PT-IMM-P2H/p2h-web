@@ -29,7 +29,7 @@ class CompanySimpleResponse(BaseModel):
 # Vehicle Schemas
 class VehicleBase(BaseModel):
     """Base vehicle schema"""
-    no_lambung: str = Field(..., min_length=1, max_length=20)
+    no_lambung: Optional[str] = Field(None, max_length=20)  # Optional for TRAVEL category
     warna_no_lambung: Optional[str] = Field(None, max_length=20)
     plat_nomor: Optional[str] = Field(None, max_length=20)
     lokasi_kendaraan: Optional[str] = Field(None, max_length=100)
@@ -51,14 +51,15 @@ class VehicleCreate(VehicleBase):
     
     @field_validator('no_lambung')
     @classmethod
-    def validate_and_format_hull_number(cls, v: str) -> str:
+    def validate_and_format_hull_number(cls, v: Optional[str]) -> Optional[str]:
         """
         Validate dan format nomor lambung ke format standar.
         Input bisa dalam format apapun: P309, P.309, p 309, P,309
         Output akan selalu dalam format standar: P.309
+        Untuk TRAVEL category, no_lambung bisa None.
         """
         if not v:
-            raise ValueError('Nomor lambung tidak boleh kosong')
+            return None  # Allow None for TRAVEL category
         
         # Validasi format
         is_valid, error_msg = validate_hull_number_format(v)
