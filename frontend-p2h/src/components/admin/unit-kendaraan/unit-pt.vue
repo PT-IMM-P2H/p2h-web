@@ -1475,9 +1475,6 @@ const getDateStyle = (dateString) => {
                         </div>
                       </div>
                     </div>
-                    <p v-if="isCustomUser" class="text-xs text-green-600 mt-1">
-                      User baru akan disimpan di data kendaraan saja
-                    </p>
                   </div>
                 </div>
 
