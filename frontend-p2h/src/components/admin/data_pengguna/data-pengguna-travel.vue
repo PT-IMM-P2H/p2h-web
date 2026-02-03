@@ -188,7 +188,7 @@ const fetchUsers = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const response = await apiService.users.getAll({ limit: 2000 });
+    const response = await apiService.users.getAll({ limit: 500 });
 
     if (response.data.status === "success" || response.data.success) {
       // Filter hanya user dengan kategori TRAVEL dan is_active = true
@@ -709,7 +709,7 @@ const sortByName = () => {
 
               <div
                 v-else
-                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[500px]"
+                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-125"
               >
                 <table class="w-full border-collapse">
                   <thead class="sticky top-0 z-10">

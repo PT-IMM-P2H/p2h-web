@@ -192,7 +192,7 @@ const fetchUsers = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const response = await apiService.users.getAll({ limit: 2000 });
+    const response = await apiService.users.getAll({ limit: 500 });
 
     if (response.data.status === "success" || response.data.success) {
       // Filter hanya user dengan kategori IMM dan is_active = true

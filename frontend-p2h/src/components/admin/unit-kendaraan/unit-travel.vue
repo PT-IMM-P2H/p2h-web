@@ -281,7 +281,7 @@ const fetchVehicles = async () => {
   try {
     console.log("🔄 [Travel] Fetching vehicles...");
     // Fetch all vehicles with high limit for frontend pagination
-    const response = await apiService.vehicles.getAll({ limit: 2000 });
+    const response = await apiService.vehicles.getAll({ limit: 500 });
 
     if (response.data.status === "success" || response.data.success) {
       // Filter hanya kategori Travel
