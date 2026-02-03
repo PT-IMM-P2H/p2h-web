@@ -111,7 +111,7 @@ class VehicleResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     id: UUID
-    no_lambung: str
+    no_lambung: Optional[str]  # Optional for TRAVEL category (no hull number)
     warna_no_lambung: Optional[str]
     plat_nomor: Optional[str]
     lokasi_kendaraan: Optional[str]
