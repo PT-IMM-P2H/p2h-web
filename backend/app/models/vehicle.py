@@ -45,6 +45,7 @@ class Vehicle(Base):
     
     company_id = Column(UUID(as_uuid=True), ForeignKey("companies.id"), nullable=True)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    custom_user_name = Column(String(100), nullable=True)  # For user name not in users table
     
     no_rangka = Column(String(100), nullable=True)
     no_mesin = Column(String(100), nullable=True)

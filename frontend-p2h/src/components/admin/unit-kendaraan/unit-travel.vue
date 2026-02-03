@@ -38,6 +38,12 @@ const isLoading = ref(false);
 const errorMessage = ref("");
 const showBulkUpload = ref(false);
 const editingId = ref(null);
+
+// User combobox state
+const userSearchQuery = ref("");
+const showUserDropdown = ref(false);
+const isCustomUser = ref(false);
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
 const filterData = ref({
@@ -67,6 +73,7 @@ const opentambahUnitKendaraan = () => {
     merk: "",
     user_id: null,
     company_id: null,
+    custom_user_name: "",
     no_rangka: "",
     no_mesin: "",
     stnk_expiry: "",
@@ -74,6 +81,10 @@ const opentambahUnitKendaraan = () => {
     kir_expiry: "",
     shift_type: "non_shift",
   };
+  // Reset user combobox state
+  userSearchQuery.value = "";
+  isCustomUser.value = false;
+  showUserDropdown.value = false;
   console.log(
     "📋 [Travel] Modal opened - Users available:",
     allUsers.value.length,
@@ -85,12 +96,17 @@ const opentambahUnitKendaraan = () => {
 
 const closeTambahUnitKendaraan = () => {
   editingId.value = null;
+  // Reset user combobox state
+  userSearchQuery.value = "";
+  isCustomUser.value = false;
+  showUserDropdown.value = false;
   formData.value = {
     plat_nomor: "",
     vehicle_type: "Light Vehicle",
     merk: "",
     user_id: null,
     company_id: null,
+    custom_user_name: "",
     no_rangka: "",
     no_mesin: "",
     stnk_expiry: "",
@@ -152,6 +168,7 @@ const formData = ref({
   merk: "",
   user_id: null,
   company_id: null,
+  custom_user_name: "",
   no_rangka: "",
   no_mesin: "",
   stnk_expiry: "",
@@ -159,6 +176,69 @@ const formData = ref({
   kir_expiry: "",
   shift_type: "non_shift",
 });
+
+// Computed: filtered users for combobox
+const filteredUsers = computed(() => {
+  if (!userSearchQuery.value.trim()) {
+    return allUsers.value;
+  }
+  const query = userSearchQuery.value.toLowerCase();
+  return allUsers.value.filter(user =>
+    user.full_name.toLowerCase().includes(query)
+  );
+});
+
+// Check if search query matches any existing user
+const hasExactMatch = computed(() => {
+  if (!userSearchQuery.value.trim()) return true;
+  const query = userSearchQuery.value.toLowerCase();
+  return allUsers.value.some(user =>
+    user.full_name.toLowerCase() === query
+  );
+});
+
+// User combobox functions
+const handleUserInput = (event) => {
+  userSearchQuery.value = event.target.value;
+  showUserDropdown.value = true;
+  isCustomUser.value = false;
+  formData.value.user_id = null;
+  formData.value.custom_user_name = "";
+};
+
+const selectUser = (user) => {
+  formData.value.user_id = user.id;
+  formData.value.custom_user_name = "";
+  userSearchQuery.value = user.full_name;
+  isCustomUser.value = false;
+  showUserDropdown.value = false;
+};
+
+const selectCustomUser = () => {
+  formData.value.user_id = null;
+  formData.value.custom_user_name = userSearchQuery.value.trim();
+  isCustomUser.value = true;
+  showUserDropdown.value = false;
+};
+
+const clearUserSelection = () => {
+  formData.value.user_id = null;
+  formData.value.custom_user_name = "";
+  userSearchQuery.value = "";
+  isCustomUser.value = false;
+  showUserDropdown.value = false;
+};
+
+const handleUserFocus = () => {
+  showUserDropdown.value = true;
+};
+
+const handleUserBlur = () => {
+  // Delay to allow click on dropdown items
+  setTimeout(() => {
+    showUserDropdown.value = false;
+  }, 200);
+};
 
 // Users and Companies data
 const allUsers = ref([]);
@@ -221,7 +301,7 @@ const fetchVehicles = async () => {
         nomorPolisi: vehicle.plat_nomor || "-",
         tipe: vehicle.vehicle_type,
         merek: vehicle.merk || "-",
-        user: vehicle.user?.full_name || "-",
+        user: vehicle.user?.full_name || vehicle.custom_user_name || "-",
         perusahaan: vehicle.company?.nama_perusahaan || "-",
         tglSTNK: vehicle.stnk_expiry || "-",
         tglPajak: vehicle.pajak_expiry || "-",
@@ -327,6 +407,7 @@ const editKendaraan = async (rowId) => {
         merk: vehicle.merk || "",
         user_id: vehicle.user_id || null,
         company_id: vehicle.company_id || null,
+        custom_user_name: vehicle.custom_user_name || "",
         no_rangka: vehicle.no_rangka || "",
         no_mesin: vehicle.no_mesin || "",
         stnk_expiry: vehicle.stnk_expiry || "",
@@ -334,6 +415,19 @@ const editKendaraan = async (rowId) => {
         kir_expiry: vehicle.kir_expiry || "",
         shift_type: vehicle.shift_type || "non_shift",
       };
+
+      // Set user combobox state based on existing data
+      if (vehicle.user_id && vehicle.user) {
+        userSearchQuery.value = vehicle.user.full_name;
+        isCustomUser.value = false;
+      } else if (vehicle.custom_user_name) {
+        userSearchQuery.value = vehicle.custom_user_name;
+        isCustomUser.value = true;
+      } else {
+        userSearchQuery.value = "";
+        isCustomUser.value = false;
+      }
+      showUserDropdown.value = false;
 
       tambahUnitKendaraan.value = true;
     }
@@ -1150,32 +1244,82 @@ const getDateStyle = (dateString) => {
 
                   <div>
                     <label
-                      for="user_id"
+                      for="user_search"
                       class="block text-base font-medium text-gray-800 mb-1 mt-1"
                       >User</label
                     >
                     <div class="relative">
-                      <select
-                        id="user_id"
-                        name="user_id"
-                        v-model="formData.user_id"
-                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm appearance-none"
-                      >
-                        <option :value="null">
-                          {{ allUsers.length === 0 ? "Loading users..." : "Pilih user" }}
-                        </option>
-                        <option
-                          v-for="user in allUsers"
-                          :key="user.id"
-                          :value="user.id"
-                        >
-                          {{ user.full_name }}
-                        </option>
-                      </select>
-                      <ChevronDownIcon
-                        class="absolute right-3 top-2.5 w-5 h-5 text-[#949494] pointer-events-none"
+                      <input
+                        id="user_search"
+                        name="user_search"
+                        type="text"
+                        v-model="userSearchQuery"
+                        @input="handleUserInput"
+                        @focus="handleUserFocus"
+                        @blur="handleUserBlur"
+                        placeholder="Ketik nama user atau pilih dari daftar..."
+                        class="w-full p-2 pr-10 border border-[#C3C3C3] bg-white text-gray-700 rounded-md focus:outline-none focus:border-[#A90CF8] text-sm"
+                        :class="{ 'border-green-500': isCustomUser }"
+                        autocomplete="off"
                       />
+                      <!-- Icon indicator -->
+                      <div class="absolute right-3 top-2.5 flex items-center gap-1">
+                        <UserPlusIcon
+                          v-if="isCustomUser"
+                          class="w-4 h-4 text-green-500"
+                          title="User Baru"
+                        />
+                        <button
+                          v-if="userSearchQuery"
+                          @click.prevent="clearUserSelection"
+                          type="button"
+                          class="text-gray-400 hover:text-gray-600"
+                        >
+                          <XMarkIcon class="w-4 h-4" />
+                        </button>
+                        <ChevronDownIcon
+                          v-else
+                          class="w-5 h-5 text-[#949494] pointer-events-none"
+                        />
+                      </div>
+                      
+                      <!-- Dropdown list -->
+                      <div
+                        v-if="showUserDropdown"
+                        class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto"
+                      >
+                        <!-- Existing users -->
+                        <div
+                          v-for="user in filteredUsers"
+                          :key="user.id"
+                          @mousedown.prevent="selectUser(user)"
+                          class="px-3 py-2 cursor-pointer hover:bg-purple-50 text-sm text-gray-700 flex items-center gap-2"
+                        >
+                          <span>{{ user.full_name }}</span>
+                        </div>
+                        
+                        <!-- Option for custom user when no exact match -->
+                        <div
+                          v-if="userSearchQuery.trim() && !hasExactMatch"
+                          @mousedown.prevent="selectCustomUser"
+                          class="px-3 py-2 cursor-pointer hover:bg-green-50 text-sm text-green-700 border-t border-gray-200 flex items-center gap-2"
+                        >
+                          <UserPlusIcon class="w-4 h-4" />
+                          <span>Tambah user baru: "<strong>{{ userSearchQuery }}</strong>"</span>
+                        </div>
+                        
+                        <!-- Empty state -->
+                        <div
+                          v-if="filteredUsers.length === 0 && !userSearchQuery.trim()"
+                          class="px-3 py-2 text-sm text-gray-500"
+                        >
+                          {{ allUsers.length === 0 ? 'Loading users...' : 'Tidak ada user tersedia' }}
+                        </div>
+                      </div>
                     </div>
+                    <p v-if="isCustomUser" class="text-xs text-green-600 mt-1">
+                      User baru akan disimpan di data kendaraan saja
+                    </p>
                   </div>
                 </div>
 

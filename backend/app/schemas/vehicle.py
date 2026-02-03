@@ -37,6 +37,7 @@ class VehicleBase(BaseModel):
     merk: Optional[str] = Field(None, max_length=50)
     user_id: Optional[UUID] = None
     company_id: Optional[UUID] = None
+    custom_user_name: Optional[str] = Field(None, max_length=100)  # For user name not in users table
     no_rangka: Optional[str] = Field(None, max_length=100)
     no_mesin: Optional[str] = Field(None, max_length=100)
     stnk_expiry: Optional[date] = None
@@ -78,6 +79,7 @@ class VehicleUpdate(BaseModel):
     merk: Optional[str] = Field(None, max_length=50)
     user_id: Optional[UUID] = None
     company_id: Optional[UUID] = None
+    custom_user_name: Optional[str] = Field(None, max_length=100)  # For user name not in users table
     no_rangka: Optional[str] = Field(None, max_length=100)
     no_mesin: Optional[str] = Field(None, max_length=100)
     stnk_expiry: Optional[date] = None
@@ -117,6 +119,7 @@ class VehicleResponse(BaseModel):
     merk: Optional[str]
     user_id: Optional[UUID]
     company_id: Optional[UUID]
+    custom_user_name: Optional[str]
     no_rangka: Optional[str]
     no_mesin: Optional[str]
     stnk_expiry: Optional[date]

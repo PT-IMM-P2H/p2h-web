@@ -1046,6 +1046,21 @@ async def bulk_upload_vehicles(
                         if company:
                             inactive_vehicle.company_id = company.id
                     
+                    # Also update user if provided
+                    if not pd.isna(row.get('user_name')) and row.get('user_name'):
+                        user_name = str(row['user_name']).strip()
+                        user = db.query(User).filter(
+                            User.full_name.ilike(user_name),
+                            User.is_active == True
+                        ).first()
+                        if user:
+                            inactive_vehicle.user_id = user.id
+                            inactive_vehicle.custom_user_name = None
+                        else:
+                            # User not found, save as custom_user_name
+                            inactive_vehicle.user_id = None
+                            inactive_vehicle.custom_user_name = user_name
+                    
                     success_count += 1
                     continue
                 
@@ -1142,6 +1157,22 @@ async def bulk_upload_vehicles(
                     if company:
                         company_id = company.id
                 
+                # Lookup user by name if provided
+                user_id = None
+                custom_user_name = None
+                if not pd.isna(row.get('user_name')) and row.get('user_name'):
+                    user_name = str(row['user_name']).strip()
+                    # Try to find user by full_name
+                    user = db.query(User).filter(
+                        User.full_name.ilike(user_name),
+                        User.is_active == True
+                    ).first()
+                    if user:
+                        user_id = user.id
+                    else:
+                        # User not found in database, save as custom_user_name
+                        custom_user_name = user_name
+                
                 # Create vehicle with all new fields
                 vehicle = Vehicle(
                     plat_nomor=plat,
@@ -1158,6 +1189,8 @@ async def bulk_upload_vehicles(
                     pajak_expiry=pajak_expiry,
                     kir_expiry=kir_expiry,
                     company_id=company_id,
+                    user_id=user_id,
+                    custom_user_name=custom_user_name,
                     is_active=True
                 )
                 
