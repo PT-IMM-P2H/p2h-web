@@ -341,7 +341,6 @@ const getMaxValue = (data) => {
 
 const getChartOptions = (data) => {
   const maxValue = getMaxValue(data);
-
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -398,13 +397,13 @@ const getChartOptions = (data) => {
         cornerRadius: 6,
         callbacks: {
           label: function (context) {
-            return " Kendaraan: " + context.parsed.y;
+            return " " + context.dataset.label + ": " + context.parsed.y;
           },
           afterLabel: function (context) {
             const data = context.parsed.y;
             const previous =
               context.dataIndex > 0
-                ? context.chart.data.datasets[0].data[context.dataIndex - 1]
+                ? context.chart.data.datasets[context.datasetIndex].data[context.dataIndex - 1]
                 : data;
             const change = data - previous;
             const changeText =
