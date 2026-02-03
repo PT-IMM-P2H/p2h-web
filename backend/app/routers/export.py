@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 import pandas as pd
 import io
+import logging
 from datetime import date, datetime
 from typing import Optional, List
 from reportlab.lib import colors
@@ -23,6 +24,8 @@ from app.dependencies import get_current_user, require_role
 from app.models.user import User, UserRole, UserKategori
 from app.models.vehicle import Vehicle, UnitKategori, ShiftType
 from app.models.p2h import P2HReport, InspectionStatus
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/export",
@@ -489,8 +492,18 @@ async def export_p2h_reports(
             detail="Hanya Admin dan Superadmin yang dapat mengekspor data"
         )
     
-    # Build query with joins
-    query = db.query(P2HReport).join(Vehicle).join(User)
+    # Import joinedload for eager loading
+    from sqlalchemy.orm import joinedload, contains_eager
+    
+    # Build base query - use join for filtering and contains_eager to use the joined data
+    query = db.query(P2HReport).join(
+        Vehicle, P2HReport.vehicle_id == Vehicle.id
+    ).join(
+        User, P2HReport.user_id == User.id
+    ).options(
+        contains_eager(P2HReport.vehicle),
+        contains_eager(P2HReport.user)
+    )
     
     # Apply filters
     filters = []
@@ -520,7 +533,7 @@ async def export_p2h_reports(
     if start_date:
         try:
             start = datetime.strptime(start_date, "%Y-%m-%d").date()
-            filters.append(P2HReport.created_at >= start)
+            filters.append(P2HReport.submission_date >= start)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -530,7 +543,7 @@ async def export_p2h_reports(
     if end_date:
         try:
             end = datetime.strptime(end_date, "%Y-%m-%d").date()
-            filters.append(P2HReport.created_at <= end)
+            filters.append(P2HReport.submission_date <= end)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -547,8 +560,16 @@ async def export_p2h_reports(
     if filters:
         query = query.filter(and_(*filters))
     
+    # Exclude soft-deleted reports
+    query = query.filter(P2HReport.is_deleted == False)
+    
+    # Log the query for debugging
+    logger.info(f"📊 [Export P2H] Filters applied: kategori={kategori}, status={report_status}, start={start_date}, end={end_date}, search={search}")
+    
     # Get reports
     reports = query.order_by(P2HReport.created_at.desc()).all()
+    
+    logger.info(f"📊 [Export P2H] Found {len(reports)} reports")
     
     # Prepare data
     data = []
@@ -556,13 +577,19 @@ async def export_p2h_reports(
         # Determine shift name
         shift_name = {1: 'Shift 1', 2: 'Shift 2', 3: 'Shift 3'}.get(report.shift_number, f'Shift {report.shift_number}')
         
+        # Handle vehicle_type enum
+        vehicle_type_str = ''
+        if report.vehicle and report.vehicle.vehicle_type:
+            vt = report.vehicle.vehicle_type
+            vehicle_type_str = vt.value if hasattr(vt, 'value') else str(vt)
+        
         data.append({
             'Tanggal Pemeriksaan': format_datetime(report.submission_date),
-            'Waktu': format_datetime(report.submission_time),
+            'Waktu': format_datetime(report.submission_time) if report.submission_time else '',
             'Shift': shift_name,
             'Nomor Polisi': report.vehicle.plat_nomor if report.vehicle else '',
             'No Lambung': report.vehicle.no_lambung if report.vehicle else '',
-            'Tipe Kendaraan': report.vehicle.vehicle_type if report.vehicle else '',
+            'Tipe Kendaraan': vehicle_type_str,
             'Kategori Pengguna': report.user.kategori_pengguna.value if report.user and report.user.kategori_pengguna else '',
             'Nama Pemeriksa': report.user.full_name if report.user else '',
             'Status Pemeriksaan': report.overall_status.value if report.overall_status else '',

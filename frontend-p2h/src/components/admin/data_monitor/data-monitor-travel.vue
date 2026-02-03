@@ -399,19 +399,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col font-['Montserrat']">
+  <div class="min-h-screen flex flex-col font-['Montserrat'] bg-[#EFEFEF]">
     <div class="flex flex-1 overflow-hidden">
-      <!-- Aside Sidebar - Push content style -->
       <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <!-- Main Content Area -->
       <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
         <HeaderAdmin />
 
-        <!-- Content -->
-        <main
-          class="bg-[#EFEFEF] flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1"
-        >
+        <main class="flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1">
           <!-- Judul - Sticky -->
           <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">

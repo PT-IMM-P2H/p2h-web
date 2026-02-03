@@ -591,19 +591,14 @@ const editPengguna = async (rowId) => {
 </script>
 
 <template>
-  <div class="h-screen flex flex-col font-['Montserrat']">
-    <div class="flex flex-1 overflow-hidden">
-      <!-- Aside Sidebar - Push content style -->
-      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
+<div class="min-h-screen flex flex-col font-['Montserrat'] bg-[#EFEFEF]">
+  <div class="flex flex-1 overflow-hidden">
+    <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-      <!-- Main Content Area -->
-      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <HeaderAdmin />
+    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <HeaderAdmin />
 
-        <!-- Content -->
-        <main
-          class="bg-[#EFEFEF] flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1"
-        >
+      <main class="flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1">
           <!-- Judul - Sticky -->
           <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
@@ -731,7 +726,7 @@ const editPengguna = async (rowId) => {
 
               <div
                 v-else
-                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[500px]"
+                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-125"
               >
                 <table class="w-full border-collapse">
                   <thead class="sticky top-0 z-10">
