@@ -131,8 +131,14 @@ const closeBulkUpload = () => {
   showBulkUpload.value = false;
 };
 
-const handleUploadSuccess = () => {
-  fetchVehicles();
+const handleUploadSuccess = async () => {
+  console.log("✅ [PT] Bulk upload success, refreshing table...");
+  // Reset selection
+  selectedRowIds.value = [];
+  selectAllChecked.value = false;
+  // Refresh data from backend
+  await fetchVehicles();
+  console.log("✅ [PT] Table refreshed after bulk upload");
 };
 
 const exportFilters = computed(() => ({
