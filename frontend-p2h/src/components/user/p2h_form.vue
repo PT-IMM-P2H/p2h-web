@@ -525,13 +525,13 @@ onMounted(() => {
                   Shift 3 (23:00 - 07:00)
                 </option>
                 <option value="non-shift" class="text-zinc-900">
-                  Non Shift (07:00 - 15:00)
+                  Non Shift (07:00 - 16:00)
                 </option>
                 <option value="long-shift-1" class="text-zinc-900">
-                  Long Shift 1 (07:00 - 00:00)
+                  Long Shift 1 (07:00 - 19:00)
                 </option>
                 <option value="long-shift-2" class="text-zinc-900">
-                  Long Shift 2 (00:00 - 07:00)
+                  Long Shift 2 (19:00 - 07:00)
                 </option>
               </select>
               <ChevronDownIcon

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Export Vehicles</title>
+</head>
+<body>
+    <h1>Test Export Vehicles vs Users</h1>
+    <button onclick="testExportVehicles()">Test Export Vehicles</button>
+    <button onclick="testExportUsers()">Test Export Users</button>
+    <pre id="result"></pre>
+
+    <script>
+        const API_BASE_URL = 'https://p2h-web-production.up.railway.app';
+        const TOKEN = localStorage.getItem('authToken'); // Ambil dari localStorage
+
+        async function testExportVehicles() {
+            const url = `${API_BASE_URL}/export/vehicles?format=excel&kategori=IMM`;
+            document.getElementById('result').textContent = `Testing: ${url}\n\n`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`
+                    }
+                });
+                
+                document.getElementById('result').textContent += `Status: ${response.status}\n`;
+                document.getElementById('result').textContent += `Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}\n`;
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    document.getElementById('result').textContent += `Blob size: ${blob.size} bytes\n`;
+                    document.getElementById('result').textContent += `Blob type: ${blob.type}\n`;
+                    
+                    // Try to download
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'test_vehicles.xlsx';
+                    link.click();
+                } else {
+                    const text = await response.text();
+                    document.getElementById('result').textContent += `Error: ${text}\n`;
+                }
+            } catch (error) {
+                document.getElementById('result').textContent += `Exception: ${error.message}\n`;
+            }
+        }
+
+        async function testExportUsers() {
+            const url = `${API_BASE_URL}/export/users?format=excel&kategori=IMM&is_active=true`;
+            document.getElementById('result').textContent = `Testing: ${url}\n\n`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`
+                    }
+                });
+                
+                document.getElementById('result').textContent += `Status: ${response.status}\n`;
+                document.getElementById('result').textContent += `Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}\n`;
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    document.getElementById('result').textContent += `Blob size: ${blob.size} bytes\n`;
+                    document.getElementById('result').textContent += `Blob type: ${blob.type}\n`;
+                    
+                    // Try to download
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'test_users.xlsx';
+                    link.click();
+                } else {
+                    const text = await response.text();
+                    document.getElementById('result').textContent += `Error: ${text}\n`;
+                }
+            } catch (error) {
+                document.getElementById('result').textContent += `Exception: ${error.message}\n`;
+            }
+        }
+    </script>
+</body>
+</html>
