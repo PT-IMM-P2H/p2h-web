@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from uuid import UUID
+import logging
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -11,6 +12,8 @@ from app.dependencies import get_current_user, require_role
 from app.services.p2h_service import p2h_service
 from app.utils.response import base_response
 from app.repositories.vehicle_repository import vehicle_repository 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -96,7 +99,7 @@ async def create_vehicle(
 @router.get("")
 async def get_vehicles(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=2000),
+    limit: int = Query(100, ge=1, le=500),
     search: Optional[str] = Query(None, description="Cari berdasarkan nomor lambung, plat, atau merk"),
     vehicle_type: Optional[str] = Query(None, description="Filter tipe kendaraan"),
     is_active: Optional[bool] = Query(None, description="Filter status aktif"),
@@ -107,32 +110,44 @@ async def get_vehicles(
     Mendapatkan semua daftar kendaraan (Wajib Login).
     Search mendukung format fleksibel untuk nomor lambung: P309, P.309, p 309, dll.
     """
-    # Default filter untuk is_active
-    is_active_filter = True if is_active is None else is_active
-    
-    # Gunakan repository search method yang sudah support normalisasi
-    vehicles = vehicle_repository.search_vehicles(
-        db=db,
-        search_query=search,
-        vehicle_type=vehicle_type,
-        is_active=is_active_filter
-    )
-    
-    # Apply pagination manual setelah search
-    # (atau bisa modifikasi repository untuk handle pagination)
-    total = len(vehicles)
-    vehicles = vehicles[skip:skip + limit]
-    
-    # Load relasi untuk response
-    for vehicle in vehicles:
-        db.refresh(vehicle)
-    
-    payload = [VehicleResponse.model_validate(v).model_dump(mode='json') for v in vehicles]
-    
-    return base_response(
-        message="Daftar kendaraan berhasil diambil",
-        payload=payload
-    )
+    try:
+        # Default filter untuk is_active
+        is_active_filter = True if is_active is None else is_active
+        
+        # Query langsung dengan eager loading untuk relasi
+        query = db.query(Vehicle).options(
+            joinedload(Vehicle.user),
+            joinedload(Vehicle.company)
+        ).filter(Vehicle.is_active == is_active_filter)
+        
+        # Filter by vehicle_type if provided
+        if vehicle_type:
+            query = query.filter(Vehicle.vehicle_type == vehicle_type)
+        
+        # Simple search tanpa normalisasi yang berat
+        if search and search.strip():
+            search_term = f"%{search.strip().upper()}%"
+            query = query.filter(
+                (Vehicle.no_lambung.ilike(search_term)) |
+                (Vehicle.plat_nomor.ilike(search_term)) |
+                (Vehicle.merk.ilike(search_term))
+            )
+        
+        # Apply pagination di database level
+        vehicles = query.offset(skip).limit(limit).all()
+        
+        payload = [VehicleResponse.model_validate(v).model_dump(mode='json') for v in vehicles]
+        
+        return base_response(
+            message="Daftar kendaraan berhasil diambil",
+            payload=payload
+        )
+    except Exception as e:
+        logger.error(f"Error fetching vehicles: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Gagal mengambil data kendaraan: {str(e)}"
+        )
 
 
 @router.get("/{vehicle_id}")
