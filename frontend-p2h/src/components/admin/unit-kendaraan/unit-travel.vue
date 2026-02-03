@@ -285,13 +285,6 @@ const handleTambahUnitKendaraan = async () => {
         kir_expiry: "",
         shift_type: "non_shift",
       };
-        no_rangka: "",
-        no_mesin: "",
-        stnk_expiry: "",
-        pajak_expiry: "",
-        kir_expiry: "",
-        shift_type: "non_shift",
-      };
 
       closeTambahUnitKendaraan();
       await fetchVehicles();
@@ -326,15 +319,6 @@ const editKendaraan = async (rowId) => {
         plat_nomor: vehicle.plat_nomor || "",
         vehicle_type: vehicle.vehicle_type || "Light Vehicle",
         merk: vehicle.merk || "",
-        user_id: vehicle.user_id || null,
-        company_id: vehicle.company_id || null,
-        no_rangka: vehicle.no_rangka || "",
-        no_mesin: vehicle.no_mesin || "",
-        stnk_expiry: vehicle.stnk_expiry || "",
-        pajak_expiry: vehicle.pajak_expiry || "",
-        kir_expiry: vehicle.kir_expiry || "",
-        shift_type: vehicle.shift_type || "non_shift",
-      };
         user_id: vehicle.user_id || null,
         company_id: vehicle.company_id || null,
         no_rangka: vehicle.no_rangka || "",
@@ -824,7 +808,7 @@ const getDateStyle = (dateString) => {
               class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4"
             >
               <div
-                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
+                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-150"
               >
                 <table class="w-full border-collapse">
                   <thead class="sticky top-0 z-10">

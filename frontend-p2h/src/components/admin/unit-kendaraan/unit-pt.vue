@@ -801,7 +801,7 @@ const getDateStyle = (dateString) => {
               class="flex flex-col gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200 mt-4"
             >
               <div
-                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-[600px]"
+                class="overflow-x-auto overflow-y-auto rounded-lg border bg-white max-h-150"
               >
                 <table class="w-full border-collapse">
                   <thead class="sticky top-0 z-10">
