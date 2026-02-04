@@ -97,6 +97,23 @@ const handleCariKendaraan = async () => {
         // Kendaraan ada tapi BELUM di-P2H hari ini
         redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Silakan login untuk mengisi P2H.`;
         showLoginButton.value = true;
+        
+        // Tampilkan riwayat kendaraan ini dengan status 'belum'
+        const normalizedInput = nomorLambung.value
+          .toLowerCase()
+          .replace(/[\s.-]/g, "");
+
+        const matchingReports = riwayatData.value.filter((report) => {
+          const normalizedNomor = (report.nomor || "").toLowerCase().replace(/[\s.-]/g, "");
+          const normalizedPlat = (report.platKendaraan || "").toLowerCase().replace(/[\s.-]/g, "");
+          return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
+        });
+
+        // Set status 'belum' karena kendaraan belum P2H hari ini
+        hasilPencarian.value = matchingReports.map(report => ({
+          ...report,
+          status: 'belum'
+        }));
       } else {
         // Kendaraan SUDAH di-P2H hari ini
         sudahP2HMessage.value = `Kendaraan ${nomorLambung.value} sudah melakukan P2H hari ini.`;
@@ -113,41 +130,10 @@ const handleCariKendaraan = async () => {
           return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
         });
 
-        // Format tanggal hari ini untuk perbandingan
-        const today = new Date();
-        const todayYear = today.getFullYear();
-        const todayMonth = (today.getMonth() + 1).toString().padStart(2, '0');
-        const todayDate = today.getDate().toString().padStart(2, '0');
-        const todayISO = `${todayYear}-${todayMonth}-${todayDate}`;
-
-        // Nama bulan dalam bahasa Indonesia
-        const bulanIndonesia = [
-          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-        ];
-
-        // Cek apakah ada laporan hari ini untuk kendaraan ini
-        const hasReportToday = matchingReports.some(report => {
-          // Jika tanggal dalam format YYYY-MM-DD
-          if (report.tanggal.includes('-')) {
-            return report.tanggal === todayISO;
-          }
-          // Jika tanggal dalam format "DD Bulan YYYY"
-          const parts = report.tanggal.split(' ');
-          if (parts.length === 3) {
-            const reportDay = parts[0].padStart(2, '0');
-            const reportMonth = bulanIndonesia.indexOf(parts[1]) + 1;
-            const reportYear = parts[2];
-            const reportDateISO = `${reportYear}-${reportMonth.toString().padStart(2, '0')}-${reportDay}`;
-            return reportDateISO === todayISO;
-          }
-          return false;
-        });
-
-        // Set status berdasarkan ketersediaan data hari ini
+        // Set status berdasarkan data backend (p2h_completed_today sudah akurat)
         hasilPencarian.value = matchingReports.map(report => ({
           ...report,
-          status: hasReportToday ? 'sudah' : 'belum'
+          status: vehicleData.p2h_completed_today ? 'sudah' : 'belum'
         }));
       }
     }
