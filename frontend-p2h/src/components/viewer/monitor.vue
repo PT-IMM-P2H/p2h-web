@@ -19,10 +19,12 @@ const itemsPerPage = ref(10);
 const sortOrder = ref("desc");
 const isLoading = ref(false);
 const sudahP2HMessage = ref(""); // Notifikasi jika sudah P2H hari ini
-const lastSearchQuery = ref(""); // Track last search query for riwayat filtering
+const lastSearchQuery = ref(""); // Track last search query untuk riwayat filtering
 
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
+// Data kendaraan yang ditemukan dari API
+const foundVehicleData = ref(null);
 
 // Fetch data P2H reports
 const fetchP2HReports = async () => {
@@ -36,7 +38,6 @@ const fetchP2HReports = async () => {
   } catch (error) {
     console.error("❌ Gagal fetch P2H reports:", error);
     console.error("Error details:", error.response?.data);
-    // User bisa tetap lihat UI meski data tidak tersedia
     p2hReports.value = [];
   } finally {
     isLoading.value = false;
@@ -70,6 +71,7 @@ const handleCariKendaraan = async () => {
   // Reset state
   sudahP2HMessage.value = "";
   hasilPencarian.value = [];
+  foundVehicleData.value = null;
 
   if (!nomorLambung.value.trim()) {
     lastSearchQuery.value = "";
@@ -88,7 +90,13 @@ const handleCariKendaraan = async () => {
     const vehicleData = vehicleResponse.data.payload;
     
     if (vehicleData) {
-      // Kendaraan ditemukan - tampilkan notifikasi status
+      // Simpan data kendaraan yang ditemukan
+      foundVehicleData.value = vehicleData;
+      
+      // Tentukan status berdasarkan p2h_completed_today dari backend (ini adalah SUMBER KEBENARAN)
+      const p2hStatus = vehicleData.p2h_completed_today ? "sudah" : "belum";
+      
+      // Jika sudah P2H, tampilkan notifikasi
       if (vehicleData.p2h_completed_today) {
         sudahP2HMessage.value = `Kendaraan ${nomorLambung.value} sudah melakukan P2H hari ini.`;
       }
@@ -105,16 +113,36 @@ const handleCariKendaraan = async () => {
         return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
       });
 
-      // Set status berdasarkan data backend (p2h_completed_today sudah akurat)
+      // Set hasil pencarian dengan status yang KONSISTEN dari backend
       hasilPencarian.value = matchingReports.map(report => ({
         ...report,
-        status: vehicleData.p2h_completed_today ? 'sudah' : 'belum'
+        status: p2hStatus // Gunakan status dari backend, bukan dari report
       }));
+      
+      // Jika tidak ada riwayat tapi kendaraan ditemukan, tampilkan minimal satu entry
+      if (hasilPencarian.value.length === 0) {
+        hasilPencarian.value = [{
+          id: vehicleData.id,
+          tanggal: "-",
+          waktu: "-",
+          shift: "-",
+          nomor: vehicleData.no_lambung || vehicleData.plat_nomor || "-",
+          warnaLambung: vehicleData.warna_no_lambung || "-",
+          merek: vehicleData.merk,
+          tipe: vehicleData.vehicle_type,
+          platKendaraan: vehicleData.plat_nomor,
+          hasil: "-",
+          status: p2hStatus, // Status dari backend
+          user: "-",
+        }];
+      }
     }
   } catch (error) {
     // Kendaraan tidak ditemukan di database
     console.error("Error searching vehicle:", error);
-    // Tidak menampilkan pesan error, langsung tampilkan hasil pencarian kosong
+    foundVehicleData.value = null;
+    sudahP2HMessage.value = "";
+    hasilPencarian.value = [];
   }
 };
 
@@ -163,6 +191,7 @@ const getHasilStyle = (hasil) => {
     abnormal: { bg: "#F7E19C", text: "#8B6F47" },
     Warning: { bg: "#FFA0A0", text: "#8B3A3A" },
     warning: { bg: "#FFA0A0", text: "#8B3A3A" },
+    "-": { bg: "#E0E0E0", text: "#666666" },
   };
   return styles[hasil] || styles["Normal"];
 };
@@ -248,8 +277,6 @@ onMounted(() => {
             </div>
           </div>
 
-
-
           <!-- NOTIFIKASI SUDAH P2H (kendaraan sudah P2H hari ini) -->
           <div
             v-if="sudahP2HMessage"
@@ -280,6 +307,7 @@ onMounted(() => {
             v-if="hasilPencarian.length > 0"
             class="flex flex-col gap-4 mt-4"
           >
+            <!-- Kendaraan yang SUDAH P2H -->
             <div
               v-for="kendaraan in hasilPencarian.filter(
                 (k) => k.status === 'sudah',
@@ -322,6 +350,8 @@ onMounted(() => {
                 </button>
               </div>
             </div>
+
+            <!-- Kendaraan yang BELUM P2H -->
             <div
               v-for="kendaraan in hasilPencarian.filter(
                 (k) => k.status === 'belum',
