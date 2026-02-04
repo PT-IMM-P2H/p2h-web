@@ -20,6 +20,7 @@ const sortOrder = ref("desc");
 const isLoading = ref(false);
 const redirectMessage = ref("");
 const showLoginButton = ref(false); // Show button to go to login
+const sudahP2HMessage = ref(""); // Notifikasi jika sudah P2H hari ini
 
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
@@ -36,7 +37,6 @@ const fetchP2HReports = async () => {
   } catch (error) {
     console.error("❌ Gagal fetch P2H reports:", error);
     console.error("Error details:", error.response?.data);
-    // Tidak perlu alert atau redirect ke login - halaman monitor adalah public
     // User bisa tetap lihat UI meski data tidak tersedia
     p2hReports.value = [];
   } finally {
@@ -70,6 +70,7 @@ const riwayatData = computed(() => {
 const handleCariKendaraan = async () => {
   // Reset state
   redirectMessage.value = "";
+  sudahP2HMessage.value = "";
   showLoginButton.value = false;
   hasilPencarian.value = [];
 
@@ -92,7 +93,10 @@ const handleCariKendaraan = async () => {
         redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Silakan login untuk mengisi P2H.`;
         showLoginButton.value = true;
       } else {
-        // Kendaraan SUDAH di-P2H hari ini - tampilkan hasil pencarian dari riwayat
+        // Kendaraan SUDAH di-P2H hari ini
+        sudahP2HMessage.value = `Kendaraan ${nomorLambung.value} sudah melakukan P2H hari ini.`;
+        
+        // Tampilkan hasil pencarian dari riwayat
         const normalizedInput = nomorLambung.value
           .toLowerCase()
           .replace(/[\s.-]/g, "");
@@ -102,10 +106,6 @@ const handleCariKendaraan = async () => {
           const normalizedPlat = (report.platKendaraan || "").toLowerCase().replace(/[\s.-]/g, "");
           return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
         });
-
-        if (hasilPencarian.value.length === 0) {
-          redirectMessage.value = `Kendaraan ${nomorLambung.value} sudah P2H hari ini, namun data riwayat tidak ditemukan.`;
-        }
       }
     }
   } catch (error) {
@@ -258,6 +258,31 @@ onMounted(() => {
                 >
                   Isi Form P2H
                 </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- NOTIFIKASI SUDAH P2H (kendaraan sudah P2H hari ini) -->
+          <div
+            v-if="sudahP2HMessage"
+            class="mt-4 p-4 bg-green-50 border-2 border-green-400 rounded-xl"
+          >
+            <div class="flex items-start gap-3">
+              <svg
+                class="w-6 h-6 text-green-600 shrink-0 mt-0.5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <div class="flex-1">
+                <p class="text-sm font-semibold text-green-800">
+                  {{ sudahP2HMessage }}
+                </p>
               </div>
             </div>
           </div>
