@@ -3,7 +3,7 @@ from datetime import date, datetime
 from typing import Optional, List
 from uuid import UUID
 
-from app.models.vehicle import VehicleType, ShiftType
+from app.models.vehicle import VehicleType, ShiftType, UnitKategori
 from app.utils.vehicle_utils import format_hull_number, validate_hull_number_format
 
 
@@ -44,6 +44,7 @@ class VehicleBase(BaseModel):
     pajak_expiry: Optional[date] = None
     kir_expiry: Optional[date] = None
     shift_type: ShiftType = Field(default=ShiftType.SHIFT)
+    kategori_unit: UnitKategori = Field(default=UnitKategori.IMM)
 
 
 class VehicleCreate(VehicleBase):
@@ -87,6 +88,7 @@ class VehicleUpdate(BaseModel):
     pajak_expiry: Optional[date] = None
     kir_expiry: Optional[date] = None
     shift_type: Optional[ShiftType] = None
+    kategori_unit: Optional[UnitKategori] = None
     is_active: Optional[bool] = None
     
     @field_validator('no_lambung')
@@ -128,6 +130,7 @@ class VehicleResponse(BaseModel):
     kir_expiry: Optional[date]
     is_active: bool
     shift_type: ShiftType
+    kategori_unit: UnitKategori
     created_at: datetime
     updated_at: datetime
     
