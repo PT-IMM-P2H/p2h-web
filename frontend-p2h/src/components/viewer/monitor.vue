@@ -18,8 +18,6 @@ const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const sortOrder = ref("desc");
 const isLoading = ref(false);
-const redirectMessage = ref("");
-const showLoginButton = ref(false); // Show button to go to login
 const sudahP2HMessage = ref(""); // Notifikasi jika sudah P2H hari ini
 const lastSearchQuery = ref(""); // Track last search query for riwayat filtering
 
@@ -70,9 +68,7 @@ const riwayatData = computed(() => {
 
 const handleCariKendaraan = async () => {
   // Reset state
-  redirectMessage.value = "";
   sudahP2HMessage.value = "";
-  showLoginButton.value = false;
   hasilPencarian.value = [];
 
   if (!nomorLambung.value.trim()) {
@@ -92,55 +88,33 @@ const handleCariKendaraan = async () => {
     const vehicleData = vehicleResponse.data.payload;
     
     if (vehicleData) {
-      // Kendaraan ditemukan
-      if (!vehicleData.p2h_completed_today) {
-        // Kendaraan ada tapi BELUM di-P2H hari ini
-        redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Silakan login untuk mengisi P2H.`;
-        showLoginButton.value = true;
-        
-        // Tampilkan riwayat kendaraan ini dengan status 'belum'
-        const normalizedInput = nomorLambung.value
-          .toLowerCase()
-          .replace(/[\s.-]/g, "");
-
-        const matchingReports = riwayatData.value.filter((report) => {
-          const normalizedNomor = (report.nomor || "").toLowerCase().replace(/[\s.-]/g, "");
-          const normalizedPlat = (report.platKendaraan || "").toLowerCase().replace(/[\s.-]/g, "");
-          return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
-        });
-
-        // Set status 'belum' karena kendaraan belum P2H hari ini
-        hasilPencarian.value = matchingReports.map(report => ({
-          ...report,
-          status: 'belum'
-        }));
-      } else {
-        // Kendaraan SUDAH di-P2H hari ini
+      // Kendaraan ditemukan - tampilkan notifikasi status
+      if (vehicleData.p2h_completed_today) {
         sudahP2HMessage.value = `Kendaraan ${nomorLambung.value} sudah melakukan P2H hari ini.`;
-        
-        // Cari riwayat P2H untuk kendaraan ini berdasarkan nomor lambung atau plat nomor
-        const normalizedInput = nomorLambung.value
-          .toLowerCase()
-          .replace(/[\s.-]/g, "");
-
-        // Filter riwayat yang cocok dengan input
-        const matchingReports = riwayatData.value.filter((report) => {
-          const normalizedNomor = (report.nomor || "").toLowerCase().replace(/[\s.-]/g, "");
-          const normalizedPlat = (report.platKendaraan || "").toLowerCase().replace(/[\s.-]/g, "");
-          return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
-        });
-
-        // Set status berdasarkan data backend (p2h_completed_today sudah akurat)
-        hasilPencarian.value = matchingReports.map(report => ({
-          ...report,
-          status: vehicleData.p2h_completed_today ? 'sudah' : 'belum'
-        }));
       }
+      
+      // Cari riwayat P2H untuk kendaraan ini berdasarkan nomor lambung atau plat nomor
+      const normalizedInput = nomorLambung.value
+        .toLowerCase()
+        .replace(/[\s.-]/g, "");
+
+      // Filter riwayat yang cocok dengan input
+      const matchingReports = riwayatData.value.filter((report) => {
+        const normalizedNomor = (report.nomor || "").toLowerCase().replace(/[\s.-]/g, "");
+        const normalizedPlat = (report.platKendaraan || "").toLowerCase().replace(/[\s.-]/g, "");
+        return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
+      });
+
+      // Set status berdasarkan data backend (p2h_completed_today sudah akurat)
+      hasilPencarian.value = matchingReports.map(report => ({
+        ...report,
+        status: vehicleData.p2h_completed_today ? 'sudah' : 'belum'
+      }));
     }
   } catch (error) {
     // Kendaraan tidak ditemukan di database
     console.error("Error searching vehicle:", error);
-    redirectMessage.value = `Kendaraan dengan nomor lambung/plat "${nomorLambung.value}" tidak ditemukan dalam sistem.`;
+    // Tidak menampilkan pesan error, langsung tampilkan hasil pencarian kosong
   }
 };
 
@@ -274,38 +248,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- REDIRECT MESSAGE (kendaraan belum P2H) -->
-          <div
-            v-if="redirectMessage"
-            class="mt-4 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-xl"
-          >
-            <div class="flex items-start gap-3">
-              <svg
-                class="w-6 h-6 text-yellow-600 shrink-0 mt-0.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              <div class="flex-1">
-                <p class="text-sm font-semibold text-yellow-800">
-                  {{ redirectMessage }}
-                </p>
-                <!-- Button to login page -->
-                <button
-                  v-if="showLoginButton"
-                  @click="router.push('/login')"
-                  class="mt-3 px-6 py-2 bg-[#2eb745] text-white rounded-lg text-sm font-semibold cursor-pointer transition-colors duration-300 hover:bg-[#24a635]"
-                >
-                  Isi Form P2H
-                </button>
-              </div>
-            </div>
-          </div>
+
 
           <!-- NOTIFIKASI SUDAH P2H (kendaraan sudah P2H hari ini) -->
           <div
