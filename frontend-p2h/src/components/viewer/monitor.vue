@@ -282,7 +282,7 @@ onMounted(() => {
               </div>
               <button
                 @click="handleCariKendaraan"
-                class="px-13 py-3 bg-[#9600E1] text-white rounded-lg text-base font-semibold cursor-pointer transition-colors duration-300 hover:bg-[#8507c5] whitespace-nowrap active:bg-[#3a276b]"
+                class="px-4 sm:px-13 py-2 bg-[#9600E1] text-white rounded-lg text-base font-semibold cursor-pointer transition-colors duration-300 hover:bg-[#8507c5] whitespace-nowrap active:bg-[#3a276b]"
               >
                 Cari
               </button>
