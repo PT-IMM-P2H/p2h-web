@@ -270,21 +270,36 @@ class P2HService:
         else:
             current_date = get_current_date_shift()  # Reset jam 05:00
         
-        tracker = db.query(P2HDailyTracker).filter(
+        # Cek LANGSUNG dari P2HReport (lebih akurat daripada tracker)
+        from app.models.p2h import P2HReport
+        today_reports = db.query(P2HReport).filter(
             and_(
-                P2HDailyTracker.vehicle_id == vehicle_id,
-                P2HDailyTracker.date == current_date
+                P2HReport.vehicle_id == vehicle_id,
+                P2HReport.submission_date == current_date
             )
-        ).first()
+        ).all()
         
-        # Status default jika belum ada tracker sama sekali hari ini
+        # Tentukan shift yang sudah done dari reports
         shifts_done = {1: False, 2: False, 3: False}
-        if tracker:
-            shifts_done = {
-                1: tracker.shift_1_done,
-                2: tracker.shift_2_done,
-                3: tracker.shift_3_done
-            }
+        for report in today_reports:
+            if report.shift_number in [1, 2, 3]:
+                shifts_done[report.shift_number] = True
+        
+        # Jika data dari reports tidak ada, fallback ke tracker
+        if not today_reports:
+            tracker = db.query(P2HDailyTracker).filter(
+                and_(
+                    P2HDailyTracker.vehicle_id == vehicle_id,
+                    P2HDailyTracker.date == current_date
+                )
+            ).first()
+            
+            if tracker:
+                shifts_done = {
+                    1: tracker.shift_1_done,
+                    2: tracker.shift_2_done,
+                    3: tracker.shift_3_done
+                }
         
         # Tentukan shift number dan status warna
         if vehicle.shift_type == ShiftType.NON_SHIFT:
