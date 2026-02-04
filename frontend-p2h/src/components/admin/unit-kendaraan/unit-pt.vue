@@ -392,10 +392,14 @@ const handleTambahUnitKendaraan = async () => {
     let response;
 
     // Add default shift_type for backend (not shown in UI)
+    // Clean empty date fields to null (backend requires null, not empty string)
     const payload = {
       ...formData.value,
       shift_type: "shift",
       kategori_unit: "IMM",
+      stnk_expiry: formData.value.stnk_expiry || null,
+      pajak_expiry: formData.value.pajak_expiry || null,
+      kir_expiry: formData.value.kir_expiry || null,
     };
 
     if (editingId.value) {

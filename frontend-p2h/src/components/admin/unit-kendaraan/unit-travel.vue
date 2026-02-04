@@ -337,11 +337,15 @@ const handleTambahUnitKendaraan = async () => {
     let response;
 
     // Add kategori TRAVEL (tanpa nomor lambung & warna)
+    // Clean empty date fields to null (backend requires null, not empty string)
     const payload = {
       ...formData.value,
       kategori_unit: "TRAVEL",
       no_lambung: null, // Travel tidak pakai nomor lambung
       warna_no_lambung: null,
+      stnk_expiry: formData.value.stnk_expiry || null,
+      pajak_expiry: formData.value.pajak_expiry || null,
+      kir_expiry: formData.value.kir_expiry || null,
     };
 
     if (editingId.value) {
