@@ -348,11 +348,15 @@ const handleTambahUnitKendaraan = async () => {
       kir_expiry: formData.value.kir_expiry || null,
     };
 
+    console.log("📤 [Travel] Sending payload:", payload);
+
     if (editingId.value) {
       response = await apiService.vehicles.update(editingId.value, payload);
     } else {
       response = await apiService.vehicles.create(payload);
     }
+
+    console.log("📥 [Travel] Response:", response.data);
 
     if (response.data.status === "success" || response.data.success) {
       alert(
