@@ -389,7 +389,8 @@ onMounted(() => {
           <!-- Button FORM P2H -->
           <div class="w-300 mt-4 flex justify-end max-w-full md:max-w-5xl">
             <button
-              class="px-10 py-3 bg-[#9600E1] text-white rounded-xl text-[14px] font-semibold cursor-pointer transition-colors duration-300 hover:bg-[#8507c5] whitespace-nowrap"
+              @click="router.push('/login')"
+              class="px-10 py-3 bg-[#9600E1] text-white rounded-xl text-base font-semibold cursor-pointer transition-colors duration-300 hover:bg-[#8507c5] whitespace-nowrap"
             >
               FORM P2H
             </button>
