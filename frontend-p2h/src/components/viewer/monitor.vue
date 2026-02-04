@@ -21,6 +21,7 @@ const isLoading = ref(false);
 const redirectMessage = ref("");
 const showLoginButton = ref(false); // Show button to go to login
 const sudahP2HMessage = ref(""); // Notifikasi jika sudah P2H hari ini
+const lastSearchQuery = ref(""); // Track last search query for riwayat filtering
 
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
@@ -75,8 +76,12 @@ const handleCariKendaraan = async () => {
   hasilPencarian.value = [];
 
   if (!nomorLambung.value.trim()) {
+    lastSearchQuery.value = "";
     return;
   }
+
+  // Store the search query untuk filtering riwayat
+  lastSearchQuery.value = nomorLambung.value;
 
   try {
     // Step 1: Cek apakah kendaraan ada di database
@@ -164,11 +169,11 @@ const sortByDate = () => {
 
 // Filter riwayat berdasarkan pencarian
 const filteredRiwayatData = computed(() => {
-  if (!nomorLambung.value.trim()) {
+  if (!lastSearchQuery.value.trim()) {
     return riwayatData.value;
   }
   
-  const normalizedInput = nomorLambung.value
+  const normalizedInput = lastSearchQuery.value
     .toLowerCase()
     .replace(/[\s.-]/g, "");
   
@@ -267,7 +272,6 @@ onMounted(() => {
                   v-model="nomorLambung"
                   type="text"
                   placeholder="Nomor Lambung Kendaraan"
-                  @input="handleCariKendaraan"
                   @keyup.enter="handleCariKendaraan"
                   class="w-full px-3.75 py-3 pr-10 border border-[#a1a1a1] bg-gray-100 rounded-lg text-[14px] text-[#333] transition-colors duration-300 focus:outline-none focus:border-[#646cff] focus:ring-3 focus:ring-[#646cff]/10"
                 />
