@@ -41,6 +41,12 @@ async def get_vehicle_by_lambung(
     # Mendapatkan status P2H hari ini (Shift, ketersediaan, dll)
     p2h_status = p2h_service.get_vehicle_p2h_status(db, vehicle.id)
     
+    # Debug log untuk troubleshooting
+    logger.info(f"🔍 [P2H Status Debug] Vehicle: {no_lambung}")
+    logger.info(f"🔍 [P2H Status Debug] color_code: {p2h_status['color_code']}")
+    logger.info(f"🔍 [P2H Status Debug] shifts_completed: {p2h_status['shifts_completed']}")
+    logger.info(f"🔍 [P2H Status Debug] status_p2h: {p2h_status['status_p2h']}")
+    
     # Cek apakah masih bisa submit P2H
     current_shift = p2h_status["current_shift"]
     can_submit, submit_message = p2h_service.can_submit_p2h(db, vehicle, current_shift)
@@ -48,6 +54,8 @@ async def get_vehicle_by_lambung(
     # Cek apakah sudah P2H hari ini (minimal 1 shift sudah selesai)
     # Green atau Yellow berarti ada shift yang sudah dikerjakan
     p2h_completed_today = p2h_status["color_code"] in ["green", "yellow"]
+    
+    logger.info(f"🔍 [P2H Status Debug] p2h_completed_today: {p2h_completed_today}")
     
     # Gabungkan data kendaraan dan status P2H dalam satu payload
     result = {

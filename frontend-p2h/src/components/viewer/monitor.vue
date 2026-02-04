@@ -93,12 +93,21 @@ const handleCariKendaraan = async () => {
       // Simpan data kendaraan yang ditemukan
       foundVehicleData.value = vehicleData;
       
+      // Debug: Log data dari backend untuk memastikan nilai yang diterima
+      console.log("🔍 [Monitor DEBUG] vehicleData:", vehicleData);
+      console.log("🔍 [Monitor DEBUG] p2h_completed_today:", vehicleData.p2h_completed_today);
+      console.log("🔍 [Monitor DEBUG] color_code:", vehicleData.color_code);
+      console.log("🔍 [Monitor DEBUG] shifts_completed:", vehicleData.shifts_completed);
+      
       // Tentukan status berdasarkan p2h_completed_today dari backend (ini adalah SUMBER KEBENARAN)
       const p2hStatus = vehicleData.p2h_completed_today ? "sudah" : "belum";
       
-      // Jika sudah P2H, tampilkan notifikasi
+      // Tampilkan notifikasi berdasarkan status P2H
       if (vehicleData.p2h_completed_today) {
         sudahP2HMessage.value = `Kendaraan ${nomorLambung.value} sudah melakukan P2H hari ini.`;
+      } else {
+        // Reset pesan sudah P2H jika belum
+        sudahP2HMessage.value = "";
       }
       
       // Cari riwayat P2H untuk kendaraan ini berdasarkan nomor lambung atau plat nomor
@@ -113,26 +122,28 @@ const handleCariKendaraan = async () => {
         return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
       });
 
-      // Set hasil pencarian dengan status yang KONSISTEN dari backend
+      // Set hasil pencarian dengan status P2H dari backend (sudah/belum)
       hasilPencarian.value = matchingReports.map(report => ({
         ...report,
-        status: p2hStatus // Gunakan status dari backend, bukan dari report
+        p2hStatus: p2hStatus // Status P2H hari ini dari backend (sudah/belum)
       }));
       
       // Jika tidak ada riwayat tapi kendaraan ditemukan, tampilkan minimal satu entry
+      // Akses data vehicle dari nested object vehicleData.vehicle
+      const vehicle = vehicleData.vehicle;
       if (hasilPencarian.value.length === 0) {
         hasilPencarian.value = [{
-          id: vehicleData.id,
+          id: vehicle?.id || vehicleData.id,
           tanggal: "-",
           waktu: "-",
           shift: "-",
-          nomor: vehicleData.no_lambung || vehicleData.plat_nomor || "-",
-          warnaLambung: vehicleData.warna_no_lambung || "-",
-          merek: vehicleData.merk,
-          tipe: vehicleData.vehicle_type,
-          platKendaraan: vehicleData.plat_nomor,
+          nomor: vehicle?.no_lambung || vehicle?.plat_nomor || "-",
+          warnaLambung: vehicle?.warna_no_lambung || "-",
+          merek: vehicle?.merk || "-",
+          tipe: vehicle?.vehicle_type || "-",
+          platKendaraan: vehicle?.plat_nomor || "-",
           hasil: "-",
-          status: p2hStatus, // Status dari backend
+          p2hStatus: p2hStatus, // Status P2H hari ini dari backend (sudah/belum)
           user: "-",
         }];
       }
@@ -310,7 +321,7 @@ onMounted(() => {
             <!-- Kendaraan yang SUDAH P2H -->
             <div
               v-for="kendaraan in hasilPencarian.filter(
-                (k) => k.status === 'sudah',
+                (k) => k.p2hStatus === 'sudah',
               )"
               :key="kendaraan.id"
               class="w-auto h-auto flex flex-col border-2 border-[#2DA642] bg-[#C5FFCF] rounded-xl shadow-lg max-w-full md:max-w-5xl p-4 md:p-4 gap-2"
@@ -354,7 +365,7 @@ onMounted(() => {
             <!-- Kendaraan yang BELUM P2H -->
             <div
               v-for="kendaraan in hasilPencarian.filter(
-                (k) => k.status === 'belum',
+                (k) => k.p2hStatus === 'belum',
               )"
               :key="kendaraan.id"
               class="w-auto h-auto flex flex-col border-2 border-[#A62D2D] bg-[#FFC5C5] rounded-xl shadow-lg max-w-full md:max-w-5xl p-4 md:p-4 gap-2"
@@ -399,7 +410,7 @@ onMounted(() => {
 
         <!-- Hasil Sudah P2H -->
         <div
-          v-if="selectedKendaraan && selectedKendaraan.status === 'sudah'"
+          v-if="selectedKendaraan && selectedKendaraan.p2hStatus === 'sudah'"
           class="w-300 h-auto flex flex-col border-2 border-[#2DA642] bg-[#C5FFCF] rounded-xl shadow-lg max-w-full md:max-w-5xl p-3 md:p-3"
         >
           <p class="font-bold text-black">
@@ -408,7 +419,7 @@ onMounted(() => {
         </div>
 
         <!-- Hasil Belum P2H -->
-        <div v-if="selectedKendaraan && selectedKendaraan.status === 'belum'">
+        <div v-if="selectedKendaraan && selectedKendaraan.p2hStatus === 'belum'">
           <div
             class="w-300 h-auto flex flex-col border-2 border-[#A62D2D] bg-[#FFC5C5] rounded-xl shadow-lg max-w-full md:max-w-5xl p-3 md:p-3"
           >

@@ -270,14 +270,37 @@ class P2HService:
         else:
             current_date = get_current_date_shift()  # Reset jam 05:00
         
+        logger.info(f"🔍 [P2H Service Debug] Vehicle: {vehicle.no_lambung}, shift_type: {vehicle.shift_type}")
+        logger.info(f"🔍 [P2H Service Debug] current_date (operational): {current_date}")
+        logger.info(f"🔍 [P2H Service Debug] current_time: {current_time}")
+        
         # Cek LANGSUNG dari P2HReport (lebih akurat daripada tracker)
         from app.models.p2h import P2HReport
         today_reports = db.query(P2HReport).filter(
             and_(
                 P2HReport.vehicle_id == vehicle_id,
-                P2HReport.submission_date == current_date
+                P2HReport.submission_date == current_date,
+                P2HReport.is_deleted == False  # Exclude soft-deleted reports
             )
         ).all()
+        
+        logger.info(f"🔍 [P2H Service Debug] Found {len(today_reports)} P2H reports for today")
+        for report in today_reports:
+            logger.info(f"🔍 [P2H Service Debug] Report: submission_date={report.submission_date}, shift={report.shift_number}")
+        
+        # Jika tidak ada report hari ini, cek semua report untuk vehicle ini (untuk debugging)
+        if not today_reports:
+            all_reports = db.query(P2HReport).filter(
+                and_(
+                    P2HReport.vehicle_id == vehicle_id,
+                    P2HReport.is_deleted == False
+                )
+            ).order_by(P2HReport.submission_date.desc()).limit(5).all()
+            
+            logger.warning(f"⚠️ [P2H Service Debug] No reports found for current_date={current_date}")
+            logger.warning(f"⚠️ [P2H Service Debug] Recent reports for this vehicle:")
+            for r in all_reports:
+                logger.warning(f"   - submission_date={r.submission_date} (type: {type(r.submission_date)}), shift={r.shift_number}")
         
         # Tentukan shift yang sudah done dari reports
         shifts_done = {1: False, 2: False, 3: False}
