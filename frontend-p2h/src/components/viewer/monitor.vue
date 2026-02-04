@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "../bar/header-user.vue";
 import Footer from "../bar/footer.vue";
@@ -20,6 +20,7 @@ const sortOrder = ref("desc");
 const isLoading = ref(false);
 const redirectMessage = ref("");
 const redirectCountdown = ref(5);
+let countdownInterval = null; // Track interval for cleanup
 
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
@@ -51,7 +52,7 @@ const riwayatData = computed(() => {
     tanggal: report.submission_date,
     waktu: report.submission_time,
     shift: report.shift_number,
-    nomor: report.vehicle.no_lambung,
+    nomor: report.vehicle.no_lambung || report.vehicle.plat_nomor || "-",
     warnaLambung: report.vehicle.warna_no_lambung || "-",
     merek: report.vehicle.merk,
     tipe: report.vehicle.vehicle_type,
@@ -67,56 +68,71 @@ const riwayatData = computed(() => {
   }));
 });
 
+// Clear countdown interval
+const clearCountdown = () => {
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+  redirectCountdown.value = 5;
+};
+
 const handleCariKendaraan = async () => {
-  if (nomorLambung.value.trim()) {
-    const normalizedInput = nomorLambung.value
-      .toLowerCase()
-      .replace(/[\s.-]/g, "");
+  // Clear previous countdown
+  clearCountdown();
+  redirectMessage.value = "";
+  hasilPencarian.value = [];
 
-    hasilPencarian.value = riwayatData.value.filter((report) => {
-      const normalizedNomor = report.nomor.toLowerCase().replace(/[\s.-]/g, "");
-      return normalizedNomor.includes(normalizedInput);
-    });
+  if (!nomorLambung.value.trim()) {
+    return;
+  }
 
-    // Jika tidak ada hasil (kendaraan belum di-P2H), redirect ke login
-    if (hasilPencarian.value.length === 0) {
-      try {
-        // Cek apakah kendaraan ada di database
-        const vehicleResponse = await api.get(
-          `/vehicles/lambung/${nomorLambung.value}`,
-        );
+  try {
+    // Step 1: Cek apakah kendaraan ada di database
+    const vehicleResponse = await api.get(
+      `/vehicles/lambung/${nomorLambung.value}`,
+    );
 
-        if (
-          vehicleResponse.data.payload &&
-          !vehicleResponse.data.payload.p2h_completed_today
-        ) {
-          // Kendaraan ada tapi belum di-P2H
+    const vehicleData = vehicleResponse.data.payload;
+    
+    if (vehicleData) {
+      // Kendaraan ditemukan
+      if (!vehicleData.p2h_completed_today) {
+        // Kendaraan ada tapi BELUM di-P2H hari ini
+        redirectCountdown.value = 5;
+        redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Anda akan diarahkan ke halaman login dalam ${redirectCountdown.value} detik untuk mengisi P2H.`;
+
+        // Start countdown dan redirect
+        countdownInterval = setInterval(() => {
+          redirectCountdown.value--;
           redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Anda akan diarahkan ke halaman login dalam ${redirectCountdown.value} detik untuk mengisi P2H.`;
 
-          // Countdown dan redirect
-          const countdownInterval = setInterval(() => {
-            redirectCountdown.value--;
-            redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Anda akan diarahkan ke halaman login dalam ${redirectCountdown.value} detik untuk mengisi P2H.`;
+          if (redirectCountdown.value <= 0) {
+            clearCountdown();
+            router.push("/login");
+          }
+        }, 1000);
+      } else {
+        // Kendaraan SUDAH di-P2H hari ini - tampilkan hasil pencarian dari riwayat
+        const normalizedInput = nomorLambung.value
+          .toLowerCase()
+          .replace(/[\s.-]/g, "");
 
-            if (redirectCountdown.value <= 0) {
-              clearInterval(countdownInterval);
-              router.push("/login");
-            }
-          }, 1000);
-        } else {
-          redirectMessage.value = `Tidak ada data P2H untuk kendaraan nomor lambung: ${nomorLambung.value}`;
+        hasilPencarian.value = riwayatData.value.filter((report) => {
+          const normalizedNomor = (report.nomor || "").toLowerCase().replace(/[\s.-]/g, "");
+          const normalizedPlat = (report.platKendaraan || "").toLowerCase().replace(/[\s.-]/g, "");
+          return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
+        });
+
+        if (hasilPencarian.value.length === 0) {
+          redirectMessage.value = `Kendaraan ${nomorLambung.value} sudah P2H hari ini, namun data riwayat tidak ditemukan.`;
         }
-      } catch (error) {
-        // Kendaraan tidak ditemukan sama sekali
-        redirectMessage.value = `Kendaraan dengan nomor lambung ${nomorLambung.value} tidak ditemukan dalam sistem.`;
       }
-    } else {
-      redirectMessage.value = "";
-      redirectCountdown.value = 5;
     }
-  } else {
-    hasilPencarian.value = [];
-    redirectMessage.value = "";
+  } catch (error) {
+    // Kendaraan tidak ditemukan di database
+    console.error("Error searching vehicle:", error);
+    redirectMessage.value = `Kendaraan dengan nomor lambung/plat "${nomorLambung.value}" tidak ditemukan dalam sistem.`;
   }
 };
 
@@ -188,6 +204,11 @@ const previousPage = () => {
 // Fetch data on mount
 onMounted(() => {
   fetchP2HReports();
+});
+
+// Cleanup on unmount
+onBeforeUnmount(() => {
+  clearCountdown();
 });
 </script>
 
