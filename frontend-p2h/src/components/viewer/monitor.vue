@@ -162,9 +162,26 @@ const sortByDate = () => {
   sortOrder.value = sortOrder.value === "desc" ? "asc" : "desc";
 };
 
+// Filter riwayat berdasarkan pencarian
+const filteredRiwayatData = computed(() => {
+  if (!nomorLambung.value.trim()) {
+    return riwayatData.value;
+  }
+  
+  const normalizedInput = nomorLambung.value
+    .toLowerCase()
+    .replace(/[\s.-]/g, "");
+  
+  return riwayatData.value.filter((report) => {
+    const normalizedNomor = (report.nomor || "").toLowerCase().replace(/[\s.-]/g, "");
+    const normalizedPlat = (report.platKendaraan || "").toLowerCase().replace(/[\s.-]/g, "");
+    return normalizedNomor.includes(normalizedInput) || normalizedPlat.includes(normalizedInput);
+  });
+});
+
 // Computed sorted data
 const sortedRiwayatData = computed(() => {
-  const data = [...riwayatData.value];
+  const data = [...filteredRiwayatData.value];
   return data.sort((a, b) => {
     const dateA = new Date(`${a.tanggal}T${a.waktu}`);
     const dateB = new Date(`${b.tanggal}T${b.waktu}`);
@@ -187,7 +204,7 @@ const getHasilStyle = (hasil) => {
 
 // Pagination computed
 const totalPages = computed(() =>
-  Math.ceil(sortedRiwayatData.value.length / itemsPerPage.value),
+  Math.ceil(filteredRiwayatData.value.length / itemsPerPage.value),
 );
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
@@ -201,7 +218,7 @@ const startIndex = computed(
 const endIndex = computed(() =>
   Math.min(
     currentPage.value * itemsPerPage.value,
-    sortedRiwayatData.value.length,
+    filteredRiwayatData.value.length,
   ),
 );
 
@@ -655,7 +672,7 @@ onMounted(() => {
             <span
               class="text-xs md:text-sm text-gray-700 font-medium order-2 md:order-1"
             >
-              {{ startIndex }} - {{ endIndex }} of {{ riwayatData.length }}
+              {{ startIndex }} - {{ endIndex }} of {{ filteredRiwayatData.length }}
             </span>
             <div class="flex gap-2 order-1 md:order-2">
               <button
