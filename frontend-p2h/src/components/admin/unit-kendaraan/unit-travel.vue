@@ -26,6 +26,11 @@ import { useSidebarProvider } from "../../../composables/useSidebar";
 // Provide sidebar state untuk header dan aside
 const { isSidebarOpen } = useSidebarProvider();
 
+const closeSidebar = () => {
+  // Sidebar akan di-close melalui composable
+  // Ini bisa digunakan jika diperlukan untuk menutup sidebar
+};
+
 const selectedRowIds = ref([]);
 const selectAllChecked = ref(false);
 const searchQuery = ref("");
@@ -409,7 +414,9 @@ const handleTambahUnitKendaraan = async () => {
 // Edit kendaraan (Travel - tanpa nomor lambung)
 const editKendaraan = async (rowId) => {
   try {
+    console.log("📝 [Travel] Editing vehicle:", rowId);
     const response = await apiService.vehicles.getById(rowId);
+    console.log("📥 [Travel] Vehicle data fetched:", response.data);
 
     if (response.data.status === "success" || response.data.success) {
       const vehicle = response.data.payload;
@@ -443,11 +450,15 @@ const editKendaraan = async (rowId) => {
       }
       showUserDropdown.value = false;
 
+      console.log("✅ [Travel] Edit form opened successfully");
       tambahUnitKendaraan.value = true;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch vehicle data");
     }
   } catch (error) {
-    console.error("Error fetching vehicle detail:", error);
-    alert("Gagal mengambil data kendaraan");
+    console.error("❌ [Travel] Error fetching vehicle detail:", error);
+    errorMessage.value = error.response?.data?.detail || error.response?.data?.message || error.message || "Gagal mengambil data kendaraan";
+    alert(`Error: ${errorMessage.value}`);
   }
 };
 
@@ -1097,7 +1108,9 @@ const getDateStyle = (dateString) => {
                         class="px-4 py-3 text-gray-800 text-xs whitespace-nowrap min-w-16"
                       >
                         <button
+                          @click="editKendaraan(row.id)"
                           class="p-1 hover:bg-gray-100 rounded transition"
+                          title="Edit unit kendaraan"
                         >
                           <PencilSquareIcon
                             class="w-4.5 h-4.5 text-black hover:text-blue-800"
