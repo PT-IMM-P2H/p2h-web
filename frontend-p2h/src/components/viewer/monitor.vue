@@ -72,6 +72,7 @@ const handleCariKendaraan = async () => {
   sudahP2HMessage.value = "";
   hasilPencarian.value = [];
   foundVehicleData.value = null;
+  selectedKendaraan.value = null; // Reset selected kendaraan agar box hasil di-hide
 
   if (!nomorLambung.value.trim()) {
     lastSearchQuery.value = "";
@@ -285,31 +286,6 @@ onMounted(() => {
               >
                 Cari
               </button>
-            </div>
-          </div>
-
-          <!-- NOTIFIKASI SUDAH P2H (kendaraan sudah P2H hari ini) -->
-          <div
-            v-if="sudahP2HMessage"
-            class="mt-4 p-4 bg-green-50 border-2 border-green-400 rounded-xl"
-          >
-            <div class="flex items-start gap-3">
-              <svg
-                class="w-6 h-6 text-green-600 shrink-0 mt-0.5"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              <div class="flex-1">
-                <p class="text-sm font-semibold text-green-800">
-                  {{ sudahP2HMessage }}
-                </p>
-              </div>
             </div>
           </div>
 
