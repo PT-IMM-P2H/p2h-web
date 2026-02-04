@@ -45,11 +45,15 @@ async def get_vehicle_by_lambung(
     current_shift = p2h_status["current_shift"]
     can_submit, submit_message = p2h_service.can_submit_p2h(db, vehicle, current_shift)
     
+    # Cek apakah sudah P2H hari ini (minimal 1 shift sudah selesai)
+    # Green atau Yellow berarti ada shift yang sudah dikerjakan
+    p2h_completed_today = p2h_status["color_code"] in ["green", "yellow"]
+    
     # Gabungkan data kendaraan dan status P2H dalam satu payload
     result = {
         "vehicle": VehicleResponse.model_validate(vehicle).model_dump(mode='json'),
         "can_submit_p2h": can_submit,
-        "p2h_completed_today": p2h_status["color_code"] == "green",
+        "p2h_completed_today": p2h_completed_today,
         "current_shift": current_shift,
         "shifts_completed": p2h_status["shifts_completed"],
         "status_p2h": p2h_status["status_p2h"],
