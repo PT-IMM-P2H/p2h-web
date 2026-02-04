@@ -35,6 +35,7 @@ const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const tambahUnitKendaraan = ref(false);
 const showFilter = ref(false);
+const sortField = ref("nomorLambung");
 const sortOrder = ref("asc");
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -296,11 +297,14 @@ const fetchVehicles = async () => {
     const response = await apiService.vehicles.getAll({ limit: 500 });
 
     if (response.data.status === "success" || response.data.success) {
-      // Filter hanya kategori IMM dan is_active = true
+      // Filter hanya kategori IMM
       const allVehicles = response.data.payload;
       const immVehicles = allVehicles.filter(
-        (v) => v.kategori_unit === "IMM" || !v.kategori_unit,
+        (v) => v.kategori_unit === "IMM"
       );
+
+      console.log("✅ [PT] Vehicles fetched:", immVehicles.length, "PT vehicles (IMM only)");
+      console.log("📊 [PT] Total vehicles from backend:", allVehicles.length, "(filtered TRAVEL:", allVehicles.filter(v => v.kategori_unit === "TRAVEL").length, ")");
 
       tableData.value = immVehicles.map((vehicle) => ({
         id: vehicle.id,
@@ -673,15 +677,36 @@ const filteredTableData = computed(() => {
   return filtered;
 });
 
+// Sorted table data based on current sort field and order
+const sortedTableData = computed(() => {
+  const sorted = [...filteredTableData.value];
+  
+  if (sortField.value && sortOrder.value) {
+    sorted.sort((a, b) => {
+      const aValue = a[sortField.value];
+      const bValue = b[sortField.value];
+      
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        const comparison = aValue.localeCompare(bValue);
+        return sortOrder.value === "asc" ? comparison : -comparison;
+      }
+      
+      return 0;
+    });
+  }
+  
+  return sorted;
+});
+
 // Pagination computed
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return filteredTableData.value.slice(start, end);
+  return sortedTableData.value.slice(start, end);
 });
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredTableData.value.length / itemsPerPage.value);
+  return Math.ceil(sortedTableData.value.length / itemsPerPage.value);
 });
 
 const startIndex = computed(() => {
@@ -691,7 +716,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length,
+    sortedTableData.value.length,
   );
 });
 
@@ -708,16 +733,13 @@ const nextPage = () => {
 };
 
 const sortByName = () => {
-  if (sortOrder.value === "asc") {
-    sortOrder.value = "desc";
-    tableData.value = [...tableData.value].sort((a, b) =>
-      b.nomorLambung.localeCompare(a.nomorLambung),
-    );
+  if (sortField.value === "nomorLambung") {
+    // Toggle sort order jika field sudah sama
+    sortOrder.value = sortOrder.value === "asc" ? "desc" : "asc";
   } else {
+    // Set field baru dengan order ascending
+    sortField.value = "nomorLambung";
     sortOrder.value = "asc";
-    tableData.value = [...tableData.value].sort((a, b) =>
-      a.nomorLambung.localeCompare(b.nomorLambung),
-    );
   }
   currentPage.value = 1;
 };
@@ -1209,7 +1231,7 @@ const getDateStyle = (dateString) => {
                   </button>
                   <span class="text-sm text-gray-700 font-medium"
                     >{{ startIndex }} - {{ endIndex }} dari
-                    {{ filteredTableData.length }}</span
+                    {{ sortedTableData.length }}</span
                   >
                   <button
                     @click="nextPage"

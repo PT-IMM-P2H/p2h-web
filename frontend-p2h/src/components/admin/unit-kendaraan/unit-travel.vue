@@ -38,6 +38,7 @@ const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const tambahUnitKendaraan = ref(false);
 const showFilter = ref(false);
+const sortField = ref("nomorPolisi");
 const sortOrder = ref("asc");
 const isLoading = ref(false);
 const errorMessage = ref("");
@@ -289,15 +290,17 @@ const fetchVehicles = async () => {
     const response = await apiService.vehicles.getAll({ limit: 500 });
 
     if (response.data.status === "success" || response.data.success) {
-      // Filter hanya kategori Travel
+      // Filter hanya kategori TRAVEL (strict, no fallback)
       const allVehicles = response.data.payload.filter(
-        (v) => v.kategori_unit === "TRAVEL",
+        (v) => v.kategori_unit === "TRAVEL"
       );
-      console.log(
-        "✅ [Travel] Vehicles fetched:",
-        allVehicles.length,
-        "vehicles",
-      );
+      
+      const totalBackend = response.data.payload.length;
+      const imm = response.data.payload.filter(v => v.kategori_unit === "IMM").length;
+      const uncat = response.data.payload.filter(v => !v.kategori_unit).length;
+      
+      console.log("✅ [Travel] Vehicles fetched:", allVehicles.length, "TRAVEL vehicles");
+      console.log("📊 [Travel] Backend stats - Total:", totalBackend, "| IMM:", imm, "| TRAVEL:", allVehicles.length, "| Uncategorized:", uncat);
 
       tableData.value = allVehicles.map((vehicle) => ({
         id: vehicle.id,
@@ -732,15 +735,36 @@ const filteredTableData = computed(() => {
   return filtered;
 });
 
+// Sorted table data based on current sort field and order
+const sortedTableData = computed(() => {
+  const sorted = [...filteredTableData.value];
+  
+  if (sortField.value && sortOrder.value) {
+    sorted.sort((a, b) => {
+      const aValue = a[sortField.value];
+      const bValue = b[sortField.value];
+      
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        const comparison = aValue.localeCompare(bValue);
+        return sortOrder.value === "asc" ? comparison : -comparison;
+      }
+      
+      return 0;
+    });
+  }
+  
+  return sorted;
+});
+
 // Pagination computed
 const paginatedData = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return filteredTableData.value.slice(start, end);
+  return sortedTableData.value.slice(start, end);
 });
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredTableData.value.length / itemsPerPage.value);
+  return Math.ceil(sortedTableData.value.length / itemsPerPage.value);
 });
 
 const startIndex = computed(() => {
@@ -750,7 +774,7 @@ const startIndex = computed(() => {
 const endIndex = computed(() => {
   return Math.min(
     currentPage.value * itemsPerPage.value,
-    filteredTableData.value.length,
+    sortedTableData.value.length,
   );
 });
 
@@ -1154,7 +1178,7 @@ const getDateStyle = (dateString) => {
                   </button>
                   <span class="text-sm text-gray-700 font-medium"
                     >{{ startIndex }} - {{ endIndex }} dari
-                    {{ filteredTableData.length }}</span
+                    {{ sortedTableData.length }}</span
                   >
                   <button
                     @click="nextPage"
