@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import NavBar from "../bar/header-user.vue";
 import Footer from "../bar/footer.vue";
@@ -19,8 +19,7 @@ const itemsPerPage = ref(10);
 const sortOrder = ref("desc");
 const isLoading = ref(false);
 const redirectMessage = ref("");
-const redirectCountdown = ref(5);
-let countdownInterval = null; // Track interval for cleanup
+const showLoginButton = ref(false); // Show button to go to login
 
 // Data P2H Reports dari backend
 const p2hReports = ref([]);
@@ -68,19 +67,10 @@ const riwayatData = computed(() => {
   }));
 });
 
-// Clear countdown interval
-const clearCountdown = () => {
-  if (countdownInterval) {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-  }
-  redirectCountdown.value = 5;
-};
-
 const handleCariKendaraan = async () => {
-  // Clear previous countdown
-  clearCountdown();
+  // Reset state
   redirectMessage.value = "";
+  showLoginButton.value = false;
   hasilPencarian.value = [];
 
   if (!nomorLambung.value.trim()) {
@@ -99,19 +89,8 @@ const handleCariKendaraan = async () => {
       // Kendaraan ditemukan
       if (!vehicleData.p2h_completed_today) {
         // Kendaraan ada tapi BELUM di-P2H hari ini
-        redirectCountdown.value = 5;
-        redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Anda akan diarahkan ke halaman login dalam ${redirectCountdown.value} detik untuk mengisi P2H.`;
-
-        // Start countdown dan redirect
-        countdownInterval = setInterval(() => {
-          redirectCountdown.value--;
-          redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Anda akan diarahkan ke halaman login dalam ${redirectCountdown.value} detik untuk mengisi P2H.`;
-
-          if (redirectCountdown.value <= 0) {
-            clearCountdown();
-            router.push("/login");
-          }
-        }, 1000);
+        redirectMessage.value = `Kendaraan ${nomorLambung.value} belum melakukan P2H hari ini. Silakan login untuk mengisi P2H.`;
+        showLoginButton.value = true;
       } else {
         // Kendaraan SUDAH di-P2H hari ini - tampilkan hasil pencarian dari riwayat
         const normalizedInput = nomorLambung.value
@@ -205,11 +184,6 @@ const previousPage = () => {
 onMounted(() => {
   fetchP2HReports();
 });
-
-// Cleanup on unmount
-onBeforeUnmount(() => {
-  clearCountdown();
-});
 </script>
 
 <template>
@@ -276,6 +250,14 @@ onBeforeUnmount(() => {
                 <p class="text-sm font-semibold text-yellow-800">
                   {{ redirectMessage }}
                 </p>
+                <!-- Button to login page -->
+                <button
+                  v-if="showLoginButton"
+                  @click="router.push('/login')"
+                  class="mt-3 px-6 py-2 bg-[#2eb745] text-white rounded-lg text-sm font-semibold cursor-pointer transition-colors duration-300 hover:bg-[#24a635]"
+                >
+                  Isi Form P2H
+                </button>
               </div>
             </div>
           </div>
