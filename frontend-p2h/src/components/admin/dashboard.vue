@@ -196,15 +196,23 @@ const fetchTotalVehicles = async () => {
 // Fetch monthly reports dari backend
 const fetchMonthlyReports = async () => {
   try {
-    const currentYear = new Date().getFullYear();
-    const params = {
-      year: currentYear,
-    };
+    const params = {};
+
+    // Gunakan periode yang dipilih user, fallback ke tahun saat ini
+    if (annualStartPeriod.value && annualEndPeriod.value) {
+      params.start_period = annualStartPeriod.value; // Format: YYYY-MM
+      params.end_period = annualEndPeriod.value;     // Format: YYYY-MM
+    } else {
+      // Fallback ke tahun saat ini jika periode tidak dipilih
+      const currentYear = new Date().getFullYear();
+      params.year = currentYear;
+    }
 
     if (selectedVehicleType.value && selectedVehicleType.value !== "") {
       params.vehicle_type = selectedVehicleType.value;
     }
 
+    console.log("📊 Fetching monthly reports with params:", params);
     const response = await api.get("/dashboard/monthly-reports", { params });
     console.log("Monthly reports response:", response.data);
     if (response.data.status === "success") {
@@ -743,6 +751,18 @@ watch([a, u], () => {
   }
 });
 
+// Watch annual period filters untuk auto-update saat periode berubah
+watch([annualStartPeriod, annualEndPeriod], () => {
+  console.log("📅 Annual period filter changed:", { 
+    start: annualStartPeriod.value, 
+    end: annualEndPeriod.value 
+  });
+  // Auto fetch monthly data saat periode berubah
+  if ((annualStartPeriod.value || annualEndPeriod.value) && chartInstance) {
+    fetchMonthlyReports();
+  }
+});
+
 // Update chart dengan data baru
 const updateChart = () => {
   if (!chartInstance) {
@@ -801,7 +821,57 @@ const resetFilter = () => {
   fetchMonthlyReports();
 };
 
+// Fungsi untuk apply filter annual
+const applyAnnualFilter = async () => {
+  if (!annualStartPeriod.value || !annualEndPeriod.value) {
+    alert("Silakan pilih periode awal dan akhir terlebih dahulu");
+    return;
+  }
+  
+  if (annualStartPeriod.value > annualEndPeriod.value) {
+    alert("Periode awal tidak boleh lebih besar dari periode akhir");
+    return;
+  }
+  
+  console.log("🔄 Applying annual filter:", {
+    start: annualStartPeriod.value,
+    end: annualEndPeriod.value
+  });
+  
+  await fetchMonthlyReports();
+};
+
+// Fungsi untuk reset filter annual
+const resetAnnualFilter = () => {
+  const currentYear = new Date().getFullYear();
+  annualStartPeriod.value = `${currentYear}-01`;
+  annualEndPeriod.value = `${currentYear}-12`;
+  
+  console.log("🔄 Resetting annual filter to default");
+  fetchMonthlyReports();
+};
+
+// Fungsi untuk format periode display
+const formatPeriod = (period) => {
+  if (!period) return "";
+  const [year, month] = period.split("-");
+  const monthNames = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  return `${monthNames[parseInt(month) - 1]} ${year}`;
+};
+
 onMounted(async () => {
+  // Initialize default annual periods
+  const currentYear = new Date().getFullYear();
+  if (!annualStartPeriod.value) {
+    annualStartPeriod.value = `${currentYear}-01`;
+  }
+  if (!annualEndPeriod.value) {
+    annualEndPeriod.value = `${currentYear}-12`;
+  }
+
   // Fetch data dari backend dulu
   await fetchStatistics(); // Ini akan update pieChartData dan init pie chart
   await fetchTotalVehicles(); // Fetch total vehicles dari unit-pt dan unit-travel
@@ -1121,7 +1191,7 @@ onBeforeUnmount(() => {
                 <h2 class="text-lg font-bold text-gray-800 mb-2">
                   {{ t("dashboard.p2hAnnualChart") }}
                 </h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div>
                     <label
                       for="annual-start-period"
@@ -1133,7 +1203,7 @@ onBeforeUnmount(() => {
                       v-model="annualStartPeriod"
                       type="month"
                       placeholder="Januari 2025"
-                      class="w-full p-2 text-sm border border-[#C3C3C3] bg-[#ffffff] text-[#777777] rounded-md cursor-pointer"
+                      class="w-full p-2 text-sm border border-[#C3C3C3] bg-[#ffffff] text-[#777777] rounded-md cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
                   <div>
@@ -1147,9 +1217,25 @@ onBeforeUnmount(() => {
                       v-model="annualEndPeriod"
                       type="month"
                       placeholder="Januari 2026"
-                      class="w-full p-2 text-sm border border-[#C3C3C3] bg-[#ffffff] text-[#777777] rounded-md cursor-pointer"
+                      class="w-full p-2 text-sm border border-[#C3C3C3] bg-[#ffffff] text-[#777777] rounded-md cursor-pointer focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                  <button
+                    type="button"
+                    @click="applyAnnualFilter"
+                    class="w-full p-2 bg-indigo-600 text-white text-sm font-semibold rounded-md hover:bg-indigo-700 transition-colors duration-200"
+                  >
+                    {{ t("dashboard.applyFilter") }}
+                  </button>
+                  <button
+                    type="button"
+                    @click="resetAnnualFilter"
+                    class="w-full p-2 bg-gray-300 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-400 transition-colors duration-200"
+                  >
+                    {{ t("dashboard.resetFilter") }}
+                  </button>
                 </div>
 
                 <!-- Grafik tahunan -->
@@ -1162,6 +1248,9 @@ onBeforeUnmount(() => {
                         <h6 class="text-gray-900 font-bold text-lg">
                           {{ t("dashboard.vehicleStatusMonthly") }}
                         </h6>
+                        <p class="text-sm text-gray-600 mt-1" v-if="annualStartPeriod && annualEndPeriod">
+                          Periode: {{ formatPeriod(annualStartPeriod) }} - {{ formatPeriod(annualEndPeriod) }}
+                        </p>
                       </div>
                     </div>
                     <div class="w-full h-80 relative">
