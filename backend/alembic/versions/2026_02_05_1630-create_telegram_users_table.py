@@ -1,7 +1,7 @@
 """Create telegram_users table for tracking user subscriptions to bot
 
-Revision ID: 2026_02_05_1630
-Revises: 2026_02_05_1526
+Revision ID: telegram_users_001
+Revises: a553b45fe239
 Create Date: 2026-02-05 16:30:00.000000
 
 """
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '2026_02_05_1630'
-down_revision = '2026_02_05_1526'
+revision = 'telegram_users_001'
+down_revision = 'a553b45fe239'
 branch_labels = None
 depends_on = None
 
