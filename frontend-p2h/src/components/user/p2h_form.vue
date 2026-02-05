@@ -108,9 +108,9 @@ const validateShiftTime = () => {
 
   // Validasi berdasarkan shift yang dipilih
   if (selected === "non-shift" || selected === "0") {
-    // Non-Shift: 00:00 - 16:00
-    if (hour >= 16) {
-      shiftWarning.value = `⚠️ Non-Shift hanya bisa diisi sebelum jam 16:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+    // Non-Shift: 06:00 - 16:00 (sesuai backend)
+    if (hour < 6 || hour >= 16) {
+      shiftWarning.value = `⚠️ Non-Shift hanya bisa diisi pada jam 06:00-16:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
       return false;
     }
   } else if (selected === "long-shift-1" || selected === "11") {
@@ -384,9 +384,15 @@ const handleSubmitReport = async () => {
       router.push({ name: "hasil-form" });
     } catch (error) {
       console.error("❌ Submit error:", error.response?.data);
-      alert(
-        "Error: " + (error.response?.data?.detail || "Gagal mengirim laporan"),
-      );
+      let errorMessage = "Gagal mengirim laporan";
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+      
+      alert("Error: " + errorMessage);
     } finally {
       isSubmitting.value = false;
     }
@@ -565,7 +571,7 @@ onMounted(() => {
                   Shift 3 (23:00 - 07:00)
                 </option>
                 <option value="non-shift" class="text-zinc-900">
-                  Non Shift (07:00 - 16:00)
+                  Non Shift (06:00 - 16:00)
                 </option>
                 <option value="long-shift-1" class="text-zinc-900">
                   Long Shift 1 (07:00 - 19:00)
