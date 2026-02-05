@@ -40,8 +40,8 @@ class DashboardRepository:
         Returns:
             Dictionary with statistics
         """
-        # Total vehicles with optional vehicle_type filter
-        vehicle_query = db.query(func.count(Vehicle.id))
+        # Total vehicles with optional vehicle_type filter - ONLY ACTIVE (not soft deleted)
+        vehicle_query = db.query(func.count(Vehicle.id)).filter(Vehicle.is_active == True)
         if vehicle_type:
             vehicle_query = vehicle_query.filter(Vehicle.vehicle_type == vehicle_type)
         total_vehicles = vehicle_query.scalar() or 0
@@ -120,9 +120,10 @@ class DashboardRepository:
         Returns:
             Dictionary with counts by status
         """
-        # Base query with vehicle type join
+        # Base query with vehicle type join - ONLY ACTIVE VEHICLES
         query = db.query(P2HReport).join(Vehicle).filter(
-            Vehicle.vehicle_type == vehicle_type
+            Vehicle.vehicle_type == vehicle_type,
+            Vehicle.is_active == True
         )
         
         # Apply date filters
@@ -145,7 +146,7 @@ class DashboardRepository:
     
     def get_vehicle_types(self, db: Session) -> list:
         """
-        Get all distinct vehicle types from database.
+        Get all distinct vehicle types from database (only active vehicles).
         
         Args:
             db: Database session
@@ -153,7 +154,7 @@ class DashboardRepository:
         Returns:
             List of vehicle type strings
         """
-        result = db.query(Vehicle.vehicle_type).distinct().all()
+        result = db.query(Vehicle.vehicle_type).filter(Vehicle.is_active == True).distinct().all()
         return [row[0] for row in result if row[0]]
 
 

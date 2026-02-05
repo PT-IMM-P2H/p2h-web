@@ -31,6 +31,7 @@ class P2HRepository(BaseRepository[P2HReport]):
     ) -> Query:
         """
         Get base query for P2H reports with optional filters.
+        ONLY INCLUDES ACTIVE VEHICLES (is_active = True)
         
         Args:
             db: Database session
@@ -43,7 +44,10 @@ class P2HRepository(BaseRepository[P2HReport]):
         Returns:
             SQLAlchemy Query object
         """
-        query = db.query(P2HReport)
+        from app.models.vehicle import Vehicle
+        
+        # Always join with Vehicle and filter for active vehicles
+        query = db.query(P2HReport).join(Vehicle).filter(Vehicle.is_active == True)
         
         # Apply filters directly - no conditional checking
         if start_date is not None:
@@ -59,8 +63,7 @@ class P2HRepository(BaseRepository[P2HReport]):
             query = query.filter(P2HReport.overall_status == status)
         
         if vehicle_type is not None:
-            from app.models.vehicle import Vehicle
-            query = query.join(Vehicle).filter(Vehicle.vehicle_type == vehicle_type)
+            query = query.filter(Vehicle.vehicle_type == vehicle_type)
         
         return query
     
@@ -97,6 +100,7 @@ class P2HRepository(BaseRepository[P2HReport]):
     ) -> dict:
         """
         Get P2H report counts by status for a specific month.
+        ONLY INCLUDES ACTIVE VEHICLES (is_active = True)
         
         Args:
             db: Database session
@@ -109,17 +113,18 @@ class P2HRepository(BaseRepository[P2HReport]):
         """
         from app.models.vehicle import Vehicle
         
-        # Base query with month/year filter
-        query = db.query(P2HReport).filter(
+        # Base query with month/year filter and active vehicles only
+        query = db.query(P2HReport).join(Vehicle).filter(
             and_(
                 extract('year', P2HReport.submission_date) == year,
-                extract('month', P2HReport.submission_date) == month
+                extract('month', P2HReport.submission_date) == month,
+                Vehicle.is_active == True
             )
         )
         
-        # Join with vehicle if vehicle_type filter is provided
+        # Filter by vehicle_type if provided
         if vehicle_type is not None:
-            query = query.join(Vehicle).filter(Vehicle.vehicle_type == vehicle_type)
+            query = query.filter(Vehicle.vehicle_type == vehicle_type)
         
         # Count by status
         normal = query.filter(P2HReport.overall_status == 'normal').count() or 0
@@ -135,6 +140,7 @@ class P2HRepository(BaseRepository[P2HReport]):
     def get_vehicles_reported_on_date(self, db: Session, report_date: date) -> int:
         """
         Count distinct vehicles that have reports on a specific date.
+        ONLY COUNTS ACTIVE VEHICLES (is_active = True)
         
         Args:
             db: Database session
@@ -143,8 +149,11 @@ class P2HRepository(BaseRepository[P2HReport]):
         Returns:
             Count of distinct vehicles
         """
-        return db.query(func.count(func.distinct(P2HReport.vehicle_id))).filter(
-            func.date(P2HReport.submission_date) == report_date
+        from app.models.vehicle import Vehicle
+        
+        return db.query(func.count(func.distinct(P2HReport.vehicle_id))).join(Vehicle).filter(
+            func.date(P2HReport.submission_date) == report_date,
+            Vehicle.is_active == True
         ).scalar() or 0
     
     def get_daily_tracker(
