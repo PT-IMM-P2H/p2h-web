@@ -185,22 +185,26 @@ const formData = ref({
 
 // Computed: filtered users for combobox
 const filteredUsers = computed(() => {
-  if (!userSearchQuery.value.trim()) {
+  if (!userSearchQuery.value || !userSearchQuery.value.trim()) {
     return allUsers.value;
   }
   const query = userSearchQuery.value.toLowerCase();
-  return allUsers.value.filter(user =>
-    user.full_name.toLowerCase().includes(query)
-  );
+  return allUsers.value.filter(user => {
+    // Safety check: ensure user.full_name exists before calling toLowerCase
+    if (!user.full_name) return false;
+    return user.full_name.toLowerCase().includes(query);
+  });
 });
 
 // Check if search query matches any existing user
 const hasExactMatch = computed(() => {
-  if (!userSearchQuery.value.trim()) return true;
+  if (!userSearchQuery.value || !userSearchQuery.value.trim()) return true;
   const query = userSearchQuery.value.toLowerCase();
-  return allUsers.value.some(user =>
-    user.full_name.toLowerCase() === query
-  );
+  return allUsers.value.some(user => {
+    // Safety check: ensure user.full_name exists before calling toLowerCase
+    if (!user.full_name) return false;
+    return user.full_name.toLowerCase() === query;
+  });
 });
 
 // User combobox functions
