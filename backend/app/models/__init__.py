@@ -17,7 +17,10 @@ from app.models.p2h import (
 )
 
 # Jika Anda memiliki model notifikasi (seperti yang ada di struktur folder Anda)
-from app.models.notification import TelegramNotification, TelegramUser
+from app.models.notification import TelegramNotification
+
+# Model untuk multi-user Telegram subscribers
+from app.models.telegram_subscriber import TelegramSubscriber
 
 # __all__ memastikan bahwa saat kita import * dari models, 
 # semua class ini akan ikut terbawa.
@@ -31,5 +34,6 @@ __all__ = [
     "P2HDailyTracker",
     "InspectionStatus",
     "FinalStatus",
-    "TelegramNotification"
+    "TelegramNotification",
+    "TelegramSubscriber"
 ]
