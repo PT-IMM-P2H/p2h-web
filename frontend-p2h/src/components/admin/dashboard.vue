@@ -122,6 +122,7 @@ const allVehicles = ref([]);
 // Fetch semua vehicles dari tabel aktual (yang tidak soft-deleted)
 // This function fetches the ACTUAL vehicles from the database that have not been soft-deleted
 // Unlike the backend statistics endpoint, this directly counts only active vehicles in the table
+// Only counts vehicles with valid kategori_unit (IMM or TRAVEL)
 const fetchAllVehicles = async () => {
   try {
     console.log("🚗 Fetching all active vehicles...");
@@ -129,9 +130,21 @@ const fetchAllVehicles = async () => {
     const response = await apiService.vehicles.getAll({ limit: 1000 });
     
     if (response.data.status === "success" || response.data.success) {
-      allVehicles.value = response.data.payload || [];
+      const allResponseVehicles = response.data.payload || [];
+      
+      // Filter hanya vehicles dengan kategori_unit yang valid (IMM atau TRAVEL)
+      // Exclude vehicles dengan kategori_unit undefined/null untuk menghindari double count
+      allVehicles.value = allResponseVehicles.filter(
+        (v) => v.kategori_unit === "IMM" || v.kategori_unit === "TRAVEL"
+      );
+      
       const totalCount = allVehicles.value.length;
+      const imm = allResponseVehicles.filter(v => v.kategori_unit === "IMM").length;
+      const travel = allResponseVehicles.filter(v => v.kategori_unit === "TRAVEL").length;
+      const uncat = allResponseVehicles.filter(v => !v.kategori_unit).length;
+      
       console.log("✅ Total vehicles from table (non-deleted):", totalCount);
+      console.log("📊 Dashboard vehicle breakdown - Total:", allResponseVehicles.length, "| IMM:", imm, "| TRAVEL:", travel, "| Uncategorized:", uncat);
       
       // Update statisticsData.totalVehicles dengan nilai dari tabel aktual
       // This ensures the dashboard shows only vehicles that actually exist in the table
