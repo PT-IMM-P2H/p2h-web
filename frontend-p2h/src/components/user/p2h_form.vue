@@ -205,7 +205,7 @@ const handleSearchVehicle = async () => {
       questions.value = [];
     }
   } catch (error) {
-    alert(error.response?.data?.detail || "Nomor lambung tidak ditemukan");
+    alert(error.response?.data?.detail || "Nomor lambung/polisi tidak ditemukan");
     vehicleData.value = null;
     p2hStatus.value = null;
     questions.value = [];
@@ -573,11 +573,14 @@ onMounted(() => {
             Jenis Kendaraan
           </h2>
           <div class="space-y-2">
+            <p class="text-xs text-zinc-600 font-medium mb-2">
+              💡 Masukkan <span class="font-bold text-purple-600">Nomor Lambung</span> (contoh: P.309) atau <span class="font-bold text-purple-600">Nomor Polisi</span> (contoh: KT1234AB)
+            </p>
             <div class="flex gap-2">
               <input
                 v-model="searchInput"
                 @keyup.enter="handleSearchVehicle"
-                placeholder="Cari nomor lambung"
+                placeholder="Cari nomor lambung atau nomor polisi"
                 class="text-sm flex-1 p-3 bg-white border-2 border-zinc-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none font-semibold text-zinc-900 placeholder-zinc-400"
               />
               <button
@@ -602,6 +605,7 @@ onMounted(() => {
           >
             <div class="space-y-2">
               <p
+                v-if="vehicleData.no_lambung"
                 class="text-sm font-bold"
                 :class="
                   p2hStatus?.color === 'green'
@@ -617,6 +621,7 @@ onMounted(() => {
                 }}</span>
               </p>
               <p
+                v-if="vehicleData.warna_no_lambung"
                 class="text-sm font-bold"
                 :class="
                   p2hStatus?.color === 'green'

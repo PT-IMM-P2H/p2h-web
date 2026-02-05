@@ -25,17 +25,42 @@ async def get_vehicle_by_lambung(
     db: Session = Depends(get_db)
 ):
     """
-    Mencari kendaraan berdasarkan nomor lambung secara publik.
+    Mencari kendaraan berdasarkan nomor lambung ATAU nomor polisi secara publik.
     Digunakan oleh driver untuk validasi unit sebelum mengisi form P2H.
     Mendukung format fleksibel: P309, P.309, p 309, P,309 semua akan ditemukan.
+    
+    Untuk unit TRAVEL (tanpa nomor lambung), bisa search menggunakan nomor polisi.
     """
-    # Gunakan repository method yang sudah support normalisasi
+    vehicle = None
+    
+    # Coba cari berdasarkan nomor lambung dulu (untuk unit IMM)
     vehicle = vehicle_repository.get_by_hull_number(db, no_lambung)
+    
+    # Jika tidak ditemukan, coba cari berdasarkan nomor polisi (untuk unit TRAVEL)
+    if not vehicle:
+        # Normalize plat nomor (uppercase dan tanpa spasi)
+        normalized_plat = no_lambung.upper().replace(" ", "").replace("-", "")
+        
+        vehicle = db.query(Vehicle).filter(
+            Vehicle.is_active == True
+        ).filter(
+            Vehicle.plat_nomor.ilike(f"%{no_lambung}%")
+        ).first()
+        
+        # Jika masih tidak ditemukan dengan LIKE, coba exact match dengan normalisasi
+        if not vehicle:
+            all_vehicles = db.query(Vehicle).filter(Vehicle.is_active == True).all()
+            for v in all_vehicles:
+                if v.plat_nomor:
+                    v_normalized = v.plat_nomor.upper().replace(" ", "").replace("-", "")
+                    if v_normalized == normalized_plat:
+                        vehicle = v
+                        break
     
     if not vehicle:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Kendaraan dengan nomor lambung {no_lambung} tidak ditemukan"
+            detail=f"Kendaraan dengan nomor lambung/polisi '{no_lambung}' tidak ditemukan"
         )
     
     # Mendapatkan status P2H hari ini (Shift, ketersediaan, dll)
