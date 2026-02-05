@@ -99,51 +99,71 @@ const fetchCurrentShift = async () => {
   }
 };
 
+// Helper function untuk mendapatkan shift yang sesuai berdasarkan waktu
+const getSuggestedShift = (hour) => {
+  if (hour >= 6 && hour < 15) {
+    return "Shift 1 (07:00-15:00) atau Non-Shift (06:00-16:00)";
+  } else if (hour >= 14 && hour < 23) {
+    return "Shift 2 (15:00-23:00) atau Long Shift 1 (07:00-19:00)";
+  } else if ((hour >= 22) || (hour >= 0 && hour < 7)) {
+    return "Shift 3 (23:00-07:00) atau Long Shift 2 (19:00-07:00)";
+  } else {
+    return "Shift yang sesuai dengan waktu kerja Anda";
+  }
+};
+
 const validateShiftTime = () => {
   if (!currentShiftInfo.value || !selectedShift.value) return true;
 
   const selected = selectedShift.value;
   const currentTime = new Date();
   const hour = currentTime.getHours();
+  const timeString = currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 
   // Validasi berdasarkan shift yang dipilih
   if (selected === "non-shift" || selected === "0") {
     // Non-Shift: 06:00 - 16:00 (sesuai backend)
     if (hour < 6 || hour >= 16) {
-      shiftWarning.value = `⚠️ Non-Shift hanya bisa diisi pada jam 06:00-16:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+      const suggested = getSuggestedShift(hour);
+      shiftWarning.value = `⚠️ Non-Shift hanya bisa diisi pada jam 06:00-16:00. Waktu sekarang: ${timeString}. Disarankan menggunakan: ${suggested}`;
       return false;
     }
   } else if (selected === "long-shift-1" || selected === "11") {
-    // Long Shift 1: 06:00 - 19:00
-    if (hour < 6 || hour >= 19) {
-      shiftWarning.value = `⚠️ Long Shift 1 hanya bisa diisi pada jam 06:00-19:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+    // Long Shift 1: 07:00 - 19:00
+    if (hour < 7 || hour >= 19) {
+      const suggested = getSuggestedShift(hour);
+      shiftWarning.value = `⚠️ Long Shift 1 hanya bisa diisi pada jam 07:00-19:00. Waktu sekarang: ${timeString}. Disarankan menggunakan: ${suggested}`;
       return false;
     }
   } else if (selected === "long-shift-2" || selected === "12") {
-    // Long Shift 2: 18:00 - 07:00 (melewati midnight)
-    if (hour < 18 && hour >= 7) {
-      shiftWarning.value = `⚠️ Long Shift 2 hanya bisa diisi pada jam 18:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+    // Long Shift 2: 19:00 - 07:00 (melewati midnight)
+    if (hour < 19 && hour >= 7) {
+      const suggested = getSuggestedShift(hour);
+      shiftWarning.value = `⚠️ Long Shift 2 hanya bisa diisi pada jam 19:00-07:00. Waktu sekarang: ${timeString}. Disarankan menggunakan: ${suggested}`;
       return false;
     }
   } else {
     // Regular shift validation
     const selectedShiftNum = parseInt(selected);
 
-    // Shift 1: 06:00 - 15:00
-    if (selectedShiftNum === 1 && (hour < 6 || hour >= 15)) {
-      shiftWarning.value = `⚠️ Shift 1 hanya bisa diisi pada jam 06:00-15:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+    // Shift 1: 07:00 - 15:00
+    if (selectedShiftNum === 1 && (hour < 7 || hour >= 15)) {
+      const suggested = getSuggestedShift(hour);
+      shiftWarning.value = `⚠️ Shift 1 hanya bisa diisi pada jam 07:00-15:00. Waktu sekarang: ${timeString}. Disarankan menggunakan: ${suggested}`;
       return false;
     }
 
-    // Shift 2: 14:00 - 23:00
-    if (selectedShiftNum === 2 && (hour < 14 || hour >= 23)) {
-      shiftWarning.value = `⚠️ Shift 2 hanya bisa diisi pada jam 14:00-23:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+    // Shift 2: 15:00 - 23:00
+    if (selectedShiftNum === 2 && (hour < 15 || hour >= 23)) {
+      const suggested = getSuggestedShift(hour);
+      shiftWarning.value = `⚠️ Shift 2 hanya bisa diisi pada jam 15:00-23:00. Waktu sekarang: ${timeString}. Disarankan menggunakan: ${suggested}`;
       return false;
     }
 
-    // Shift 3: 22:00 - 07:00 (melewati midnight)
-    if (selectedShiftNum === 3 && hour < 22 && hour >= 7) {
-      shiftWarning.value = `⚠️ Shift 3 hanya bisa diisi pada jam 22:00-07:00. Waktu sekarang: ${currentTime.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}`;
+    // Shift 3: 23:00 - 07:00 (melewati midnight)
+    if (selectedShiftNum === 3 && hour < 23 && hour >= 7) {
+      const suggested = getSuggestedShift(hour);
+      shiftWarning.value = `⚠️ Shift 3 hanya bisa diisi pada jam 23:00-07:00. Waktu sekarang: ${timeString}. Disarankan menggunakan: ${suggested}`;
       return false;
     }
   }
