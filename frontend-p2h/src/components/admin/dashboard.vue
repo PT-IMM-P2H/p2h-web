@@ -14,6 +14,7 @@ import {
 import Chart from "chart.js/auto";
 import { useI18n } from "vue-i18n";
 import { api } from "../../services/api";
+import apiService from "../../services/api";
 import { useSidebarProvider } from "../../composables/useSidebar";
 
 const { t } = useI18n();
@@ -163,6 +164,30 @@ const fetchStatistics = async () => {
     }
   } catch (error) {
     console.error("Error fetching statistics:", error);
+  } finally {
+    // Cleanup if needed
+  }
+};
+
+// Fetch total vehicles dari vehicles table (unit-pt dan unit-travel)
+const fetchTotalVehicles = async () => {
+  try {
+    console.log("📊 Fetching total vehicles from all units...");
+    const response = await apiService.vehicles.getAll({ limit: 1000 });
+    
+    if (response.data.status === "success" || response.data.success) {
+      const allVehicles = response.data.payload;
+      const totalCount = allVehicles.length;
+      
+      console.log("✅ Total vehicles fetched:", totalCount);
+      
+      // Update totalVehicles dalam statisticsData
+      statisticsData.value.totalVehicles = totalCount;
+    } else {
+      console.error("Failed to fetch vehicles:", response.data);
+    }
+  } catch (error) {
+    console.error("❌ Error fetching total vehicles:", error);
   } finally {
     // Cleanup if needed
   }
@@ -757,6 +782,7 @@ const monthlyTotals = computed(() => {
 const applyFilter = async () => {
   // Fetch data dengan filter tanggal
   await fetchStatistics();
+  await fetchTotalVehicles();
   await fetchMonthlyReports();
   if (selectedVehicleType.value) {
     await fetchVehicleTypeStatus();
@@ -771,12 +797,14 @@ const resetFilter = () => {
 
   // Fetch ulang data tanpa filter
   fetchStatistics();
+  fetchTotalVehicles();
   fetchMonthlyReports();
 };
 
 onMounted(async () => {
   // Fetch data dari backend dulu
   await fetchStatistics(); // Ini akan update pieChartData dan init pie chart
+  await fetchTotalVehicles(); // Fetch total vehicles dari unit-pt dan unit-travel
   await fetchVehicleTypes();
   await fetchMonthlyReports(); // Ini akan update vehicleDataByMonth dan call updateChart()
 
