@@ -407,25 +407,39 @@ const handleTambahUnitKendaraan = async () => {
     };
 
     if (editingId.value) {
+      // Jika edit, gunakan update biasa
       response = await apiService.vehicles.update(editingId.value, payload);
     } else {
-      response = await apiService.vehicles.create(payload);
+      // Jika tambah baru, gunakan restore-or-create endpoint
+      // Ini akan check apakah no_lambung sudah ada (deleted/active)
+      // Jika ada dan deleted: RESTORE
+      // Jika ada dan active: ERROR
+      // Jika tidak ada: CREATE baru
+      response = await apiService.vehicles.immRestoreOrCreate(payload);
     }
 
     if (response.data.status === "success" || response.data.success) {
-      alert(
-        editingId.value
-          ? "Kendaraan berhasil diupdate"
-          : "Kendaraan berhasil ditambahkan",
-      );
+      const message = editingId.value
+        ? "Kendaraan berhasil diupdate"
+        : response.status === 200 
+          ? "Kendaraan berhasil dipulihkan dari data terhapus"
+          : "Kendaraan baru berhasil ditambahkan";
+      
+      alert(message);
 
       editingId.value = null;
       formData.value = {
         no_lambung: "",
         warna_no_lambung: "",
         plat_nomor: "",
+        lokasi_kendaraan: "",
         vehicle_type: "Light Vehicle",
         merk: "",
+        user_id: null,
+        company_id: null,
+        custom_user_name: "",
+        no_rangka: "",
+        no_mesin: "",
         stnk_expiry: "",
         pajak_expiry: "",
         kir_expiry: "",

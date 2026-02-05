@@ -155,6 +155,10 @@ const apiService = {
     delete: (id) => api.delete(`/vehicles/${id}`),
     // Bulk delete
     bulkDelete: (ids) => api.post('/vehicles/bulk-delete', { ids }),
+    // Travel: Restore deleted atau create baru (based on plat_nomor)
+    travelRestoreOrCreate: (data) => api.post('/vehicles/travel/restore-or-create', data),
+    // IMM: Restore deleted atau create baru (based on no_lambung)
+    immRestoreOrCreate: (data) => api.post('/vehicles/imm/restore-or-create', data),
   },
 
   // G. BULK UPLOAD

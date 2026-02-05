@@ -308,3 +308,154 @@ async def bulk_delete_vehicles(
             "requested_count": len(ids)
         }
     )
+
+@router.post("/travel/restore-or-create")
+async def restore_or_create_travel_vehicle(
+    vehicle_data: VehicleCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+):
+    """
+    Untuk TRAVEL vehicles: Check apakah plat_nomor sudah exist (deleted atau tidak).
+    - Jika exist dan deleted (is_active=False): RESTORE data lama dengan update field baru
+    - Jika exist dan active: Return error
+    - Jika tidak exist: CREATE vehicle baru
+    
+    Ini penting karena plat_nomor adalah unique key untuk TRAVEL.
+    Soft delete bukan hard delete, jadi data masih ada di database.
+    """
+    from datetime import datetime
+    
+    if vehicle_data.kategori_unit != "TRAVEL":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Endpoint ini hanya untuk kategori TRAVEL"
+        )
+    
+    plat_nomor = vehicle_data.plat_nomor
+    
+    # Check apakah plat_nomor sudah ada di database
+    existing_vehicle = db.query(Vehicle).filter(
+        Vehicle.plat_nomor == plat_nomor
+    ).first()
+    
+    if existing_vehicle:
+        if existing_vehicle.is_active:
+            # Sudah active - error
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Nomor polisi {plat_nomor} sudah terdaftar dan masih aktif"
+            )
+        else:
+            # Soft deleted - RESTORE dan update data
+            logger.info(f"🔄 Restoring deleted vehicle with plat_nomor: {plat_nomor}")
+            
+            # Update semua field dari vehicle_data kecuali id, created_at
+            for field, value in vehicle_data.model_dump(exclude_unset=True).items():
+                if field not in ['id', 'created_at']:
+                    setattr(existing_vehicle, field, value)
+            
+            # Restore dengan set is_active = True
+            existing_vehicle.is_active = True
+            existing_vehicle.updated_at = datetime.utcnow()
+            
+            db.commit()
+            db.refresh(existing_vehicle)
+            
+            logger.info(f"✅ Vehicle restored successfully: {plat_nomor}")
+            
+            return base_response(
+                message="Kendaraan berhasil dipulihkan (Restore dari data terhapus)",
+                payload=VehicleResponse.model_validate(existing_vehicle).model_dump(mode='json'),
+                status_code=status.HTTP_200_OK
+            )
+    
+    # Tidak ada existing vehicle - CREATE baru
+    vehicle = Vehicle(**vehicle_data.model_dump())
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+    
+    logger.info(f"✅ New vehicle created: {plat_nomor}")
+    
+    return base_response(
+        message="Kendaraan baru berhasil ditambahkan",
+        payload=VehicleResponse.model_validate(vehicle).model_dump(mode='json'),
+        status_code=status.HTTP_201_CREATED
+    )
+
+
+@router.post("/imm/restore-or-create")
+async def restore_or_create_imm_vehicle(
+    vehicle_data: VehicleCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
+):
+    """
+    Untuk IMM (Unit PT) vehicles: Check apakah no_lambung sudah exist (deleted atau tidak).
+    - Jika exist dan deleted (is_active=False): RESTORE data lama dengan update field baru
+    - Jika exist dan active: Return error
+    - Jika tidak exist: CREATE vehicle baru
+    
+    Ini penting karena no_lambung adalah unique key untuk IMM.
+    Soft delete bukan hard delete, jadi data masih ada di database.
+    """
+    from datetime import datetime
+    
+    if vehicle_data.kategori_unit != "IMM":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Endpoint ini hanya untuk kategori IMM"
+        )
+    
+    no_lambung = vehicle_data.no_lambung
+    
+    # Check apakah no_lambung sudah ada di database
+    existing_vehicle = db.query(Vehicle).filter(
+        Vehicle.no_lambung == no_lambung
+    ).first()
+    
+    if existing_vehicle:
+        if existing_vehicle.is_active:
+            # Sudah active - error
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Nomor lambung {no_lambung} sudah terdaftar dan masih aktif"
+            )
+        else:
+            # Soft deleted - RESTORE dan update data
+            logger.info(f"🔄 Restoring deleted vehicle with no_lambung: {no_lambung}")
+            
+            # Update semua field dari vehicle_data kecuali id, created_at
+            for field, value in vehicle_data.model_dump(exclude_unset=True).items():
+                if field not in ['id', 'created_at']:
+                    setattr(existing_vehicle, field, value)
+            
+            # Restore dengan set is_active = True
+            existing_vehicle.is_active = True
+            existing_vehicle.updated_at = datetime.utcnow()
+            
+            db.commit()
+            db.refresh(existing_vehicle)
+            
+            logger.info(f"✅ Vehicle restored successfully: {no_lambung}")
+            
+            return base_response(
+                message="Kendaraan berhasil dipulihkan (Restore dari data terhapus)",
+                payload=VehicleResponse.model_validate(existing_vehicle).model_dump(mode='json'),
+                status_code=status.HTTP_200_OK
+            )
+    
+    # Tidak ada existing vehicle - CREATE baru
+    vehicle = Vehicle(**vehicle_data.model_dump())
+    db.add(vehicle)
+    db.commit()
+    db.refresh(vehicle)
+    
+    logger.info(f"✅ New vehicle created: {no_lambung}")
+    
+    return base_response(
+        message="Kendaraan baru berhasil ditambahkan",
+        payload=VehicleResponse.model_validate(vehicle).model_dump(mode='json'),
+        status_code=status.HTTP_201_CREATED
+    )

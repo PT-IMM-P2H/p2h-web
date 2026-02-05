@@ -359,19 +359,27 @@ const handleTambahUnitKendaraan = async () => {
     console.log("📤 [Travel] Sending payload:", payload);
 
     if (editingId.value) {
+      // Jika edit, gunakan update biasa
       response = await apiService.vehicles.update(editingId.value, payload);
     } else {
-      response = await apiService.vehicles.create(payload);
+      // Jika tambah baru, gunakan restore-or-create endpoint
+      // Ini akan check apakah plat_nomor sudah ada (deleted/active)
+      // Jika ada dan deleted: RESTORE
+      // Jika ada dan active: ERROR
+      // Jika tidak ada: CREATE baru
+      response = await apiService.vehicles.travelRestoreOrCreate(payload);
     }
 
     console.log("📥 [Travel] Response:", response.data);
 
     if (response.data.status === "success" || response.data.success) {
-      alert(
-        editingId.value
-          ? "Kendaraan berhasil diupdate"
-          : "Kendaraan berhasil ditambahkan",
-      );
+      const message = editingId.value
+        ? "Kendaraan berhasil diupdate"
+        : response.status === 200 
+          ? "Kendaraan berhasil dipulihkan dari data terhapus"
+          : "Kendaraan baru berhasil ditambahkan";
+      
+      alert(message);
 
       editingId.value = null;
       formData.value = {
