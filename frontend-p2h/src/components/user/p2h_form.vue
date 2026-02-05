@@ -337,7 +337,7 @@ const handleSubmitReport = async () => {
       vehicle_id: vehicleData.value.id,
       shift_number: shiftNum,
       details: Object.keys(answers.value).map((id) => ({
-        checklist_item_id: parseInt(id),
+        checklist_item_id: id, // Keep as string for UUID
         status: answers.value[id].status.toLowerCase(),
         keterangan: answers.value[id].keterangan || "",
       })),
