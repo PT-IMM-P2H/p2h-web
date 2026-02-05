@@ -161,11 +161,18 @@ const handleLoginRedirect = () => {
 
 const handleSearchVehicle = async () => {
   if (!searchInput.value) return;
+  
+  // Validasi minimal 2 karakter untuk search
+  if (searchInput.value.trim().length < 2) {
+    alert("Minimal 2 karakter untuk pencarian");
+    return;
+  }
+  
   checkAuthentication();
 
   try {
     loading.value = true;
-    const response = await api.get(`/vehicles/lambung/${searchInput.value}`);
+    const response = await api.get(`/vehicles/lambung/${searchInput.value.trim()}`);
 
     vehicleData.value = response.data.payload.vehicle;
     p2hStatus.value = {
@@ -205,7 +212,9 @@ const handleSearchVehicle = async () => {
       questions.value = [];
     }
   } catch (error) {
-    alert(error.response?.data?.detail || "Nomor lambung/polisi tidak ditemukan");
+    console.error("❌ [Search Error]", error);
+    const errorMsg = error.response?.data?.detail || "Nomor lambung/polisi tidak ditemukan";
+    alert(`${errorMsg}\n\nPastikan:\n✓ Format benar (contoh: P.309 atau KT1234AB)\n✓ Kendaraan sudah terdaftar di sistem\n✓ Minimal 2 karakter untuk pencarian`);
     vehicleData.value = null;
     p2hStatus.value = null;
     questions.value = [];
@@ -573,9 +582,6 @@ onMounted(() => {
             Jenis Kendaraan
           </h2>
           <div class="space-y-2">
-            <p class="text-xs text-zinc-600 font-medium mb-2">
-              💡 Masukkan <span class="font-bold text-purple-600">Nomor Lambung</span> (contoh: P.309) atau <span class="font-bold text-purple-600">Nomor Polisi</span> (contoh: KT1234AB)
-            </p>
             <div class="flex gap-2">
               <input
                 v-model="searchInput"
