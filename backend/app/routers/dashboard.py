@@ -296,14 +296,16 @@ async def get_card_details(
     result_list = []
     
     if card_type == "total_vehicles":
-        # Get all vehicles
-        vehicles = db.query(Vehicle).limit(limit).all()
+        # Get all active vehicles (both IMM and TRAVEL)
+        vehicles = db.query(Vehicle).filter(
+            Vehicle.is_active == True
+        ).order_by(Vehicle.created_at.desc()).limit(limit).all()
         result_list = [
             {
-                "no_lambung": v.no_lambung,
-                "plat_nomor": v.plat_nomor,
+                "no_lambung": v.no_lambung or "-",
+                "plat_nomor": v.plat_nomor or "-",
                 "vehicle_type": v.vehicle_type.value if hasattr(v.vehicle_type, 'value') else str(v.vehicle_type) if v.vehicle_type else None,
-                "merk": v.merk,
+                "merk": v.merk or "-",
                 "status": "registered"
             }
             for v in vehicles
@@ -319,7 +321,8 @@ async def get_card_details(
         status = status_map[card_type]
         
         query = db.query(P2HReport).join(Vehicle).filter(
-            P2HReport.overall_status == status
+            P2HReport.overall_status == status,
+            Vehicle.is_active == True  # Only active vehicles
         )
         
         if start_dt:
@@ -331,10 +334,10 @@ async def get_card_details(
         
         result_list = [
             {
-                "no_lambung": r.vehicle.no_lambung if r.vehicle else None,
-                "plat_nomor": r.vehicle.plat_nomor if r.vehicle else None,
+                "no_lambung": r.vehicle.no_lambung if r.vehicle else "-",
+                "plat_nomor": r.vehicle.plat_nomor if r.vehicle else "-",
                 "vehicle_type": r.vehicle.vehicle_type.value if (r.vehicle and hasattr(r.vehicle.vehicle_type, 'value')) else str(r.vehicle.vehicle_type) if (r.vehicle and r.vehicle.vehicle_type) else None,
-                "merk": r.vehicle.merk if r.vehicle else None,
+                "merk": r.vehicle.merk if r.vehicle else "-",
                 "status": r.overall_status,
                 "submission_date": r.submission_date.isoformat() if r.submission_date else None,
                 "operator": r.user.full_name if r.user else None
@@ -344,7 +347,9 @@ async def get_card_details(
         
     elif card_type == "total_completed":
         # Get vehicles that completed P2H
-        query = db.query(P2HReport).join(Vehicle)
+        query = db.query(P2HReport).join(Vehicle).filter(
+            Vehicle.is_active == True  # Only active vehicles
+        )
         
         if start_dt:
             query = query.filter(func.date(P2HReport.submission_date) >= start_dt)
@@ -355,10 +360,10 @@ async def get_card_details(
         
         result_list = [
             {
-                "no_lambung": r.vehicle.no_lambung if r.vehicle else None,
-                "plat_nomor": r.vehicle.plat_nomor if r.vehicle else None,
+                "no_lambung": r.vehicle.no_lambung if r.vehicle else "-",
+                "plat_nomor": r.vehicle.plat_nomor if r.vehicle else "-",
                 "vehicle_type": r.vehicle.vehicle_type.value if (r.vehicle and hasattr(r.vehicle.vehicle_type, 'value')) else str(r.vehicle.vehicle_type) if (r.vehicle and r.vehicle.vehicle_type) else None,
-                "merk": r.vehicle.merk if r.vehicle else None,
+                "merk": r.vehicle.merk if r.vehicle else "-",
                 "status": r.overall_status,
                 "submission_date": r.submission_date.isoformat() if r.submission_date else None,
                 "operator": r.user.full_name if r.user else None
@@ -377,15 +382,16 @@ async def get_card_details(
         ).subquery()
         
         vehicles = db.query(Vehicle).filter(
-            ~Vehicle.id.in_(subquery)
-        ).limit(limit).all()
+            ~Vehicle.id.in_(subquery),
+            Vehicle.is_active == True  # Only active vehicles
+        ).order_by(Vehicle.created_at.desc()).limit(limit).all()
         
         result_list = [
             {
-                "no_lambung": v.no_lambung,
-                "plat_nomor": v.plat_nomor,
+                "no_lambung": v.no_lambung or "-",
+                "plat_nomor": v.plat_nomor or "-",
                 "vehicle_type": v.vehicle_type.value if hasattr(v.vehicle_type, 'value') else str(v.vehicle_type) if v.vehicle_type else None,
-                "merk": v.merk,
+                "merk": v.merk or "-",
                 "status": "pending"
             }
             for v in vehicles
