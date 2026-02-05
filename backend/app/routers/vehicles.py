@@ -6,7 +6,7 @@ import logging
 
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.models.vehicle import Vehicle
+from app.models.vehicle import Vehicle, UnitKategori
 from app.schemas.vehicle import VehicleCreate, VehicleUpdate, VehicleResponse
 from app.dependencies import get_current_user, require_role
 from app.services.p2h_service import p2h_service
@@ -96,7 +96,7 @@ async def restore_or_create_travel_vehicle(
     """
     from datetime import datetime
     
-    if vehicle_data.kategori_unit != "TRAVEL":
+    if vehicle_data.kategori_unit != UnitKategori.TRAVEL:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Endpoint ini hanya untuk kategori TRAVEL"
@@ -172,7 +172,7 @@ async def restore_or_create_imm_vehicle(
     """
     from datetime import datetime
     
-    if vehicle_data.kategori_unit != "IMM":
+    if vehicle_data.kategori_unit != UnitKategori.IMM:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Endpoint ini hanya untuk kategori IMM"
