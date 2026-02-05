@@ -78,6 +78,7 @@ def run_migrations_offline() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode with retry logic for Railway."""
     import time
+    from sqlalchemy import text, inspect as sa_inspect
     
     # Ambil section konfigurasi dari file .ini
     configuration = config.get_section(config.config_ini_section) or {}
@@ -97,13 +98,68 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
 
+    # =========================================================
+    # FIX: Handle problematic alembic versions BEFORE migration
+    # =========================================================
+    def fix_problematic_versions(connection):
+        """Remove alembic versions that no longer exist in migration files"""
+        try:
+            inspector = sa_inspect(connection)
+            tables = inspector.get_table_names()
+            
+            if "alembic_version" not in tables:
+                return  # No alembic_version table yet
+            
+            # List of problematic versions that might exist in DB but not in files
+            problematic_versions = [
+                'telegram_users_001',
+                'create_telegram_users',
+            ]
+            
+            result = connection.execute(text("SELECT version_num FROM alembic_version"))
+            current_versions = [row[0] for row in result.fetchall()]
+            
+            for version in current_versions:
+                if version in problematic_versions:
+                    print(f"⚠️  Found problematic alembic version: {version}")
+                    connection.execute(
+                        text("DELETE FROM alembic_version WHERE version_num = :version"),
+                        {"version": version}
+                    )
+                    connection.commit()
+                    print(f"✅ Deleted problematic version: {version}")
+                    
+                    # Check if we need to insert a valid version
+                    result = connection.execute(text("SELECT COUNT(*) FROM alembic_version"))
+                    count = result.scalar()
+                    
+                    if count == 0:
+                        # Insert the last known good version
+                        connection.execute(
+                            text("INSERT INTO alembic_version (version_num) VALUES ('a553b45fe239')")
+                        )
+                        connection.commit()
+                        print("✅ Stamped to 'a553b45fe239' (last known good version)")
+        except Exception as e:
+            print(f"⚠️  Could not fix alembic versions: {str(e)}")
+
     # Retry logic for Railway internal networking
     max_retries = 3
     retry_delay = 5  # seconds
     
+    # First, try to fix any problematic versions before running migrations
+    try:
+        with connectable.connect() as connection:
+            fix_problematic_versions(connection)
+    except Exception as e:
+        print(f"⚠️  Pre-migration fix attempt failed: {e}")
+    
     for attempt in range(max_retries):
         try:
             with connectable.connect() as connection:
+                # Fix problematic versions again in case first attempt failed
+                fix_problematic_versions(connection)
+                
                 context.configure(
                     connection=connection, 
                     target_metadata=target_metadata
