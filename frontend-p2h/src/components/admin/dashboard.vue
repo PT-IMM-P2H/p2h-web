@@ -14,6 +14,7 @@ import {
 import Chart from "chart.js/auto";
 import { useI18n } from "vue-i18n";
 import { api } from "../../services/api";
+import apiService from "../../services/api";
 import { useSidebarProvider } from "../../composables/useSidebar";
 
 const { t } = useI18n();
@@ -115,6 +116,34 @@ const vehicleDataByMonth = ref({
   Desember: [0, 0, 0],
 });
 
+// Data untuk menyimpan semua vehicles (untuk menghitung total yang akurat)
+const allVehicles = ref([]);
+
+// Fetch semua vehicles dari tabel aktual (yang tidak soft-deleted)
+// This function fetches the ACTUAL vehicles from the database that have not been soft-deleted
+// Unlike the backend statistics endpoint, this directly counts only active vehicles in the table
+const fetchAllVehicles = async () => {
+  try {
+    console.log("🚗 Fetching all active vehicles...");
+    // Fetch dengan limit tinggi untuk mendapatkan semua data
+    const response = await apiService.vehicles.getAll({ limit: 1000 });
+    
+    if (response.data.status === "success" || response.data.success) {
+      allVehicles.value = response.data.payload || [];
+      const totalCount = allVehicles.value.length;
+      console.log("✅ Total vehicles from table (non-deleted):", totalCount);
+      
+      // Update statisticsData.totalVehicles dengan nilai dari tabel aktual
+      // This ensures the dashboard shows only vehicles that actually exist in the table
+      statisticsData.value.totalVehicles = totalCount;
+      
+      return allVehicles.value;
+    }
+  } catch (error) {
+    console.error("❌ Error fetching all vehicles:", error);
+  }
+};
+
 // Fetch dashboard statistics dari backend
 const fetchStatistics = async () => {
   try {
@@ -128,6 +157,9 @@ const fetchStatistics = async () => {
       params.end_date = u.value;
     }
 
+    // Fetch total vehicles dari tabel aktual (non-deleted)
+    await fetchAllVehicles();
+
     // NOTE: Vehicle type filter NOT applied here - cards and pie chart show ALL data
     // Vehicle type filter only affects monthly chart and vehicle type status
 
@@ -138,8 +170,9 @@ const fetchStatistics = async () => {
       console.log("📊 Statistics data:", data);
 
       // Map snake_case dari backend ke camelCase untuk frontend
+      // totalVehicles sudah di-set dari fetchAllVehicles (actual table data)
       statisticsData.value = {
-        totalVehicles: data.total_vehicles,
+        totalVehicles: statisticsData.value.totalVehicles, // Dari tabel aktual, bukan backend
         totalNormal: data.total_normal,
         totalAbnormal: data.total_abnormal,
         totalWarning: data.total_warning,
