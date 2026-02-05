@@ -269,6 +269,7 @@ from app.routers import (
     bulk_upload,
     admin,
     admin_tools,
+    telegram,
 )
 
 from app.routers.export import router as export_router
@@ -284,6 +285,7 @@ app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(bulk_upload.router)
 app.include_router(export_router)
 app.include_router(health_router, prefix="/health", tags=["Health"])
+app.include_router(telegram.router)  # Telegram webhook and handlers
 app.include_router(admin.router)  # Admin endpoints for seeding
 app.include_router(admin_tools.router)  # Admin tools for maintenance
 

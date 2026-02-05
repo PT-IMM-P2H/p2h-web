@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 import logging
 import asyncio
 from datetime import datetime
@@ -6,7 +6,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from app.config import settings
-from app.models.notification import TelegramNotification, NotificationType
+from app.models.notification import TelegramNotification, NotificationType, TelegramUser
 from app.models.vehicle import Vehicle
 from app.models.p2h import P2HReport, InspectionStatus
 
@@ -17,7 +17,7 @@ class TelegramService:
     
     def __init__(self):
         self.bot_token = settings.TELEGRAM_BOT_TOKEN
-        self.chat_id = settings.TELEGRAM_CHAT_ID  # Fallback for group notifications
+        self.chat_id = settings.TELEGRAM_CHAT_ID
         self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
         # Shared client dengan connection pooling untuk performa lebih baik
         self._client = None
@@ -31,21 +31,8 @@ class TelegramService:
             )
         return self._client
     
-    async def send_message(self, message: str, chat_id: Optional[str] = None, max_retries: int = 3) -> bool:
-        """
-        Kirim pesan ke Telegram dengan retry mechanism
-        
-        Args:
-            message: Pesan yang akan dikirim
-            chat_id: Target chat_id. Jika None, gunakan default TELEGRAM_CHAT_ID dari config
-            max_retries: Jumlah retry maksimal
-        """
-        target_chat_id = chat_id or self.chat_id
-        
-        if not target_chat_id:
-            logger.error("❌ No chat_id provided and no default TELEGRAM_CHAT_ID set")
-            return False
-        
+    async def send_message(self, message: str, max_retries: int = 3) -> bool:
+        """Kirim pesan ke Telegram dengan retry mechanism"""
         client = self._get_client()
         
         for attempt in range(max_retries):
@@ -55,7 +42,7 @@ class TelegramService:
                 response = await client.post(
                     f"{self.base_url}/sendMessage",
                     json={
-                        "chat_id": target_chat_id,
+                        "chat_id": self.chat_id,
                         "text": message,
                         "parse_mode": "HTML",
                         "disable_web_page_preview": True
@@ -94,6 +81,46 @@ class TelegramService:
                 
             except Exception as e:
                 logger.error(f"❌ Unexpected error sending telegram: {str(e)}", exc_info=True)
+                return False
+        
+        return False
+    
+    async def send_message_to_chat_id(self, chat_id: str, message: str, max_retries: int = 3) -> bool:
+        """Kirim pesan ke specific chat_id"""
+        client = self._get_client()
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"📤 Sending message to chat_id {chat_id} (attempt {attempt + 1}/{max_retries})")
+                
+                response = await client.post(
+                    f"{self.base_url}/sendMessage",
+                    json={
+                        "chat_id": chat_id,
+                        "text": message,
+                        "parse_mode": "HTML",
+                        "disable_web_page_preview": True
+                    }
+                )
+                
+                if response.status_code == 200:
+                    logger.info(f"✅ Message sent successfully to {chat_id}")
+                    return True
+                elif response.status_code == 400:
+                    logger.error(f"❌ Bad Request to {chat_id}: {response.text}")
+                    return False
+                else:
+                    logger.warning(f"⚠️ API returned {response.status_code} for {chat_id}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(2 ** attempt)
+                        continue
+                    return False
+                    
+            except Exception as e:
+                logger.error(f"❌ Error sending to {chat_id}: {str(e)}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
                 return False
         
         return False
@@ -192,10 +219,7 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         report: P2HReport,
         status: InspectionStatus
     ) -> Optional[TelegramNotification]:
-        """
-        Kirim notifikasi P2H dan catat di tabel telegram_notifications
-        Notifikasi dikirim ke user yang melakukan submit P2H
-        """
+        """Kirim notifikasi P2H ke semua registered users dan catat di tabel telegram_notifications"""
         
         if status == InspectionStatus.NORMAL:
             return None
@@ -221,24 +245,15 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         db.commit()
         db.refresh(notification)
         
-        # Dapatkan chat_id dari user yang submit P2H
-        user_chat_id = None
-        if report.user and report.user.telegram_chat_id:
-            user_chat_id = report.user.telegram_chat_id
-            logger.info(f"📱 Sending P2H notification to user {report.user.phone_number} (chat_id: {user_chat_id})")
-        else:
-            logger.warning(f"⚠️ User {report.user.phone_number if report.user else 'Unknown'} has no telegram_chat_id linked, using default group chat")
-            user_chat_id = self.chat_id  # Fallback ke group chat jika user belum link telegram
-        
-        # Kirim
-        success = await self.send_message(message, chat_id=user_chat_id)
+        # Kirim ke semua registered users
+        success = await self._send_to_all_users(db, message)
         
         # Update status kirim
         notification.is_sent = success
         if success:
             notification.sent_at = datetime.utcnow()
         else:
-            notification.error_message = "Gagal terhubung ke Telegram API atau user belum link telegram"
+            notification.error_message = "Gagal terhubung ke Telegram API atau tidak ada user yang terdaftar"
         
         db.commit()
         return notification
@@ -251,10 +266,7 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         expiry_date: datetime,
         days_remaining: int
     ) -> Optional[TelegramNotification]:
-        """
-        Kirim notifikasi Expired dan catat di database
-        Notifikasi dikirim ke semua admin/superadmin atau ke grup default
-        """
+        """Kirim notifikasi Expired ke semua registered users dan catat di database"""
         
         notification_type = (
             NotificationType.STNK_EXPIRY 
@@ -277,9 +289,7 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         db.commit()
         db.refresh(notification)
         
-        # Untuk expiry notification, kirim ke grup atau admin
-        # Bisa dimodifikasi untuk kirim ke semua admin yang sudah link telegram
-        success = await self.send_message(message, chat_id=self.chat_id)
+        success = await self._send_to_all_users(db, message)
         
         notification.is_sent = success
         if success:
@@ -289,6 +299,96 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
             
         db.commit()
         return notification
+
+    async def _send_to_all_users(self, db: Session, message: str) -> bool:
+        """
+        Kirim pesan ke semua registered Telegram users.
+        Coba kirim ke semua yang aktif, return True jika minimal 1 berhasil.
+        """
+        # Ambil semua registered users
+        registered_users = db.query(TelegramUser).filter(
+            TelegramUser.is_active == True
+        ).all()
+        
+        if not registered_users:
+            logger.warning("⚠️ No registered Telegram users found. Skipping notification.")
+            return False
+        
+        logger.info(f"📢 Sending notification to {len(registered_users)} registered users...")
+        
+        success_count = 0
+        failed_count = 0
+        
+        for user in registered_users:
+            try:
+                sent = await self.send_message_to_chat_id(user.chat_id, message)
+                
+                if sent:
+                    success_count += 1
+                    user.last_notification_at = datetime.utcnow()
+                    db.add(user)
+                else:
+                    failed_count += 1
+                    # Mark as inactive jika failed beberapa kali (bisa di-enhance lebih lanjut)
+                    logger.warning(f"⚠️ Failed to send to user {user.chat_id}")
+                    
+            except Exception as e:
+                logger.error(f"❌ Error sending to {user.chat_id}: {str(e)}")
+                failed_count += 1
+        
+        db.commit()
+        
+        logger.info(f"✅ Notification sent - Success: {success_count}/{len(registered_users)}, Failed: {failed_count}")
+        
+        # Return True jika minimal 1 user menerima notifikasi
+        return success_count > 0
+
+    async def register_user(self, db: Session, chat_id: str, first_name: str = None, last_name: str = None, username: str = None) -> TelegramUser:
+        """
+        Register atau update user Telegram yang sudah melakukan /start pada bot.
+        Dipanggil ketika bot menerima /start command.
+        """
+        # Cek apakah user sudah terdaftar
+        existing_user = db.query(TelegramUser).filter(
+            TelegramUser.chat_id == str(chat_id)
+        ).first()
+        
+        if existing_user:
+            # Update data jika ada perubahan
+            if first_name:
+                existing_user.first_name = first_name
+            if last_name:
+                existing_user.last_name = last_name
+            if username:
+                existing_user.username = username
+            existing_user.is_active = True
+            
+            logger.info(f"♻️ Updated Telegram user: {chat_id}")
+            db.add(existing_user)
+            db.commit()
+            db.refresh(existing_user)
+            return existing_user
+        
+        # Buat user baru
+        new_user = TelegramUser(
+            chat_id=str(chat_id),
+            first_name=first_name,
+            last_name=last_name,
+            username=username,
+            is_active=True
+        )
+        
+        logger.info(f"✅ Registered new Telegram user: {chat_id} - {first_name or username or 'Unknown'}")
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        return new_user
+    
+    async def get_registered_users_count(self, db: Session) -> int:
+        """Get total active registered users"""
+        return db.query(TelegramUser).filter(
+            TelegramUser.is_active == True
+        ).count()
 
     async def close(self):
         """Close httpx client gracefully"""

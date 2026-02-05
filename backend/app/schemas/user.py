@@ -94,11 +94,6 @@ class UserResponse(BaseModel):
     kategori_pengguna: UserKategori
     is_active: bool
     
-    # Telegram Integration
-    telegram_chat_id: Optional[str] = None
-    telegram_username: Optional[str] = None
-    telegram_linked_at: Optional[datetime] = None
-    
     # Metadata Relasi (IDs)
     department_id: Optional[UUID]
     position_id: Optional[UUID]

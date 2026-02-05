@@ -19,6 +19,36 @@ class NotificationType(str, enum.Enum):
     KIR_EXPIRY = "kir_expiry"
 
 
+class TelegramUser(Base):
+    """
+    Model untuk menyimpan chat_id dari user yang sudah melakukan /start pada bot.
+    Memungkinkan sistem mengirim notifikasi ke multiple chat_id (individual users).
+    """
+    __tablename__ = "telegram_users"
+    __table_args__ = {'extend_existing': True}
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Chat ID dari Telegram - yang akan menerima notifikasi
+    chat_id = Column(String(50), unique=True, nullable=False, index=True)
+    
+    # Username atau nama user Telegram (optional)
+    first_name = Column(String(255), nullable=True)
+    last_name = Column(String(255), nullable=True)
+    username = Column(String(255), nullable=True, index=True)
+    
+    # Status user
+    is_active = Column(Boolean, default=True, nullable=False)
+    
+    # Audit Trail
+    started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    last_notification_at = Column(DateTime, nullable=True)
+    
+    def __repr__(self):
+        user_name = f"@{self.username}" if self.username else f"{self.first_name or ''}"
+        return f"<TelegramUser {user_name} - Chat ID: {self.chat_id}>"
+
+
 class TelegramNotification(Base):
     """
     Model untuk mencatat setiap pesan yang dikirim (atau gagal dikirim) ke Telegram.

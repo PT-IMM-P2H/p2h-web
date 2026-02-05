@@ -17,7 +17,7 @@ from app.models.p2h import (
 )
 
 # Jika Anda memiliki model notifikasi (seperti yang ada di struktur folder Anda)
-from app.models.notification import TelegramNotification
+from app.models.notification import TelegramNotification, TelegramUser
 
 # __all__ memastikan bahwa saat kita import * dari models, 
 # semua class ini akan ikut terbawa.
