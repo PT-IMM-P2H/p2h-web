@@ -17,7 +17,7 @@ class TelegramService:
     
     def __init__(self):
         self.bot_token = settings.TELEGRAM_BOT_TOKEN
-        self.chat_id = settings.TELEGRAM_CHAT_ID
+        self.chat_id = settings.TELEGRAM_CHAT_ID  # Fallback for group notifications
         self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
         # Shared client dengan connection pooling untuk performa lebih baik
         self._client = None
@@ -31,8 +31,21 @@ class TelegramService:
             )
         return self._client
     
-    async def send_message(self, message: str, max_retries: int = 3) -> bool:
-        """Kirim pesan ke Telegram dengan retry mechanism"""
+    async def send_message(self, message: str, chat_id: Optional[str] = None, max_retries: int = 3) -> bool:
+        """
+        Kirim pesan ke Telegram dengan retry mechanism
+        
+        Args:
+            message: Pesan yang akan dikirim
+            chat_id: Target chat_id. Jika None, gunakan default TELEGRAM_CHAT_ID dari config
+            max_retries: Jumlah retry maksimal
+        """
+        target_chat_id = chat_id or self.chat_id
+        
+        if not target_chat_id:
+            logger.error("❌ No chat_id provided and no default TELEGRAM_CHAT_ID set")
+            return False
+        
         client = self._get_client()
         
         for attempt in range(max_retries):
@@ -42,7 +55,7 @@ class TelegramService:
                 response = await client.post(
                     f"{self.base_url}/sendMessage",
                     json={
-                        "chat_id": self.chat_id,
+                        "chat_id": target_chat_id,
                         "text": message,
                         "parse_mode": "HTML",
                         "disable_web_page_preview": True
@@ -179,7 +192,10 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         report: P2HReport,
         status: InspectionStatus
     ) -> Optional[TelegramNotification]:
-        """Kirim notifikasi P2H dan catat di tabel telegram_notifications"""
+        """
+        Kirim notifikasi P2H dan catat di tabel telegram_notifications
+        Notifikasi dikirim ke user yang melakukan submit P2H
+        """
         
         if status == InspectionStatus.NORMAL:
             return None
@@ -205,15 +221,24 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         db.commit()
         db.refresh(notification)
         
+        # Dapatkan chat_id dari user yang submit P2H
+        user_chat_id = None
+        if report.user and report.user.telegram_chat_id:
+            user_chat_id = report.user.telegram_chat_id
+            logger.info(f"📱 Sending P2H notification to user {report.user.phone_number} (chat_id: {user_chat_id})")
+        else:
+            logger.warning(f"⚠️ User {report.user.phone_number if report.user else 'Unknown'} has no telegram_chat_id linked, using default group chat")
+            user_chat_id = self.chat_id  # Fallback ke group chat jika user belum link telegram
+        
         # Kirim
-        success = await self.send_message(message)
+        success = await self.send_message(message, chat_id=user_chat_id)
         
         # Update status kirim
         notification.is_sent = success
         if success:
             notification.sent_at = datetime.utcnow()
         else:
-            notification.error_message = "Gagal terhubung ke Telegram API"
+            notification.error_message = "Gagal terhubung ke Telegram API atau user belum link telegram"
         
         db.commit()
         return notification
@@ -226,7 +251,10 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         expiry_date: datetime,
         days_remaining: int
     ) -> Optional[TelegramNotification]:
-        """Kirim notifikasi Expired dan catat di database"""
+        """
+        Kirim notifikasi Expired dan catat di database
+        Notifikasi dikirim ke semua admin/superadmin atau ke grup default
+        """
         
         notification_type = (
             NotificationType.STNK_EXPIRY 
@@ -249,7 +277,9 @@ Harap segera memproses perpanjangan dokumen agar operasional tidak terganggu.
         db.commit()
         db.refresh(notification)
         
-        success = await self.send_message(message)
+        # Untuk expiry notification, kirim ke grup atau admin
+        # Bisa dimodifikasi untuk kirim ke semua admin yang sudah link telegram
+        success = await self.send_message(message, chat_id=self.chat_id)
         
         notification.is_sent = success
         if success:

@@ -73,6 +73,11 @@ class User(Base):
     phone_number = Column(String(20), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     
+    # Telegram Integration
+    telegram_chat_id = Column(String(100), unique=True, index=True, nullable=True)
+    telegram_username = Column(String(100), nullable=True)
+    telegram_linked_at = Column(DateTime, nullable=True)
+    
     # Metadata Profil
     birth_date = Column(Date, nullable=True) # Digunakan untuk password default DDMMYYYY
     

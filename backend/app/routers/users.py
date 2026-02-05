@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.user import User, UserRole
@@ -247,5 +248,114 @@ async def bulk_delete_users(
         payload={
             "deleted_count": deleted_count,
             "requested_count": len(ids)
+        }
+    )
+
+
+# --- Telegram Integration Endpoints ---
+
+class TelegramLinkRequest(BaseModel):
+    """Request body untuk link telegram dengan phone number"""
+    phone_number: str
+    telegram_chat_id: str
+    telegram_username: Optional[str] = None
+
+
+@router.post("/telegram/link")
+async def link_telegram_account(
+    request: TelegramLinkRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Link akun user dengan telegram chat_id.
+    Endpoint ini dipanggil oleh telegram bot setelah user kirim /start
+    """
+    # Normalize phone number
+    phone_number = request.phone_number.replace(" ", "").replace("-", "").replace("+", "")
+    
+    # Find user by phone_number
+    user = db.query(User).filter(User.phone_number == phone_number).first()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User dengan nomor {phone_number} tidak ditemukan"
+        )
+    
+    # Check if telegram_chat_id already linked to another user
+    existing = db.query(User).filter(
+        User.telegram_chat_id == request.telegram_chat_id,
+        User.id != user.id
+    ).first()
+    
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Telegram ini sudah terhubung dengan user {existing.full_name}"
+        )
+    
+    # Update telegram info
+    user.telegram_chat_id = request.telegram_chat_id
+    user.telegram_username = request.telegram_username
+    user.telegram_linked_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(user)
+    
+    return base_response(
+        message="Telegram berhasil terhubung",
+        payload={
+            "user_id": str(user.id),
+            "full_name": user.full_name,
+            "phone_number": user.phone_number,
+            "telegram_chat_id": user.telegram_chat_id,
+            "telegram_username": user.telegram_username,
+            "telegram_linked_at": user.telegram_linked_at.isoformat() if user.telegram_linked_at else None
+        }
+    )
+
+
+@router.delete("/me/telegram/unlink")
+async def unlink_telegram_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Unlink telegram dari akun user yang sedang login.
+    User bisa unlink telegram mereka sendiri.
+    """
+    if not current_user.telegram_chat_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Akun Anda belum terhubung dengan Telegram"
+        )
+    
+    current_user.telegram_chat_id = None
+    current_user.telegram_username = None
+    current_user.telegram_linked_at = None
+    
+    db.commit()
+    
+    return base_response(
+        message="Telegram berhasil diputus dari akun Anda"
+    )
+
+
+@router.get("/me/telegram/status")
+async def get_telegram_status(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Cek status telegram linking untuk user yang sedang login
+    """
+    is_linked = bool(current_user.telegram_chat_id)
+    
+    return base_response(
+        message="Status telegram berhasil diambil",
+        payload={
+            "is_linked": is_linked,
+            "telegram_chat_id": current_user.telegram_chat_id if is_linked else None,
+            "telegram_username": current_user.telegram_username if is_linked else None,
+            "telegram_linked_at": current_user.telegram_linked_at.isoformat() if current_user.telegram_linked_at else None
         }
     )
