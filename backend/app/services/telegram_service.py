@@ -44,20 +44,27 @@ class TelegramService:
     
     def _get_active_subscribers(self, db: Session) -> List[str]:
         """Mendapatkan daftar chat_id dari subscriber aktif"""
-        from app.models.telegram_subscriber import TelegramSubscriber
-        
-        subscribers = db.query(TelegramSubscriber).filter(
-            TelegramSubscriber.is_active == True
-        ).all()
-        
-        chat_ids = [s.chat_id for s in subscribers]
-        
-        # Jika tidak ada subscriber, gunakan default chat_id dari config
-        if not chat_ids and self.default_chat_id:
-            logger.info("No active subscribers found, using default chat_id")
-            chat_ids = [self.default_chat_id]
-        
-        return chat_ids
+        try:
+            from app.models.telegram_subscriber import TelegramSubscriber
+            
+            subscribers = db.query(TelegramSubscriber).filter(
+                TelegramSubscriber.is_active == True
+            ).all()
+            
+            chat_ids = [s.chat_id for s in subscribers]
+            
+            # Jika tidak ada subscriber, gunakan default chat_id dari config
+            if not chat_ids and self.default_chat_id:
+                logger.info("No active subscribers found, using default chat_id")
+                chat_ids = [self.default_chat_id]
+            
+            return chat_ids
+        except Exception as e:
+            logger.warning(f"⚠️ Error getting subscribers, using default chat_id: {str(e)}")
+            # Fallback ke default chat_id jika table belum ada atau error
+            if self.default_chat_id:
+                return [self.default_chat_id]
+            return []
     
     async def send_message_to_chat(self, chat_id: str, message: str, max_retries: int = 3) -> bool:
         """Kirim pesan ke satu chat_id tertentu dengan retry mechanism"""
@@ -136,19 +143,20 @@ class TelegramService:
         
         logger.info(f"📤 Broadcasting message to {len(chat_ids)} subscribers")
         
-        # Update last_notified_at untuk subscriber yang berhasil
-        from app.models.telegram_subscriber import TelegramSubscriber
-        
         for chat_id in chat_ids:
             success = await self.send_message_to_chat(chat_id, message)
             if success:
                 result.success_count += 1
-                # Update last_notified_at
-                subscriber = db.query(TelegramSubscriber).filter(
-                    TelegramSubscriber.chat_id == chat_id
-                ).first()
-                if subscriber:
-                    subscriber.last_notified_at = datetime.utcnow()
+                # Update last_notified_at - wrapped in try-except to prevent crashes
+                try:
+                    from app.models.telegram_subscriber import TelegramSubscriber
+                    subscriber = db.query(TelegramSubscriber).filter(
+                        TelegramSubscriber.chat_id == chat_id
+                    ).first()
+                    if subscriber:
+                        subscriber.last_notified_at = datetime.utcnow()
+                except Exception as e:
+                    logger.warning(f"⚠️ Could not update last_notified_at for {chat_id}: {str(e)}")
             else:
                 result.failed_count += 1
                 result.failed_chat_ids.append(chat_id)
@@ -156,7 +164,10 @@ class TelegramService:
             # Small delay untuk menghindari rate limiting
             await asyncio.sleep(0.1)
         
-        db.commit()
+        try:
+            db.commit()
+        except Exception as e:
+            logger.warning(f"⚠️ Could not commit subscriber updates: {str(e)}")
         
         logger.info(f"✅ Broadcast complete: {result.success_count}/{result.total_subscribers} successful")
         return result
