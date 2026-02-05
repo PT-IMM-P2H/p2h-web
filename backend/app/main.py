@@ -56,6 +56,54 @@ def wait_for_database(max_retries: int = 10, delay: int = 2) -> bool:
 # =========================================================
 # SAFE ALEMBIC AUTO MIGRATION
 # =========================================================
+def fix_problematic_alembic_versions():
+    """
+    Fix alembic_version entries yang bermasalah sebelum migration.
+    Ini menangani kasus dimana revision lama yang sudah dihapus masih ada di database.
+    """
+    try:
+        with engine.connect() as connection:
+            inspector = inspect(connection)
+            tables = inspector.get_table_names()
+            
+            if "alembic_version" not in tables:
+                return  # No alembic_version table yet
+            
+            # List of problematic versions that might exist in DB but not in files
+            problematic_versions = [
+                'telegram_users_001',
+                'create_telegram_users',
+            ]
+            
+            result = connection.execute(text("SELECT version_num FROM alembic_version"))
+            current_versions = [row[0] for row in result.fetchall()]
+            
+            for version in current_versions:
+                if version in problematic_versions:
+                    logger.warning(f"⚠️  Found problematic alembic version: {version}")
+                    connection.execute(
+                        text("DELETE FROM alembic_version WHERE version_num = :version"),
+                        {"version": version}
+                    )
+                    connection.commit()
+                    logger.info(f"✅ Deleted problematic version: {version}")
+                    
+                    # Check if we need to insert a valid version
+                    result = connection.execute(text("SELECT COUNT(*) FROM alembic_version"))
+                    count = result.scalar()
+                    
+                    if count == 0:
+                        # Insert the last known good version
+                        connection.execute(
+                            text("INSERT INTO alembic_version (version_num) VALUES ('a553b45fe239')")
+                        )
+                        connection.commit()
+                        logger.info("✅ Stamped to 'a553b45fe239' (last known good version)")
+                        
+    except Exception as e:
+        logger.warning(f"⚠️  Could not fix alembic versions: {str(e)}")
+
+
 def run_alembic_migration():
     """
     Jalankan alembic upgrade head secara aman.
@@ -66,6 +114,9 @@ def run_alembic_migration():
         return
 
     try:
+        # Fix any problematic versions first
+        fix_problematic_alembic_versions()
+        
         # Create Alembic configuration object
         alembic_cfg = Config("alembic.ini")
         
