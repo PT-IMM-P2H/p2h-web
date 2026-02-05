@@ -104,6 +104,62 @@ def fix_problematic_alembic_versions():
         logger.warning(f"⚠️  Could not fix alembic versions: {str(e)}")
 
 
+def ensure_telegram_subscribers_table():
+    """
+    Pastikan tabel telegram_subscribers ada setelah migrasi.
+    Jika tidak ada, buat secara manual.
+    """
+    try:
+        with engine.connect() as connection:
+            inspector = inspect(connection)
+            tables = inspector.get_table_names()
+            
+            if 'telegram_subscribers' not in tables:
+                logger.warning("⚠️  Table 'telegram_subscribers' not found, creating manually...")
+                
+                # Create table with exact same structure as migration
+                create_sql = """
+                CREATE TABLE telegram_subscribers (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    chat_id VARCHAR(100) NOT NULL UNIQUE,
+                    telegram_user_id BIGINT,
+                    telegram_username VARCHAR(255),
+                    full_name VARCHAR(255),
+                    chat_type VARCHAR(50) NOT NULL DEFAULT 'private',
+                    is_active BOOLEAN NOT NULL DEFAULT true,
+                    notes TEXT,
+                    subscribed_at TIMESTAMP NOT NULL DEFAULT now(),
+                    unsubscribed_at TIMESTAMP,
+                    last_notified_at TIMESTAMP
+                );
+                """
+                
+                connection.execute(text(create_sql))
+                
+                # Create indexes
+                connection.execute(text(
+                    "CREATE INDEX ix_telegram_subscribers_chat_id ON telegram_subscribers (chat_id);"
+                ))
+                connection.execute(text(
+                    "CREATE INDEX ix_telegram_subscribers_is_active ON telegram_subscribers (is_active);"
+                ))
+                
+                # Update alembic_version to latest if it exists
+                result = connection.execute(text("SELECT COUNT(*) FROM alembic_version"))
+                if result.scalar() > 0:
+                    connection.execute(text(
+                        "UPDATE alembic_version SET version_num = 'b7a2c3d4e5f6'"
+                    ))
+                
+                connection.commit()
+                logger.info("✅ Table 'telegram_subscribers' created successfully!")
+            else:
+                logger.info("✅ Table 'telegram_subscribers' already exists")
+                
+    except Exception as e:
+        logger.error(f"❌ Failed to ensure telegram_subscribers table: {str(e)}")
+
+
 def run_alembic_migration():
     """
     Jalankan alembic upgrade head secara aman.
@@ -136,6 +192,9 @@ def run_alembic_migration():
         logger.info("🧬 Running Alembic migrations...")
         command.upgrade(alembic_cfg, "head")
         logger.info("✅ Alembic migration completed")
+        
+        # Ensure telegram_subscribers table exists after migration
+        ensure_telegram_subscribers_table()
 
     except Exception as e:
         logger.error("❌ Alembic migration failed")
