@@ -190,18 +190,9 @@ const handleSearchVehicle = async () => {
       p2hStatus.value.currentShift,
     );
 
-    console.log("🔍 [P2H DEBUG] === DETAILED DEBUG INFO ===");
     console.log("🔍 [P2H DEBUG] currentShiftDone:", currentShiftDone);
     console.log("🔍 [P2H DEBUG] canSubmit:", p2hStatus.value.canSubmit);
-    console.log("🔍 [P2H DEBUG] isAuthenticated:", isAuthenticated.value);
     console.log("🔍 [P2H DEBUG] vehicle_type:", vehicleData.value.vehicle_type);
-    console.log("🔍 [P2H DEBUG] currentShift:", p2hStatus.value.currentShift);
-    console.log("🔍 [P2H DEBUG] shiftsCompleted:", p2hStatus.value.shiftsCompleted);
-    console.log("🔍 [P2H DEBUG] color:", p2hStatus.value.color);
-    console.log("🔍 [P2H DEBUG] status:", p2hStatus.value.status);
-    console.log("🔍 [P2H DEBUG] message:", p2hStatus.value.message);
-    console.log("🔍 [P2H DEBUG] p2hStatus full object:", p2hStatus.value);
-    console.log("🔍 [P2H DEBUG] === END DEBUG INFO ===");
 
     // Special handling untuk Travel atau Light Vehicle
     const isTravel = vehicleData.value.vehicle_type?.toLowerCase().includes('travel') ||
@@ -227,8 +218,6 @@ const handleSearchVehicle = async () => {
 
     if (isAuthenticated.value) {
       console.log("✅ [P2H DEBUG] Fetching checklist for:", vehicleData.value.vehicle_type);
-      console.log("✅ [P2H DEBUG] isTravel:", isTravel);
-      console.log("✅ [P2H DEBUG] Will skip restrictions for Travel:", isTravel && (currentShiftDone || !p2hStatus.value.canSubmit));
       await fetchChecklist(vehicleData.value.vehicle_type);
     } else {
       console.log("❌ [P2H DEBUG] User tidak authenticated");
@@ -246,98 +235,34 @@ const handleSearchVehicle = async () => {
   }
 };
 
-const forceFetchChecklist = async () => {
-  if (!vehicleData.value) {
-    alert("Tidak ada data kendaraan. Silakan cari kendaraan terlebih dahulu.");
-    return;
-  }
 
-  console.log("🔧 [FORCE FETCH] Mencoba fetch checklist secara paksa...");
-  console.log("🔧 [FORCE FETCH] Vehicle Type:", vehicleData.value.vehicle_type);
-  console.log("🔧 [FORCE FETCH] Is Authenticated:", isAuthenticated.value);
-
-  if (!isAuthenticated.value) {
-    alert("Anda belum login. Silakan login terlebih dahulu.");
-    return;
-  }
-
-  try {
-    loading.value = true;
-    await fetchChecklist(vehicleData.value.vehicle_type);
-    console.log("🔧 [FORCE FETCH] Berhasil fetch", questions.value.length, "questions");
-    
-    if (questions.value.length === 0) {
-      alert(`⚠️ Tidak ada checklist untuk tipe kendaraan '${vehicleData.value.vehicle_type}'. Silakan hubungi admin.`);
-    } else {
-      alert(`✅ Berhasil memuat ${questions.value.length} item checklist untuk ${vehicleData.value.vehicle_type}`);
-    }
-  } catch (error) {
-    console.error("🔧 [FORCE FETCH] Error:", error);
-    alert("❌ Gagal memuat checklist: " + (error.response?.data?.detail || error.message));
-  } finally {
-    loading.value = false;
-  }
-};
-
-const debugAnswers = () => {
-  console.log("🔍 [DEBUG ANSWERS] Current answers state:");
-  console.log("🔍 [DEBUG ANSWERS] answers.value:", answers.value);
-  console.log("🔍 [DEBUG ANSWERS] answers keys:", Object.keys(answers.value));
-  console.log("🔍 [DEBUG ANSWERS] answers entries:", Object.entries(answers.value));
-  
-  Object.entries(answers.value).forEach(([id, answer]) => {
-    console.log(`🔍 [DEBUG ANSWERS] ID: ${id} (${typeof id}) -> Status: ${answer.status}, Keterangan: "${answer.keterangan}"`);
-  });
-  
-  console.log("🔍 [DEBUG ANSWERS] Questions:", questions.value.map(q => ({ id: q.id, name: q.item_name })));
-  
-  alert(`Debug info logged to console. Answers count: ${Object.keys(answers.value).length}, Questions count: ${questions.value.length}`);
-};
 
 const fetchChecklist = async (vehicleType) => {
   try {
     console.log("📡 [FETCH] Calling /p2h/checklist-items...");
-    console.log("📡 [FETCH] Vehicle Type to filter:", vehicleType);
     const response = await api.get("/p2h/checklist-items");
     const allQuestions = response.data.payload;
     console.log("📋 [FETCH] Total questions dari API:", allQuestions.length);
-    console.log("📋 [FETCH] Sample question:", allQuestions[0]);
 
-    // Debug: tampilkan semua vehicle_tags yang ada
-    const allVehicleTags = allQuestions.map(q => q.vehicle_tags);
-    console.log("📋 [FETCH] All vehicle_tags in questions:", allVehicleTags);
-    
-    // Cari yang mengandung vehicleType (case insensitive)
+    // Cari yang mengandung vehicleType (exact match atau case insensitive)
     const exactMatches = allQuestions.filter(
       (q) => q.vehicle_tags && q.vehicle_tags.includes(vehicleType),
     );
-    console.log("📋 [FETCH] Exact matches for", vehicleType, ":", exactMatches.length);
     
-    // Jika tidak ada exact match, coba case insensitive
     const caseInsensitiveMatches = allQuestions.filter(
       (q) => q.vehicle_tags && q.vehicle_tags.some(tag => 
         tag.toLowerCase().includes(vehicleType.toLowerCase()) ||
         vehicleType.toLowerCase().includes(tag.toLowerCase())
       )
     );
-    console.log("📋 [FETCH] Case insensitive matches for", vehicleType, ":", caseInsensitiveMatches.length);
     
     questions.value = exactMatches.length > 0 ? exactMatches : caseInsensitiveMatches;
     console.log(
-      "✅ [FILTER] Final questions untuk",
+      "✅ [FILTER] Questions untuk",
       vehicleType,
       ":",
       questions.value.length,
     );
-
-    if (questions.value.length === 0) {
-      console.log("❌ [FILTER] No questions found! Vehicle tags available:");
-      allQuestions.forEach((q, idx) => {
-        if (idx < 10) { // Log first 10 untuk avoid spam
-          console.log(`   Question ${idx + 1}: ${q.item_name} -> Tags: ${q.vehicle_tags}`);
-        }
-      });
-    }
 
     questions.value = questions.value.map((q) => ({
       ...q,
@@ -355,7 +280,6 @@ const fetchChecklist = async (vehicleType) => {
 
     questions.value.forEach((q) => {
       answers.value[q.id] = { status: "Normal", keterangan: "" };
-      console.log(`📝 [INIT] Answer for question ${q.id} (${typeof q.id}): ${q.item_name}`);
     });
   } catch (error) {
     console.error("❌ Gagal memuat checklist", error);
@@ -382,7 +306,6 @@ const handleSubmitReport = async () => {
   // Validasi Checklist
   for (const qId in answers.value) {
     const ans = answers.value[qId];
-    console.log(`🔍 [VALIDATION] Checking question ${qId}: status="${ans.status}", keterangan="${ans.keterangan}"`);
     if (
       (ans.status === "Abnormal" || ans.status === "Warning") &&
       !ans.keterangan.trim()
@@ -399,8 +322,6 @@ const handleSubmitReport = async () => {
     let shiftNum = null;
     if (selectedShift.value) {
       const shiftStr = selectedShift.value.toString();
-      console.log("🔄 [SHIFT] Converting shift:", shiftStr, typeof shiftStr);
-      
       if (shiftStr === "non-shift" || shiftStr === "0") {
         shiftNum = 0; // Non-shift
       } else if (shiftStr === "long-shift-1" || shiftStr === "11") {
@@ -410,140 +331,67 @@ const handleSubmitReport = async () => {
       } else {
         shiftNum = parseInt(shiftStr); // Regular shift 1/2/3
       }
-      console.log("🔄 [SHIFT] Converted to:", shiftNum, typeof shiftNum);
     }
 
     const payload = {
       vehicle_id: vehicleData.value.id,
       shift_number: shiftNum,
       details: Object.keys(answers.value).map((id) => ({
-        checklist_item_id: parseInt(id), // Pastikan integer
-        status: answers.value[id].status.toLowerCase(), // Convert ke lowercase untuk backend
-        keterangan: answers.value[id].keterangan || "", // Pastikan string tidak null
+        checklist_item_id: parseInt(id),
+        status: answers.value[id].status.toLowerCase(),
+        keterangan: answers.value[id].keterangan || "",
       })),
     };
 
-    // Validasi payload sebelum kirim
-    console.log("🔍 [VALIDATION] Validating payload...");
-    console.log("🔍 [VALIDATION] vehicle_id:", payload.vehicle_id, typeof payload.vehicle_id);
-    console.log("🔍 [VALIDATION] shift_number:", payload.shift_number, typeof payload.shift_number);
-    console.log("🔍 [VALIDATION] details count:", payload.details.length);
-    
-    // Validasi vehicle_id
-    if (!payload.vehicle_id || typeof payload.vehicle_id !== 'number') {
-      alert("❌ Error: vehicle_id tidak valid");
-      return;
-    }
-    
-    // Validasi shift_number  
-    if (payload.shift_number === null || typeof payload.shift_number !== 'number') {
-      alert("❌ Error: shift_number tidak valid");
-      return;
-    }
-    
-    // Validasi details
-    if (!payload.details || payload.details.length === 0) {
-      alert("❌ Error: Tidak ada detail checklist");
-      return;
-    }
-    
-    // Validasi setiap detail
-    for (let i = 0; i < payload.details.length; i++) {
-      const detail = payload.details[i];
-      console.log(`🔍 [VALIDATION] Detail ${i + 1}:`, detail);
-      
-      if (!detail.checklist_item_id) {
-        alert(`❌ Error: checklist_item_id kosong pada item ${i + 1}`);
-        return;
-      }
-      
-      if (!detail.status || !['normal', 'abnormal', 'warning'].includes(detail.status)) {
-        alert(`❌ Error: Status tidak valid pada item ${i + 1}: ${detail.status}`);
-        return;
-      }
-      
-      // Keterangan wajib jika status bukan normal
-      if ((detail.status === 'abnormal' || detail.status === 'warning') && !detail.keterangan?.trim()) {
-        alert(`❌ Error: Keterangan wajib diisi untuk status ${detail.status}`);
-        return;
-      }
-    }
-    
-    console.log("✅ [VALIDATION] Payload valid, proceeding with submit...");
+
 
     console.log("📤 Payload yang dikirim:", JSON.stringify(payload, null, 2));
     
     try {
       const response = await api.post("/p2h/submit", payload);
-      console.log("✅ Submit berhasil:", response.data);
-    } catch (error) {
-      console.error("❌ Submit error:", error);
-      console.error("❌ Error response:", error.response);
-      console.error("❌ Error data:", error.response?.data);
-      console.error("❌ Error status:", error.response?.status);
-      console.error("❌ Error headers:", error.response?.headers);
-      console.error("❌ Full error object:", JSON.stringify(error.response?.data, null, 2));
-      
-      // Extract detailed error message
-      let errorMessage = "Gagal mengirim laporan";
-      if (error.response?.data?.detail) {
-        if (typeof error.response.data.detail === 'string') {
-          errorMessage = error.response.data.detail;
-        } else if (Array.isArray(error.response.data.detail)) {
-          errorMessage = error.response.data.detail.map(err => 
-            `${err.loc?.join('.')} - ${err.msg}`
-          ).join(', ');
-        } else {
-          errorMessage = JSON.stringify(error.response.data.detail);
+
+      // Hitung overall status dari jawaban
+      let hasWarning = false;
+      let hasAbnormal = false;
+
+      for (const qId in answers.value) {
+        const status = answers.value[qId].status;
+        if (status === "Warning") {
+          hasWarning = true;
+          break; // Warning is highest priority
+        } else if (status === "Abnormal") {
+          hasAbnormal = true;
         }
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
       }
-      
-      alert(`Error: ${errorMessage}`);
-      return; // Exit early on error
-    }
 
-    // Hitung overall status dari jawaban
-    let hasWarning = false;
-    let hasAbnormal = false;
-
-    for (const qId in answers.value) {
-      const status = answers.value[qId].status;
-      if (status === "Warning") {
-        hasWarning = true;
-        break; // Warning is highest priority
-      } else if (status === "Abnormal") {
-        hasAbnormal = true;
+      // Determine overall status
+      let overallStatus = "normal";
+      if (hasWarning) {
+        overallStatus = "warning";
+      } else if (hasAbnormal) {
+        overallStatus = "abnormal";
       }
+
+      // Simpan data ke sessionStorage untuk ditampilkan di halaman hasil
+      const resultData = {
+        status: overallStatus,
+        vehicleData: vehicleData.value,
+        submissionTime: new Date().toLocaleString("id-ID"),
+      };
+      sessionStorage.setItem("p2hResult", JSON.stringify(resultData));
+
+      // Redirect ke halaman hasil
+      router.push({ name: "hasil-form" });
+    } catch (error) {
+      console.error("❌ Submit error:", error.response?.data);
+      alert(
+        "Error: " + (error.response?.data?.detail || "Gagal mengirim laporan"),
+      );
+    } finally {
+      isSubmitting.value = false;
     }
-
-    // Determine overall status
-    let overallStatus = "normal";
-    if (hasWarning) {
-      overallStatus = "warning";
-    } else if (hasAbnormal) {
-      overallStatus = "abnormal";
-    }
-
-    // Simpan data ke sessionStorage untuk ditampilkan di halaman hasil
-    const resultData = {
-      status: overallStatus,
-      vehicleData: vehicleData.value,
-      submissionTime: new Date().toLocaleString("id-ID"),
-    };
-    sessionStorage.setItem("p2hResult", JSON.stringify(resultData));
-
-    // Redirect ke halaman hasil
-    router.push({ name: "hasil-form" });
   } catch (error) {
-    console.error("❌ Submit error:", error.response?.data);
-    alert(
-      "Error: " + (error.response?.data?.detail || "Gagal mengirim laporan"),
-    );
-  } finally {
+    console.error("❌ Outer submit error:", error);
     isSubmitting.value = false;
   }
 };
@@ -927,129 +775,9 @@ onMounted(() => {
                   Shift yang sudah di-P2H: Shift
                   {{ p2hStatus.shiftsCompleted.join(", Shift ") }}
                 </p>
-
-                <!-- Debug Info Section -->
-                <div class="mt-3 pt-2 border-t border-gray-300">
-                  <details class="cursor-pointer">
-                    <summary class="text-xs font-bold text-gray-600 hover:text-gray-800">
-                      🔧 Debug Info (Klik untuk expand)
-                    </summary>
-                    <div class="mt-2 text-xs text-gray-600 space-y-1 bg-gray-50 p-2 rounded">
-                      <p><strong>Can Submit:</strong> {{ p2hStatus?.canSubmit }}</p>
-                      <p><strong>Current Shift:</strong> {{ p2hStatus?.currentShift }}</p>
-                      <p><strong>Shifts Completed:</strong> {{ p2hStatus?.shiftsCompleted }}</p>
-                      <p><strong>Color Code:</strong> {{ p2hStatus?.color }}</p>
-                      <p><strong>P2H Completed Today:</strong> {{ p2hStatus?.completed }}</p>
-                      <p><strong>Questions Available:</strong> {{ questions.length }}</p>
-                      <p><strong>Is Authenticated:</strong> {{ isAuthenticated }}</p>
-                      <p><strong>Current Shift Done:</strong> {{ 
-                        p2hStatus?.shiftsCompleted?.includes(p2hStatus?.currentShift) 
-                      }}</p>
-                      <p><strong>Is Travel/Light Vehicle:</strong> {{ 
-                        vehicleData?.vehicle_type?.toLowerCase().includes('travel') ||
-                        vehicleData?.vehicle_type?.toLowerCase().includes('light vehicle')
-                      }}</p>
-                      
-                      <!-- Force Fetch Button untuk debugging -->
-                      <div class="mt-2 pt-2 border-t border-gray-400 space-y-1">
-                        <button 
-                          @click="forceFetchChecklist" 
-                          class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded font-bold mr-2"
-                        >
-                          🔧 Force Fetch Checklist
-                        </button>
-                        <button 
-                          @click="debugAnswers" 
-                          class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded font-bold"
-                        >
-                          🔍 Debug Answers
-                        </button>
-                      </div>
-                    </div>
-                  </details>
-                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Message ketika tidak bisa mengisi P2H -->
-        <div 
-          v-if="vehicleData && (!p2hStatus?.canSubmit || (p2hStatus?.shiftsCompleted && p2hStatus.shiftsCompleted.includes(p2hStatus?.currentShift))) && !(vehicleData.vehicle_type?.toLowerCase().includes('travel') || vehicleData.vehicle_type?.toLowerCase().includes('light vehicle'))"
-          class="p-6 bg-blue-50 border-2 border-blue-300 rounded-2xl"
-        >
-          <div class="flex items-center gap-2 text-blue-900 mb-3">
-            <InformationCircleIcon class="h-5 w-5" />
-            <h3 class="font-bold text-lg">Informasi P2H</h3>
-          </div>
-          
-          <div v-if="p2hStatus?.completed" class="space-y-2">
-            <p class="text-sm font-semibold text-blue-800">
-              ✅ P2H untuk kendaraan ini sudah selesai untuk hari ini.
-            </p>
-            <p class="text-xs text-blue-700">
-              Shift yang sudah diisi: {{ p2hStatus.shiftsCompleted?.join(', ') || 'Tidak ada' }}
-            </p>
-          </div>
-          
-          <div v-else-if="!p2hStatus?.canSubmit" class="space-y-2">
-            <p class="text-sm font-semibold text-blue-800">
-              ❌ Tidak dapat mengisi P2H saat ini.
-            </p>
-            <p class="text-xs text-blue-700">
-              Alasan: {{ p2hStatus?.message || 'Belum waktunya atau sudah terisi untuk shift saat ini' }}
-            </p>
-          </div>
-          
-          <div v-else class="space-y-2">
-            <p class="text-sm font-semibold text-blue-800">
-              ⏰ P2H untuk shift saat ini sudah diisi.
-            </p>
-            <p class="text-xs text-blue-700">
-              Shift {{ p2hStatus?.currentShift }} sudah selesai di-P2H.
-            </p>
-          </div>
-        </div>
-
-        <!-- Message khusus untuk Travel -->
-        <div 
-          v-if="vehicleData && (vehicleData.vehicle_type?.toLowerCase().includes('travel') || vehicleData.vehicle_type?.toLowerCase().includes('light vehicle')) && questions.length === 0 && isAuthenticated"
-          class="p-6 bg-orange-50 border-2 border-orange-300 rounded-2xl"
-        >
-          <div class="flex items-center gap-2 text-orange-900 mb-3">
-            <ExclamationTriangleIcon class="h-5 w-5" />
-            <h3 class="font-bold text-lg">Travel/Light Vehicle - Checklist Tidak Ditemukan</h3>
-          </div>
-          <div class="space-y-2">
-            <p class="text-sm font-semibold text-orange-800">
-              🚗 Kendaraan Travel/Light Vehicle terdeteksi, namun checklist tidak dapat dimuat.
-            </p>
-            <p class="text-xs text-orange-700 space-y-1">
-              <span class="block">• Kemungkinan belum ada checklist untuk tipe "{{ vehicleData.vehicle_type }}"</span>
-              <span class="block">• Atau ada masalah dengan konfigurasi backend</span>
-              <span class="block">• Gunakan tombol "Force Fetch" di debug info untuk mencoba lagi</span>
-            </p>
-          </div>
-        </div>
-
-        <!-- Message ketika tidak login -->
-        <div 
-          v-if="vehicleData && !isAuthenticated && p2hStatus?.color !== 'green'"
-          class="p-6 bg-yellow-50 border-2 border-yellow-400 rounded-2xl"
-        >
-          <div class="flex items-center gap-2 text-yellow-900 mb-3">
-            <ExclamationTriangleIcon class="h-5 w-5" />
-            <h3 class="font-bold text-lg">Login Diperlukan</h3>
-          </div>
-          <p class="text-sm font-semibold text-yellow-800 mb-3">
-            Kendaraan ini belum di-P2H. Silakan login untuk mengisi form P2H.
-          </p>
-          <button
-            @click="handleLoginRedirect"
-            class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white font-bold text-sm rounded-lg transition-colors"
-          >
-            Login Sekarang
-          </button>
         </div>
 
         <section
