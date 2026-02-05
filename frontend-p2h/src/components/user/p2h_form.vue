@@ -279,6 +279,21 @@ const forceFetchChecklist = async () => {
   }
 };
 
+const debugAnswers = () => {
+  console.log("🔍 [DEBUG ANSWERS] Current answers state:");
+  console.log("🔍 [DEBUG ANSWERS] answers.value:", answers.value);
+  console.log("🔍 [DEBUG ANSWERS] answers keys:", Object.keys(answers.value));
+  console.log("🔍 [DEBUG ANSWERS] answers entries:", Object.entries(answers.value));
+  
+  Object.entries(answers.value).forEach(([id, answer]) => {
+    console.log(`🔍 [DEBUG ANSWERS] ID: ${id} (${typeof id}) -> Status: ${answer.status}, Keterangan: "${answer.keterangan}"`);
+  });
+  
+  console.log("🔍 [DEBUG ANSWERS] Questions:", questions.value.map(q => ({ id: q.id, name: q.item_name })));
+  
+  alert(`Debug info logged to console. Answers count: ${Object.keys(answers.value).length}, Questions count: ${questions.value.length}`);
+};
+
 const fetchChecklist = async (vehicleType) => {
   try {
     console.log("📡 [FETCH] Calling /p2h/checklist-items...");
@@ -340,6 +355,7 @@ const fetchChecklist = async (vehicleType) => {
 
     questions.value.forEach((q) => {
       answers.value[q.id] = { status: "Normal", keterangan: "" };
+      console.log(`📝 [INIT] Answer for question ${q.id} (${typeof q.id}): ${q.item_name}`);
     });
   } catch (error) {
     console.error("❌ Gagal memuat checklist", error);
@@ -366,6 +382,7 @@ const handleSubmitReport = async () => {
   // Validasi Checklist
   for (const qId in answers.value) {
     const ans = answers.value[qId];
+    console.log(`🔍 [VALIDATION] Checking question ${qId}: status="${ans.status}", keterangan="${ans.keterangan}"`);
     if (
       (ans.status === "Abnormal" || ans.status === "Warning") &&
       !ans.keterangan.trim()
@@ -382,6 +399,8 @@ const handleSubmitReport = async () => {
     let shiftNum = null;
     if (selectedShift.value) {
       const shiftStr = selectedShift.value.toString();
+      console.log("🔄 [SHIFT] Converting shift:", shiftStr, typeof shiftStr);
+      
       if (shiftStr === "non-shift" || shiftStr === "0") {
         shiftNum = 0; // Non-shift
       } else if (shiftStr === "long-shift-1" || shiftStr === "11") {
@@ -391,20 +410,101 @@ const handleSubmitReport = async () => {
       } else {
         shiftNum = parseInt(shiftStr); // Regular shift 1/2/3
       }
+      console.log("🔄 [SHIFT] Converted to:", shiftNum, typeof shiftNum);
     }
 
     const payload = {
       vehicle_id: vehicleData.value.id,
       shift_number: shiftNum,
       details: Object.keys(answers.value).map((id) => ({
-        checklist_item_id: id,
+        checklist_item_id: parseInt(id), // Pastikan integer
         status: answers.value[id].status.toLowerCase(), // Convert ke lowercase untuk backend
-        keterangan: answers.value[id].keterangan,
+        keterangan: answers.value[id].keterangan || "", // Pastikan string tidak null
       })),
     };
 
+    // Validasi payload sebelum kirim
+    console.log("🔍 [VALIDATION] Validating payload...");
+    console.log("🔍 [VALIDATION] vehicle_id:", payload.vehicle_id, typeof payload.vehicle_id);
+    console.log("🔍 [VALIDATION] shift_number:", payload.shift_number, typeof payload.shift_number);
+    console.log("🔍 [VALIDATION] details count:", payload.details.length);
+    
+    // Validasi vehicle_id
+    if (!payload.vehicle_id || typeof payload.vehicle_id !== 'number') {
+      alert("❌ Error: vehicle_id tidak valid");
+      return;
+    }
+    
+    // Validasi shift_number  
+    if (payload.shift_number === null || typeof payload.shift_number !== 'number') {
+      alert("❌ Error: shift_number tidak valid");
+      return;
+    }
+    
+    // Validasi details
+    if (!payload.details || payload.details.length === 0) {
+      alert("❌ Error: Tidak ada detail checklist");
+      return;
+    }
+    
+    // Validasi setiap detail
+    for (let i = 0; i < payload.details.length; i++) {
+      const detail = payload.details[i];
+      console.log(`🔍 [VALIDATION] Detail ${i + 1}:`, detail);
+      
+      if (!detail.checklist_item_id) {
+        alert(`❌ Error: checklist_item_id kosong pada item ${i + 1}`);
+        return;
+      }
+      
+      if (!detail.status || !['normal', 'abnormal', 'warning'].includes(detail.status)) {
+        alert(`❌ Error: Status tidak valid pada item ${i + 1}: ${detail.status}`);
+        return;
+      }
+      
+      // Keterangan wajib jika status bukan normal
+      if ((detail.status === 'abnormal' || detail.status === 'warning') && !detail.keterangan?.trim()) {
+        alert(`❌ Error: Keterangan wajib diisi untuk status ${detail.status}`);
+        return;
+      }
+    }
+    
+    console.log("✅ [VALIDATION] Payload valid, proceeding with submit...");
+
     console.log("📤 Payload yang dikirim:", JSON.stringify(payload, null, 2));
-    const response = await api.post("/p2h/submit", payload);
+    
+    try {
+      const response = await api.post("/p2h/submit", payload);
+      console.log("✅ Submit berhasil:", response.data);
+    } catch (error) {
+      console.error("❌ Submit error:", error);
+      console.error("❌ Error response:", error.response);
+      console.error("❌ Error data:", error.response?.data);
+      console.error("❌ Error status:", error.response?.status);
+      console.error("❌ Error headers:", error.response?.headers);
+      console.error("❌ Full error object:", JSON.stringify(error.response?.data, null, 2));
+      
+      // Extract detailed error message
+      let errorMessage = "Gagal mengirim laporan";
+      if (error.response?.data?.detail) {
+        if (typeof error.response.data.detail === 'string') {
+          errorMessage = error.response.data.detail;
+        } else if (Array.isArray(error.response.data.detail)) {
+          errorMessage = error.response.data.detail.map(err => 
+            `${err.loc?.join('.')} - ${err.msg}`
+          ).join(', ');
+        } else {
+          errorMessage = JSON.stringify(error.response.data.detail);
+        }
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(`Error: ${errorMessage}`);
+      return; // Exit early on error
+    }
 
     // Hitung overall status dari jawaban
     let hasWarning = false;
@@ -851,12 +951,18 @@ onMounted(() => {
                       }}</p>
                       
                       <!-- Force Fetch Button untuk debugging -->
-                      <div class="mt-2 pt-2 border-t border-gray-400">
+                      <div class="mt-2 pt-2 border-t border-gray-400 space-y-1">
                         <button 
                           @click="forceFetchChecklist" 
-                          class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded font-bold"
+                          class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded font-bold mr-2"
                         >
-                          🔧 Force Fetch Checklist (Debug)
+                          🔧 Force Fetch Checklist
+                        </button>
+                        <button 
+                          @click="debugAnswers" 
+                          class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs rounded font-bold"
+                        >
+                          🔍 Debug Answers
                         </button>
                       </div>
                     </div>
