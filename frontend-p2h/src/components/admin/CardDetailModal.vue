@@ -30,6 +30,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
+// Sorting state
+const sortOrder = ref('asc'); // 'asc' for A-Z, 'desc' for Z-A
+
 // Pagination state
 const currentPage = ref(1);
 const itemsPerPage = 20;
@@ -50,25 +53,43 @@ watch(() => props.items, () => {
   currentPage.value = 1;
 });
 
+// Sorted items
+const sortedItems = computed(() => {
+  if (!props.items || props.items.length === 0) return [];
+  
+  const sorted = [...props.items].sort((a, b) => {
+    const aValue = (a.no_lambung || '').toString().toUpperCase();
+    const bValue = (b.no_lambung || '').toString().toUpperCase();
+    
+    if (sortOrder.value === 'asc') {
+      return aValue.localeCompare(bValue, 'id-ID');
+    } else {
+      return bValue.localeCompare(aValue, 'id-ID');
+    }
+  });
+  
+  return sorted;
+});
+
 // Computed properties for pagination
 const totalPages = computed(() => {
-  return Math.ceil((props.items?.length || 0) / itemsPerPage);
+  return Math.ceil((sortedItems.value?.length || 0) / itemsPerPage);
 });
 
 const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage;
   const end = start + itemsPerPage;
-  return props.items?.slice(start, end) || [];
+  return sortedItems.value?.slice(start, end) || [];
 });
 
 const startIndex = computed(() => {
-  if (!props.items || props.items.length === 0) return 0;
+  if (!sortedItems.value || sortedItems.value.length === 0) return 0;
   return (currentPage.value - 1) * itemsPerPage + 1;
 });
 
 const endIndex = computed(() => {
-  if (!props.items || props.items.length === 0) return 0;
-  return Math.min(currentPage.value * itemsPerPage, props.items.length);
+  if (!sortedItems.value || sortedItems.value.length === 0) return 0;
+  return Math.min(currentPage.value * itemsPerPage, sortedItems.value.length);
 });
 
 // Pagination methods
@@ -86,6 +107,12 @@ const nextPage = () => {
 
 const closeModal = () => {
   emit('close');
+};
+
+// Toggle sorting order
+const toggleSort = () => {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  currentPage.value = 1; // Reset to first page when sorting changes
 };
 
 // Get status badge styling
@@ -153,7 +180,7 @@ const handleKeydown = (e) => {
             </div>
 
             <!-- Empty State -->
-            <div v-else-if="!items || items.length === 0" class="text-center py-12">
+            <div v-else-if="!sortedItems || sortedItems.length === 0" class="text-center py-12">
               <p class="text-gray-500 text-sm">Tidak ada data tersedia</p>
             </div>
 
@@ -162,8 +189,13 @@ const handleKeydown = (e) => {
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      No. Lambung
+                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors" @click="toggleSort">
+                      <div class="flex items-center gap-2">
+                        No. Lambung
+                        <span class="text-xs">
+                          {{ sortOrder === 'asc' ? '↑ A-Z' : '↓ Z-A' }}
+                        </span>
+                      </div>
                     </th>
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Plat Nomor
@@ -177,10 +209,10 @@ const handleKeydown = (e) => {
                     <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
-                    <th v-if="items[0]?.submission_date" scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th v-if="sortedItems[0]?.submission_date" scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Tanggal
                     </th>
-                    <th v-if="items[0]?.operator" scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th v-if="sortedItems[0]?.operator" scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Operator
                     </th>
                   </tr>
@@ -225,7 +257,7 @@ const handleKeydown = (e) => {
           <!-- Footer with Pagination -->
           <div class="border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
             <p class="text-sm text-gray-600">
-              Menampilkan {{ startIndex }} - {{ endIndex }} dari {{ items?.length || 0 }} data
+              Menampilkan {{ startIndex }} - {{ endIndex }} dari {{ sortedItems?.length || 0 }} data
             </p>
             
             <!-- Pagination Controls -->
