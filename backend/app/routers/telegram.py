@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 
 from app.database import get_db
-from app.dependencies import get_current_user_admin
+from app.dependencies import require_admin
 from app.models.user import User
 from app.models.telegram_subscriber import TelegramSubscriber
 from app.schemas.telegram import (
@@ -264,7 +264,7 @@ Ketik /help untuk melihat commands yang tersedia.
 @router.get("/subscribers", response_model=TelegramSubscriberListResponse)
 async def list_subscribers(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Mendapatkan daftar semua subscriber.
@@ -288,7 +288,7 @@ async def list_subscribers(
 async def add_subscriber(
     data: TelegramSubscriberCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Menambahkan subscriber secara manual.
@@ -326,7 +326,7 @@ async def update_subscriber(
     chat_id: str,
     data: TelegramSubscriberUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Update subscriber (aktivasi/deaktivasi, catatan, dll).
@@ -367,7 +367,7 @@ async def update_subscriber(
 async def delete_subscriber(
     chat_id: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Hapus subscriber secara permanen.
@@ -395,7 +395,7 @@ async def delete_subscriber(
 async def broadcast_message(
     data: BroadcastMessage,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Kirim pesan broadcast ke semua subscriber aktif.
@@ -407,7 +407,7 @@ async def broadcast_message(
 @router.post("/test-notification")
 async def test_notification(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Kirim notifikasi test ke semua subscriber.
@@ -436,7 +436,7 @@ Jika Anda menerima pesan ini, notifikasi berfungsi dengan baik!
 
 @router.get("/bot-info")
 async def get_bot_info(
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Mendapatkan informasi bot Telegram.
@@ -448,7 +448,7 @@ async def get_bot_info(
 @router.post("/setup-webhook")
 async def setup_webhook(
     webhook_url: str,
-    current_user: User = Depends(get_current_user_admin)
+    current_user: User = Depends(require_admin)
 ):
     """
     [Admin Only] Setup webhook URL untuk bot Telegram.
