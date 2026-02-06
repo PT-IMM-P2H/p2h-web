@@ -285,7 +285,7 @@ async def submit_p2h(
 @router.get("/reports")
 async def get_p2h_reports(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 5000,  # Increased from 100 to support large datasets
     db: Session = Depends(get_db)
 ):
     from app.models.p2h import P2HReport, P2HDetail
