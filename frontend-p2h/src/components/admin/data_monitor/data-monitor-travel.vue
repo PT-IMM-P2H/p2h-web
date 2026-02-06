@@ -77,15 +77,16 @@ const closeFilter = () => {
   showFilter.value = false;
 };
 
-// Fetch data P2H reports
+// Fetch data P2H reports - Fetch all data without limit
 const fetchP2HReports = async () => {
   try {
     isLoading.value = true;
-    console.log("🔄 [Travel] Fetching P2H reports...");
-    const response = await apiService.p2h.getList({ limit: 100 });
+    console.log("🔄 [Travel] Fetching all P2H reports...");
+    // Remove limit to fetch all records from database
+    const response = await apiService.p2h.getList();
     console.log("✅ [Travel] P2H reports fetched:", response.data);
     p2hReports.value = response.data.payload;
-    console.log("📊 [Travel] Total reports:", p2hReports.value.length);
+    console.log("📊 [Travel] Total reports loaded:", p2hReports.value.length);
   } catch (error) {
     console.error("❌ [Travel] Gagal fetch P2H reports:", error);
     console.error("Error details:", error.response?.data);
