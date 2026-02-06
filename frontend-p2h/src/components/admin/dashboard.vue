@@ -862,6 +862,16 @@ const formatPeriod = (period) => {
   return `${monthNames[parseInt(month) - 1]} ${year}`;
 };
 
+// Computed property untuk bulan dan tahun sekarang
+const currentMonthYear = computed(() => {
+  const now = new Date();
+  const monthNames = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  return `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+});
+
 onMounted(async () => {
   // Initialize default annual periods
   const currentYear = new Date().getFullYear();
@@ -1299,6 +1309,15 @@ onBeforeUnmount(() => {
                         <p class="text-xl font-bold text-red-600">
                           {{ monthlyTotals.warning }}
                         </p>
+                      </div>
+                    </div>
+                    <!-- Informasi Bulan Sekarang -->
+                    <div class="mt-4 text-center">
+                      <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                        <span class="text-sm font-semibold text-blue-800">
+                          Bulan Sekarang: {{ currentMonthYear }}
+                        </span>
                       </div>
                     </div>
                   </div>
