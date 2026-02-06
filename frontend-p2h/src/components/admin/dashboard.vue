@@ -31,8 +31,8 @@ const a = ref("");
 const u = ref("");
 
 // Variables for month inputs (format YYYY-MM untuk month picker di Grafik Tahunan)
-const annualStartPeriod = ref("2025-01");
-const annualEndPeriod = ref("2026-01");
+const annualStartPeriod = ref("");
+const annualEndPeriod = ref("");
 
 // Data statistik dari backend
 const statisticsData = ref({
@@ -50,6 +50,9 @@ const modalCardType = ref("");
 const modalCardTitle = ref("");
 const modalItems = ref([]);
 const modalLoading = ref(false);
+
+// Loading state for annual filter
+const annualFilterLoading = ref(false);
 
 // Function to open modal with card details
 const openCardDetail = async (cardType, cardTitle) => {
@@ -202,26 +205,40 @@ const fetchMonthlyReports = async () => {
     if (annualStartPeriod.value && annualEndPeriod.value) {
       params.start_period = annualStartPeriod.value; // Format: YYYY-MM
       params.end_period = annualEndPeriod.value;     // Format: YYYY-MM
+      console.log("📊 Using period filter:", {
+        start_period: params.start_period,
+        end_period: params.end_period
+      });
     } else {
       // Fallback ke tahun saat ini jika periode tidak dipilih
       const currentYear = new Date().getFullYear();
       params.year = currentYear;
+      console.log("📊 Using year fallback:", { year: params.year });
     }
 
     if (selectedVehicleType.value && selectedVehicleType.value !== "") {
       params.vehicle_type = selectedVehicleType.value;
+      console.log("📊 Adding vehicle type filter:", params.vehicle_type);
     }
 
-    console.log("📊 Fetching monthly reports with params:", params);
+    console.log("📊 Fetching monthly reports with final params:", params);
     const response = await api.get("/dashboard/monthly-reports", { params });
-    console.log("Monthly reports response:", response.data);
+    console.log("📊 Monthly reports response:", response.data);
+    
     if (response.data.status === "success") {
-      vehicleDataByMonth.value = response.data.payload.monthly_data;
-      console.log("Updated vehicleDataByMonth:", vehicleDataByMonth.value);
+      const newData = response.data.payload.monthly_data;
+      console.log("📊 Received monthly data:", newData);
+      
+      vehicleDataByMonth.value = newData;
+      console.log("📊 Updated vehicleDataByMonth:", vehicleDataByMonth.value);
 
       // Update chart setelah data berubah
       await nextTick();
+      console.log("📊 Updating chart with new data...");
       updateChart();
+      console.log("✅ Chart updated successfully");
+    } else {
+      console.error("❌ Failed to fetch monthly reports:", response.data);
     }
   } catch (error) {
     console.error("Error fetching monthly reports:", error);
@@ -751,30 +768,28 @@ watch([a, u], () => {
   }
 });
 
-// Watch annual period filters untuk auto-update saat periode berubah
-watch([annualStartPeriod, annualEndPeriod], () => {
-  console.log("📅 Annual period filter changed:", { 
-    start: annualStartPeriod.value, 
-    end: annualEndPeriod.value 
-  });
-  // Auto fetch monthly data saat periode berubah
-  if ((annualStartPeriod.value || annualEndPeriod.value) && chartInstance) {
-    fetchMonthlyReports();
-  }
-});
+// NOTE: Removed auto-watch for annual period to prevent conflicts
+// Annual period filter is now only triggered manually through buttons
 
 // Update chart dengan data baru
 const updateChart = () => {
+  console.log("🔄 Updating chart...");
+  
   if (!chartInstance) {
+    console.log("⚠️ Chart instance not found, creating new chart");
     // Jika chart belum ada atau sudah di-destroy, buat baru
     initChart();
     return;
   }
 
   const newData = convertMonthlyDataToChartFormat(vehicleDataByMonth.value);
+  console.log("📊 New chart data:", newData);
+  
   chartInstance.data = newData;
   chartInstance.options = getChartOptions(newData);
-  chartInstance.update();
+  chartInstance.update('active');
+  
+  console.log("✅ Chart updated successfully");
 };
 
 // Computed property untuk total data bulanan
@@ -838,17 +853,44 @@ const applyAnnualFilter = async () => {
     end: annualEndPeriod.value
   });
   
-  await fetchMonthlyReports();
+  // Set loading state
+  annualFilterLoading.value = true;
+  
+  // Force refresh dengan parameter baru
+  try {
+    await fetchMonthlyReports();
+    console.log("✅ Annual filter applied successfully");
+  } catch (error) {
+    console.error("❌ Error applying annual filter:", error);
+    alert("Gagal menerapkan filter periode. Silakan coba lagi.");
+  } finally {
+    annualFilterLoading.value = false;
+  }
 };
 
 // Fungsi untuk reset filter annual
-const resetAnnualFilter = () => {
+const resetAnnualFilter = async () => {
   const currentYear = new Date().getFullYear();
   annualStartPeriod.value = `${currentYear}-01`;
   annualEndPeriod.value = `${currentYear}-12`;
   
-  console.log("🔄 Resetting annual filter to default");
-  fetchMonthlyReports();
+  console.log("🔄 Resetting annual filter to default:", {
+    start: annualStartPeriod.value,
+    end: annualEndPeriod.value
+  });
+  
+  // Set loading state
+  annualFilterLoading.value = true;
+  
+  try {
+    // Force refresh dengan default values
+    await fetchMonthlyReports();
+    console.log("✅ Annual filter reset successfully");
+  } catch (error) {
+    console.error("❌ Error resetting annual filter:", error);
+  } finally {
+    annualFilterLoading.value = false;
+  }
 };
 
 // Fungsi untuk format periode display
@@ -862,25 +904,16 @@ const formatPeriod = (period) => {
   return `${monthNames[parseInt(month) - 1]} ${year}`;
 };
 
-// Computed property untuk bulan dan tahun sekarang
-const currentMonthYear = computed(() => {
-  const now = new Date();
-  const monthNames = [
-    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-  ];
-  return `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
-});
-
 onMounted(async () => {
   // Initialize default annual periods
   const currentYear = new Date().getFullYear();
-  if (!annualStartPeriod.value) {
-    annualStartPeriod.value = `${currentYear}-01`;
-  }
-  if (!annualEndPeriod.value) {
-    annualEndPeriod.value = `${currentYear}-12`;
-  }
+  annualStartPeriod.value = `${currentYear}-01`;
+  annualEndPeriod.value = `${currentYear}-12`;
+  
+  console.log("🚀 Initializing dashboard with default periods:", {
+    start: annualStartPeriod.value,
+    end: annualEndPeriod.value
+  });
 
   // Fetch data dari backend dulu
   await fetchStatistics(); // Ini akan update pieChartData dan init pie chart
@@ -1235,14 +1268,17 @@ onBeforeUnmount(() => {
                   <button
                     type="button"
                     @click="applyAnnualFilter"
-                    class="w-full p-2 bg-indigo-600 text-white text-sm font-semibold rounded-md hover:bg-indigo-700 transition-colors duration-200"
+                    :disabled="annualFilterLoading"
+                    class="w-full p-2 bg-indigo-600 text-white text-sm font-semibold rounded-md hover:bg-indigo-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {{ t("dashboard.applyFilter") }}
+                    <span v-if="!annualFilterLoading">{{ t("dashboard.applyFilter") }}</span>
+                    <span v-else>Memproses...</span>
                   </button>
                   <button
                     type="button"
                     @click="resetAnnualFilter"
-                    class="w-full p-2 bg-gray-300 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-400 transition-colors duration-200"
+                    :disabled="annualFilterLoading"
+                    class="w-full p-2 bg-gray-300 text-gray-700 text-sm font-semibold rounded-md hover:bg-gray-400 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {{ t("dashboard.resetFilter") }}
                   </button>
@@ -1309,15 +1345,6 @@ onBeforeUnmount(() => {
                         <p class="text-xl font-bold text-red-600">
                           {{ monthlyTotals.warning }}
                         </p>
-                      </div>
-                    </div>
-                    <!-- Informasi Bulan Sekarang -->
-                    <div class="mt-4 text-center">
-                      <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-                        <span class="text-sm font-semibold text-blue-800">
-                          Bulan Sekarang: {{ currentMonthYear }}
-                        </span>
                       </div>
                     </div>
                   </div>
