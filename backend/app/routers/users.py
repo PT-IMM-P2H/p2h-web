@@ -116,7 +116,7 @@ async def create_user(
 @router.get("")
 async def get_users(
     skip: int = Query(0, ge=0),
-    limit: int = Query(2000, ge=1, le=2000),
+    limit: int = Query(5000, ge=1, le=5000),  # Increased to support large datasets
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.superadmin, UserRole.admin))
 ):

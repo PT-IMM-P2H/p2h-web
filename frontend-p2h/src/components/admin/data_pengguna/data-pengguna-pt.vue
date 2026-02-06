@@ -192,7 +192,7 @@ const fetchUsers = async () => {
   isLoading.value = true;
   errorMessage.value = "";
   try {
-    const response = await apiService.users.getAll({ limit: 500 });
+    const response = await apiService.users.getAll({ limit: 5000 });
 
     if (response.data.status === "success" || response.data.success) {
       // Filter hanya user dengan kategori IMM dan is_active = true
@@ -591,14 +591,14 @@ const editPengguna = async (rowId) => {
 </script>
 
 <template>
-<div class="min-h-screen flex flex-col font-['Montserrat'] bg-[#EFEFEF]">
-  <div class="flex flex-1 overflow-hidden">
-    <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
+  <div class="min-h-screen flex flex-col font-['Montserrat'] bg-[#EFEFEF]">
+    <div class="flex flex-1 overflow-hidden">
+      <Aside :isOpen="isSidebarOpen" :onClose="closeSidebar" />
 
-    <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
-      <HeaderAdmin />
+      <div class="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <HeaderAdmin />
 
-      <main class="flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1">
+        <main class="flex-1 overflow-y-auto p-1 sm:p-1 md:p-2 lg:p-1">
           <!-- Judul - Sticky -->
           <div class="mb-2 shrink-0 sticky top-0 z-30 bg-[#EFEFEF]">
             <div class="bg-white rounded-lg shadow-md p-1 pl-5">
